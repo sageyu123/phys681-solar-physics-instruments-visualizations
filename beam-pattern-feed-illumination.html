@@ -1,0 +1,2580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beam Pattern Depends on Feed Illumination</title>
+  <style>
+    :root {
+      --apple-black: #1d1d1f;
+      --apple-white: #ffffff;
+      --apple-light: #f5f5f7;
+      --apple-blue: #0071e3;
+      --apple-link: #0066cc;
+      --apple-gray-80: rgba(29, 29, 31, 0.8);
+      --apple-gray-56: rgba(29, 29, 31, 0.56);
+      --apple-gray-40: rgba(29, 29, 31, 0.4);
+      --apple-line: #d2d2d7;
+      --apple-filter-bg: #fafafc;
+      --apple-button-active: #ededf2;
+      --apple-shadow: rgba(0, 0, 0, 0.12) 0 14px 40px 0;
+      --panel-bg: rgba(255, 255, 255, 0.84);
+      --panel-border: rgba(210, 210, 215, 0.94);
+      --curve-uniform: #c46a39;
+      --curve-tapered: #167a82;
+      --curve-product: #af5127;
+      --curve-source: #5a7480;
+      --math-font: "Cambria Math", "STIXGeneral", "Times New Roman", serif;
+      --ui-font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --ui-font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: var(--ui-font-text);
+      background: var(--apple-light);
+      color: var(--apple-black);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      overflow: hidden;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.92), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(0, 113, 227, 0.08), transparent 24%),
+        linear-gradient(180deg, #f7f7fa 0%, #f3f4f7 100%);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 0.95rem;
+      padding: 1rem;
+      overflow: hidden;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 0.65rem;
+      align-items: center;
+      padding: 0.72rem 0.85rem;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(210, 210, 215, 0.92);
+      border-radius: 14px;
+      box-shadow: var(--apple-shadow);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      overflow-x: auto;
+      overflow-y: hidden;
+      flex-shrink: 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(90, 113, 125, 0.42) rgba(255, 255, 255, 0.56);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .toolbar::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .toolbar::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.54);
+      border-radius: 999px;
+    }
+
+    .toolbar::-webkit-scrollbar-thumb {
+      background: rgba(90, 113, 125, 0.4);
+      border-radius: 999px;
+    }
+
+    .toolbar-title {
+      display: grid;
+      gap: 0.12rem;
+      padding-right: 0.65rem;
+      margin-right: 0.15rem;
+      border-right: 1px solid rgba(210, 210, 215, 0.9);
+      white-space: nowrap;
+    }
+
+    .toolbar-title strong {
+      font-family: var(--ui-font-display);
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+      font-weight: 700;
+    }
+
+    .toolbar-title span {
+      font-size: 0.74rem;
+      color: #5a717d;
+    }
+
+    .field {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      white-space: nowrap;
+    }
+
+    .field label,
+    .field span {
+      font-size: 0.78rem;
+      color: #4d6470;
+      font-weight: 600;
+    }
+
+    .field select {
+      min-width: 11rem;
+      padding: 0.5rem 0.72rem;
+      border: 1px solid var(--apple-line);
+      border-radius: 8px;
+      background: var(--apple-white);
+      color: var(--apple-black);
+    }
+
+    .toolbar-pills {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .toolbar-pills button,
+    .preset-btn,
+    .diameter-preset-btn {
+      border: 1px solid var(--apple-line);
+      background: var(--apple-white);
+      color: var(--apple-black);
+      border-radius: 999px;
+      padding: 0.5rem 0.9rem;
+      font-size: 0.82rem;
+      line-height: 1.1;
+      transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, opacity 0.18s ease, transform 0.14s ease;
+      box-shadow: none;
+    }
+
+    .toolbar-pills button:hover,
+    .preset-btn:hover,
+    .diameter-preset-btn:hover {
+      background: var(--apple-button-active);
+      transform: translateY(-1px);
+    }
+
+    .toolbar-pills button.is-active,
+    .preset-btn.is-active,
+    .diameter-preset-btn.is-active {
+      background: rgba(0, 113, 227, 0.1);
+      border-color: rgba(0, 113, 227, 0.4);
+      color: #004c99;
+    }
+
+    .toolbar-status {
+      margin-left: auto;
+      flex: 0 1 27rem;
+      min-width: 0;
+      color: #5a717d;
+      font-size: 0.78rem;
+      line-height: 1.35;
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: minmax(390px, 430px) minmax(0, 1fr);
+      gap: 1rem;
+      flex: 1 1 auto;
+      min-height: 0;
+      height: auto;
+      overflow: hidden;
+      align-items: stretch;
+    }
+
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      box-shadow: var(--apple-shadow);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      min-height: 0;
+    }
+
+    .control-rail {
+      display: grid;
+      grid-auto-rows: max-content;
+      align-content: start;
+      gap: 0.7rem;
+      padding: 0.85rem;
+      height: 100%;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+    }
+
+    .analysis-wall {
+      display: flex;
+      flex-direction: column;
+      padding: 0.85rem;
+      min-height: 0;
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+    }
+
+    .analysis-stack {
+      display: grid;
+      gap: 0.7rem;
+      min-height: 0;
+      align-content: start;
+      min-width: 0;
+      grid-auto-rows: max-content;
+      flex: 0 0 auto;
+    }
+
+    .analysis-two-up {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.7rem;
+      align-items: start;
+      min-width: 0;
+    }
+
+    .summary-box,
+    .rail-section,
+    .plot-box,
+    .scene-card,
+    .mini-card,
+    .note-card {
+      border: 1px solid rgba(210, 210, 215, 0.96);
+      border-radius: 14px;
+      padding: 0.78rem;
+      background: rgba(255, 255, 255, 0.88);
+      min-height: 0;
+    }
+
+    .summary-box {
+      display: grid;
+      gap: 0.55rem;
+      padding: 0.95rem;
+    }
+
+    .summary-kicker {
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #5d7581;
+      font-weight: 700;
+    }
+
+    .summary-box h1 {
+      margin: 0;
+      font-family: var(--ui-font-display);
+      font-size: clamp(1.7rem, 3vw, 2.35rem);
+      line-height: 0.96;
+      letter-spacing: -0.045em;
+      max-width: 12ch;
+    }
+
+    .summary-copy {
+      margin: 0;
+      color: #445d69;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      max-width: 62ch;
+    }
+
+    .formula-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    .formula-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.42rem 0.65rem;
+      border-radius: 999px;
+      background: rgba(245, 245, 247, 0.95);
+      border: 1px solid rgba(210, 210, 215, 0.92);
+      color: #314a56;
+      font-size: 0.78rem;
+      font-family: var(--math-font);
+    }
+
+    .rail-title-row,
+    .panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.55rem;
+      flex-wrap: nowrap;
+      min-width: 0;
+    }
+
+    .rail-title-row h2,
+    .panel-head h2 {
+      margin: 0;
+      min-width: 0;
+      font-size: 0.92rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #243b47;
+    }
+
+    .rail-title-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      flex-wrap: nowrap;
+      margin-left: auto;
+      min-width: 0;
+    }
+
+    .rail-title-meta span {
+      padding: 0.18rem 0.48rem;
+      border-radius: 999px;
+      background: rgba(245, 245, 247, 0.95);
+      border: 1px solid rgba(210, 210, 215, 0.9);
+      font-size: 0.72rem;
+      color: #405a66;
+    }
+
+    .section-copy,
+    .panel-head p,
+    .control-help,
+    .source-note,
+    .note-copy {
+      margin: 0;
+      color: #5b7480;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .source-note strong,
+    .note-copy strong {
+      color: #2f4753;
+    }
+
+    .control-stack {
+      display: grid;
+      gap: 0.7rem;
+    }
+
+    .control-block {
+      display: grid;
+      gap: 0.45rem;
+    }
+
+    .control-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.6rem;
+    }
+
+    .control-top label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #263d48;
+    }
+
+    .value-chip {
+      font-family: var(--math-font);
+      color: #0f5e98;
+      font-size: 0.86rem;
+      font-weight: 700;
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 96px;
+      gap: 0.55rem;
+      align-items: center;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--apple-blue);
+    }
+
+    input[type="number"],
+    .rail-section select {
+      width: 100%;
+      padding: 0.48rem 0.6rem;
+      border-radius: 8px;
+      border: 1px solid rgba(210, 210, 215, 0.96);
+      background: var(--apple-white);
+      color: var(--apple-black);
+    }
+
+    .button-row {
+      display: flex;
+      gap: 0.38rem;
+      flex-wrap: wrap;
+    }
+
+    .mini-grid,
+    .readout-grid,
+    .source-readout-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.45rem;
+      align-items: start;
+    }
+
+    .readout-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .source-readout-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .mini-card {
+      display: grid;
+      gap: 0.18rem;
+      padding: 0.72rem;
+    }
+
+    .mini-card span {
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: #617883;
+      font-weight: 700;
+    }
+
+    .mini-card strong {
+      font-size: 0.96rem;
+      line-height: 1.2;
+      color: #1b313d;
+      font-family: var(--math-font);
+      overflow-wrap: anywhere;
+    }
+
+    .mini-card small {
+      font-size: 0.72rem;
+      line-height: 1.35;
+      color: #617883;
+    }
+
+    .scene-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.65rem;
+      align-items: start;
+    }
+
+    .plot-box {
+      display: grid;
+      gap: 0.65rem;
+      align-content: start;
+      min-width: 0;
+    }
+
+    .analysis-two-up .readout-grid,
+    .analysis-two-up .source-readout-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .analysis-two-up .plot-canvas,
+    .analysis-two-up .coupling-canvas {
+      height: 250px;
+    }
+
+    .scene-card {
+      display: grid;
+      grid-template-rows: minmax(3.9rem, auto) auto auto;
+      gap: 0.55rem;
+    }
+
+    .scene-head {
+      display: grid;
+      gap: 0.15rem;
+      align-content: start;
+    }
+
+    .scene-head h3 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #233a46;
+    }
+
+    .scene-head p {
+      margin: 0;
+      font-size: 0.78rem;
+      color: #607883;
+      line-height: 1.35;
+    }
+
+    .scene-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+
+    .stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.42rem;
+      padding: 0.34rem 0.58rem;
+      border-radius: 999px;
+      border: 1px solid rgba(210, 210, 215, 0.92);
+      background: rgba(250, 250, 252, 0.95);
+      color: #35515d;
+      font-size: 0.74rem;
+      line-height: 1.2;
+    }
+
+    .stat-pill i {
+      width: 0.44rem;
+      height: 0.44rem;
+      border-radius: 999px;
+      display: inline-block;
+      background: currentColor;
+      flex: none;
+    }
+
+    canvas {
+      width: 100%;
+      display: block;
+      border-radius: 12px;
+      background: #ffffff;
+      border: 1px solid rgba(210, 210, 215, 0.88);
+    }
+
+    .scene-canvas {
+      height: 370px;
+    }
+
+    .plot-canvas,
+    .coupling-canvas {
+      height: 285px;
+    }
+
+    .scene-colorbar {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+      color: #5d7581;
+      font-size: 0.75rem;
+      line-height: 1.2;
+    }
+
+    .scene-colorbar strong {
+      color: #213844;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .scene-colorbar-ramp {
+      flex: 1 1 220px;
+      min-width: 180px;
+      height: 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(210, 210, 215, 0.92);
+      background: linear-gradient(90deg, hsl(215 78% 44%), hsl(196 72% 51%), hsl(55 96% 60%), hsl(15 86% 50%));
+    }
+
+    .legend-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      color: #5d7581;
+      font-size: 0.78rem;
+      line-height: 1.3;
+    }
+
+    .legend-row span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .legend-line {
+      width: 1.1rem;
+      height: 0;
+      border-top: 3px solid currentColor;
+      border-radius: 999px;
+    }
+
+    .legend-line.dashed {
+      border-top-style: dashed;
+    }
+
+    .legend-fill {
+      width: 1.1rem;
+      height: 0.65rem;
+      border-radius: 999px;
+      border: 1px solid currentColor;
+      background: color-mix(in srgb, currentColor 22%, white);
+      display: inline-block;
+    }
+
+    .note-card {
+      display: grid;
+      gap: 0.38rem;
+    }
+
+    .note-card h3 {
+      margin: 0;
+      font-size: 0.84rem;
+      letter-spacing: 0.02em;
+      color: #2b4350;
+    }
+
+    .note-list {
+      margin: 0;
+      padding-left: 1rem;
+      display: grid;
+      gap: 0.4rem;
+      color: #445d69;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .axis-note {
+      font-family: var(--math-font);
+    }
+
+    @media (max-width: 1180px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+
+      body {
+        overflow: auto;
+      }
+
+      .app-shell {
+        height: auto;
+        min-height: 100vh;
+        overflow: visible;
+      }
+
+      .control-rail,
+      .analysis-wall {
+        height: auto;
+        max-height: none;
+        overflow: visible;
+      }
+    }
+
+    @media (max-width: 960px) {
+      .analysis-two-up {
+        grid-template-columns: 1fr;
+      }
+
+      .readout-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .source-readout-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .app-shell {
+        padding: 0.72rem;
+        gap: 0.72rem;
+      }
+
+      .toolbar {
+        gap: 0.5rem;
+        padding: 0.66rem 0.72rem 0.72rem;
+      }
+
+      .toolbar-title {
+        gap: 0;
+        padding-right: 0.45rem;
+      }
+
+      .toolbar-title strong {
+        font-size: 0.92rem;
+      }
+
+      .toolbar-title strong::after {
+        content: none;
+      }
+
+      .toolbar-title span {
+        display: none;
+      }
+
+      .field {
+        gap: 0.35rem;
+      }
+
+      .field label,
+      .field span {
+        display: none;
+      }
+
+      .field select {
+        min-width: 7.5rem;
+        padding: 0.44rem 0.58rem;
+      }
+
+      .toolbar .toolbar-pills button,
+      .toolbar .diameter-preset-btn {
+        padding: 0.42rem 0.68rem;
+        font-size: 0.76rem;
+      }
+
+      .toolbar-title strong {
+        font-size: 0;
+        letter-spacing: 0;
+      }
+
+      .toolbar-title strong::after {
+        content: "Beam + Source";
+        font-size: 0.86rem;
+        letter-spacing: -0.01em;
+      }
+
+      .summary-box h1 {
+        max-width: none;
+      }
+
+      .scene-grid,
+      .mini-grid,
+      .readout-grid,
+      .source-readout-grid,
+      .control-row {
+        grid-template-columns: 1fr;
+      }
+
+      .scene-canvas {
+        height: 320px;
+      }
+
+      .plot-canvas,
+      .coupling-canvas {
+        height: 250px;
+      }
+
+      .toolbar-status {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="toolbar">
+      <div class="toolbar-title">
+        <strong>Beam Pattern + Source Coupling</strong>
+        <span>Feed taper, beam dilution, and antenna temperature</span>
+      </div>
+
+      <div class="field">
+        <label for="sourceSelect">Source</label>
+        <select id="sourceSelect">
+          <option value="quiet_sun">Quiet Sun (32′ disk)</option>
+          <option value="taurus_a">Taurus A (9′ disk)</option>
+          <option value="virgo_a">Virgo A (16′ disk)</option>
+          <option value="cygnus_a">Cygnus A (2′ disk)</option>
+          <option value="cal_20jy">20 Jy calibrator</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="viewModeSelect">3D Mode</label>
+        <select id="viewModeSelect">
+          <option value="both">Feed + system beam</option>
+          <option value="feed">Feed pattern only</option>
+          <option value="system">System beam only</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <span>Dish presets</span>
+        <div class="toolbar-pills">
+          <button class="diameter-preset-btn" data-diameter="2.1" type="button">EOVSA 2.1 m</button>
+          <button class="diameter-preset-btn" data-diameter="10" type="button">Textbook 10 m</button>
+          <button class="diameter-preset-btn" data-diameter="27" type="button">Calibrator 27 m</button>
+        </div>
+      </div>
+
+      <div class="toolbar-status" id="toolbarStatus">Quiet-Sun beam dilution still leaves the Sun well above a 100 K system temperature on a small dish.</div>
+    </header>
+
+    <main class="content-grid">
+      <aside class="panel control-rail">
+        <section class="summary-box">
+          <div class="summary-kicker">Reflector Antennas • Feed Taper • Beam Dilution</div>
+          <h1>Beam Pattern Depends on Feed Illumination</h1>
+          <p class="summary-copy">
+            Taper softens the dish edge, broadens the main beam, lowers sidelobes, and changes how much of an extended source actually couples into the antenna temperature.
+          </p>
+          <div class="formula-strip">
+            <span class="formula-pill">&theta; &sim; &lambda; / D<sub>eff</sub></span>
+            <span class="formula-pill">T<sub>A</sub>(point) = 2 S D<sub>eff</sub><sup>2</sup> / (&pi;k)</span>
+            <span class="formula-pill">T<sub>tot</sub> = T<sub>a</sub> + T<sub>sys</sub></span>
+          </div>
+        </section>
+
+        <section class="rail-section">
+          <div class="rail-title-row">
+            <h2>Feed Taper + Geometry</h2>
+            <div class="rail-title-meta">
+              <span id="currentSourceBadge">Quiet Sun</span>
+            </div>
+          </div>
+          <p class="section-copy">The same controls drive the 3D scenes, the beam cut, and the source-coupling temperature estimate.</p>
+
+          <div class="control-stack">
+            <div class="control-block">
+              <div class="control-top">
+                <label>Example taper presets</label>
+              </div>
+              <div class="button-row">
+                <button class="preset-btn" data-preset="0" type="button">Uniform</button>
+                <button class="preset-btn" data-preset="10" type="button">Moderate taper</button>
+                <button class="preset-btn" data-preset="16" type="button">Strong taper</button>
+              </div>
+            </div>
+
+            <div class="control-block">
+              <div class="control-top">
+                <label for="taperRange">Edge taper</label>
+                <div class="value-chip" id="taperReadout">-12.0 dB</div>
+              </div>
+              <div class="control-row">
+                <input id="taperRange" type="range" min="0" max="20" step="0.5" value="12" />
+                <input id="taperNumber" type="number" min="0" max="20" step="0.5" value="12" />
+              </div>
+              <p class="control-help">Lower edge power trades some gain for a cleaner, wider main beam.</p>
+            </div>
+
+            <div class="control-block">
+              <div class="control-top">
+                <label for="diameterRange">Dish diameter <span class="axis-note">D</span></label>
+                <div class="value-chip" id="diameterReadout">2.10 m</div>
+              </div>
+              <div class="control-row">
+                <input id="diameterRange" type="range" min="1" max="30" step="0.1" value="2.1" />
+                <input id="diameterNumber" type="number" min="1" max="30" step="0.1" value="2.1" />
+              </div>
+              <p class="control-help">Use the 27 m preset to see why a larger dish helps weak calibrator work.</p>
+            </div>
+
+            <div class="control-block">
+              <div class="control-top">
+                <label for="wavelengthRange">Wavelength <span class="axis-note">&lambda;</span></label>
+                <div class="value-chip" id="wavelengthReadout">1.67 cm</div>
+              </div>
+              <div class="control-row">
+                <input id="wavelengthRange" type="range" min="0.4" max="12" step="0.01" value="1.67" />
+                <input id="wavelengthNumber" type="number" min="0.4" max="12" step="0.01" value="1.67" />
+              </div>
+              <p class="control-help">The beam narrows roughly with <span class="axis-note">&lambda; / D</span>, while the source spectra also change with frequency.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="rail-section">
+          <div class="rail-title-row">
+            <h2>Beam Metrics</h2>
+            <div class="rail-title-meta">
+              <span id="sourceFrequencyBadge">18.0 GHz</span>
+            </div>
+          </div>
+          <div class="mini-grid">
+            <div class="mini-card">
+              <span>Edge power</span>
+              <strong id="edgePowerMetric">6.3%</strong>
+              <small>Power at the dish rim relative to the center.</small>
+            </div>
+            <div class="mini-card">
+              <span>Effective diameter</span>
+              <strong id="effectiveDiameterMetric">1.90 m</strong>
+              <small>Instructional <span class="axis-note">D<sub>eff</sub></span> after taper loss.</small>
+            </div>
+            <div class="mini-card">
+              <span>Tapered FWHM</span>
+              <strong id="fwhmMetric">33.7 arcmin</strong>
+              <small>Main-beam width in the fixed sky coordinate system.</small>
+            </div>
+            <div class="mini-card">
+              <span>First sidelobe</span>
+              <strong id="sidelobeMetric">-24.8 dB</strong>
+              <small>Cleaner beams come from softer dish edges.</small>
+            </div>
+          </div>
+        </section>
+
+        <section class="rail-section">
+          <div class="rail-title-row">
+            <h2>Current Source</h2>
+            <div class="rail-title-meta">
+              <span id="sourceTypeBadge">Extended disk</span>
+            </div>
+          </div>
+          <p class="source-note" id="sourceModelNote">The quiet-Sun model uses a lecture-fit brightness temperature curve in the 10<sup>4</sup>–10<sup>5</sup> K range over a fixed 32′ disk.</p>
+          <div class="note-card">
+            <h3>Lecture Link</h3>
+            <p class="note-copy" id="sourceNarrative">Even when the Sun does not fill the beam, the coupled antenna temperature still lands at kilokelvin levels on an EOVSA-sized dish.</p>
+            <p class="note-copy" id="referencePointNote">Course reference: 1 Jy on a 10 m dish gives about 0.05 K with the lecture point-source convention.</p>
+          </div>
+        </section>
+
+        <section class="rail-section">
+          <div class="rail-title-row">
+            <h2>What To Notice</h2>
+          </div>
+          <ul class="note-list">
+            <li>Uniform illumination narrows the beam but makes sidelobes more obvious.</li>
+            <li>Taper reduces the effective collecting diameter and lowers point-source gain.</li>
+            <li>For extended sources, the beam average across the disk matters just as much as the total flux.</li>
+            <li>Weak calibrators add only a tiny excess above blank sky and instrument noise on small dishes; the Sun does not.</li>
+          </ul>
+        </section>
+      </aside>
+
+      <section class="panel analysis-wall">
+        <div class="analysis-stack">
+          <section class="plot-box">
+            <div class="panel-head">
+              <div>
+                <h2>Dish Illumination and 3D Beam</h2>
+                <p>Left: uniform illumination. Right: the current tapered case using the same dish and wavelength settings.</p>
+              </div>
+            </div>
+
+            <div class="scene-grid">
+              <article class="scene-card">
+                <div class="scene-head">
+                  <h3>Fully Illuminated Dish</h3>
+                  <p>Sharper edge, narrower main beam, stronger diffraction structure.</p>
+                </div>
+                <canvas id="uniformScene" class="scene-canvas" aria-label="3D dish with uniform illumination and stronger sidelobes"></canvas>
+                <div class="scene-stats">
+                  <span class="stat-pill" style="color: var(--curve-uniform);"><i></i><span id="uniformEdgeText">Edge power 100%</span></span>
+                  <span class="stat-pill" style="color: #2b5c8d;"><i></i><span id="uniformFwhmText">Narrowest main beam</span></span>
+                  <span class="stat-pill" style="color: #9f4b2d;"><i></i><span id="uniformSideText">Strong sidelobes</span></span>
+                </div>
+              </article>
+
+              <article class="scene-card">
+                <div class="scene-head">
+                  <h3>Tapered Illumination</h3>
+                  <p>Lower rim power, broader beam, lower sidelobes, and smaller effective diameter.</p>
+                </div>
+                <canvas id="taperedScene" class="scene-canvas" aria-label="3D dish with tapered illumination and reduced sidelobes"></canvas>
+                <div class="scene-stats">
+                  <span class="stat-pill" style="color: var(--curve-product);"><i></i><span id="taperEdgeText">Edge power 6%</span></span>
+                  <span class="stat-pill" style="color: #2b5c8d;"><i></i><span id="taperDeffText">Smaller effective aperture</span></span>
+                  <span class="stat-pill" style="color: var(--curve-tapered);"><i></i><span id="taperSideText">Cleaner sidelobes</span></span>
+                </div>
+              </article>
+            </div>
+
+            <div class="scene-colorbar">
+              <strong>Normalized Power</strong>
+              <span>low</span>
+              <div class="scene-colorbar-ramp" aria-hidden="true"></div>
+              <span>high</span>
+            </div>
+          </section>
+
+          <div class="analysis-two-up">
+            <section class="plot-box">
+              <div class="panel-head">
+                <div>
+                  <h2>Beam Cut</h2>
+                  <p>Dashed: uniform reference. Solid: current tapered beam. The x-axis stays fixed so changing <span class="axis-note">D</span> or <span class="axis-note">&lambda;</span> is visible as a true width change.</p>
+                </div>
+              </div>
+
+              <canvas id="beamPlot" class="plot-canvas" aria-label="Beam pattern comparison between uniform and tapered dish illumination"></canvas>
+
+              <div class="legend-row">
+                <span style="color: var(--curve-uniform);"><i class="legend-line dashed"></i>Uniform beam</span>
+                <span style="color: var(--curve-tapered);"><i class="legend-line"></i>Tapered beam</span>
+                <span style="color: rgba(90, 116, 128, 0.85);"><i class="legend-line"></i><span class="axis-note">-3 dB</span> reference</span>
+              </div>
+
+              <div class="readout-grid">
+                <div class="mini-card">
+                  <span>Uniform FWHM</span>
+                  <strong id="uniformFwhmMetric">30.6 arcmin</strong>
+                  <small>Reference width for the same physical diameter and wavelength.</small>
+                </div>
+                <div class="mini-card">
+                  <span>Tapered FWHM</span>
+                  <strong id="taperFwhmMetric">33.7 arcmin</strong>
+                  <small>Main beam broadens as the effective aperture shrinks.</small>
+                </div>
+                <div class="mini-card">
+                  <span>Uniform first sidelobe</span>
+                  <strong id="uniformSideMetric">-17.6 dB</strong>
+                  <small>Sharper aperture edges create stronger diffraction structure.</small>
+                </div>
+                <div class="mini-card">
+                  <span>Tapered first sidelobe</span>
+                  <strong id="taperSideMetric">-24.8 dB</strong>
+                  <small>Edge softening strongly reduces the first sidelobe.</small>
+                </div>
+              </div>
+            </section>
+
+            <section class="plot-box">
+              <div class="panel-head">
+                <div>
+                  <h2>Source Coupling and Antenna Temperature</h2>
+                  <p>The beam profile, the source surface-brightness top-hat, and their product show the source-coupled part of <span class="axis-note">T<sub>a</sub></span>; blank sky and instrument noise are added in the readouts below.</p>
+                </div>
+                <div class="rail-title-meta">
+                  <span id="temperatureStatusBadge">T<sub>tot</sub> = 2,150 K</span>
+                </div>
+              </div>
+
+              <canvas id="couplingPlot" class="coupling-canvas" aria-label="Source coupling plot showing beam response, source profile, and beam-source product"></canvas>
+
+              <div class="legend-row">
+                <span style="color: var(--curve-tapered);"><i class="legend-line"></i>Tapered beam</span>
+                <span style="color: var(--curve-source);"><i class="legend-line dashed"></i>Uniform source disk</span>
+                <span style="color: var(--curve-product);"><i class="legend-fill"></i>Beam × source</span>
+              </div>
+
+              <div class="source-readout-grid">
+                <div class="mini-card">
+                  <span>Integrated flux density</span>
+                  <strong id="sourceFluxMetric">74,000 SFU</strong>
+                  <small>Total source flux at the selected wavelength.</small>
+                </div>
+                <div class="mini-card">
+                  <span>Source diameter</span>
+                  <strong id="sourceDiameterMetric">32.0 arcmin</strong>
+                  <small>Equivalent circular disk used in the teaching model.</small>
+                </div>
+                <div class="mini-card">
+                  <span>Uniform brightness temperature</span>
+                  <strong id="sourceBrightnessMetric">11,000 K</strong>
+                  <small>Derived from the selected source model and disk size.</small>
+                </div>
+                <div class="mini-card">
+                  <span>Source contribution to <span class="axis-note">T<sub>a</sub></span></span>
+                  <strong id="sourceContributionMetric">2,040 K</strong>
+                  <small>Beam-weighted source excess above the assumed blank sky.</small>
+                </div>
+                <div class="mini-card">
+                  <span>On-source <span class="axis-note">T<sub>a</sub></span></span>
+                  <strong id="antennaTempMetric">2,050 K</strong>
+                  <small>Blank sky plus the source-coupled term measured by the antenna.</small>
+                </div>
+                <div class="mini-card">
+                  <span>Total <span class="axis-note">T<sub>tot</sub></span></span>
+                  <strong id="totalTemperatureMetric">2,150 K</strong>
+                  <small>On-source <span class="axis-note">T<sub>a</sub></span> plus instrument-only <span class="axis-note">T<sub>sys</sub> = 100 K</span>.</small>
+                </div>
+              </div>
+
+              <div class="note-card">
+                <h3>Interpretation</h3>
+                <p class="note-copy" id="couplingNarrative">A quiet-Sun disk does not fill the whole beam, so part of <span class="axis-note">T<sub>a</sub></span> is still blank sky. Even so, the source term is large enough to drive the on-source antenna temperature into the kilokelvin regime.</p>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const BOLTZMANN = 1.380649e-23;
+      const U_MAX = 40;
+      const U_SAMPLES = 900;
+      const R_SAMPLES = 260;
+      const THETA_SCALE_DEG = 180 / Math.PI;
+      const ARC_MIN_PER_RAD = THETA_SCALE_DEG * 60;
+      const ARC_MIN_TO_RAD = Math.PI / (180 * 60);
+      const GHZ_PER_CM = 29.9792458;
+      const PLOT_DB_FLOOR = -42;
+      const FIXED_X_MAX_ARCMIN = 120;
+      const DEFAULT_DIAMETER_M = 2.1;
+      const DEFAULT_WAVELENGTH_CM = 1.67;
+      const DEFAULT_SOURCE_ID = "quiet_sun";
+      const T_SYS_K = 100;
+      const T_SKY_K = 10;
+      const QUIET_SUN_DIAMETER_ARCMIN = 32;
+      const POINT_PROFILE_WIDTH_ARCMIN = 0.8;
+      const params = new URLSearchParams(window.location.search);
+
+      const SOURCE_DEFINITIONS = {
+        quiet_sun: {
+          label: "Quiet Sun",
+          shortLabel: "Quiet Sun",
+          type: "disk_tb",
+          diameterArcmin: QUIET_SUN_DIAMETER_ARCMIN,
+          note: "Quiet-Sun disk brightness uses a lecture-fit microwave curve anchored to the 10^4–10^5 K range and a fixed 32′ solar diameter."
+        },
+        taurus_a: {
+          label: "Taurus A",
+          shortLabel: "Tau A",
+          type: "disk_flux",
+          diameterArcmin: 9,
+          coeffs: [2.9516, -0.2173, -0.0473, -0.0674],
+          validRangeGHz: [0.05, 4],
+          note: "Perley-Butler 2017 polynomial spectrum for Taurus A, treated here as a 9′ uniform disk."
+        },
+        virgo_a: {
+          label: "Virgo A",
+          shortLabel: "Virgo A",
+          type: "disk_flux",
+          diameterArcmin: 16,
+          coeffs: [2.4466, -0.8116, -0.0483],
+          validRangeGHz: [0.05, 3],
+          note: "Perley-Butler 2017 polynomial spectrum for Virgo A, rendered as a 16′ equivalent disk for beam-dilution comparison."
+        },
+        cygnus_a: {
+          label: "Cygnus A",
+          shortLabel: "Cyg A",
+          type: "disk_flux",
+          diameterArcmin: 2,
+          coeffs: [3.3498, -1.0022, -0.2246, 0.0227, 0.0425],
+          validRangeGHz: [0.05, 12],
+          note: "Perley-Butler 2017 polynomial spectrum for Cygnus A, represented as a compact 2′ disk."
+        },
+        cal_20jy: {
+          label: "20 Jy calibrator",
+          shortLabel: "20 Jy cal",
+          type: "point",
+          fluxJy: 20,
+          diameterArcmin: 0,
+          note: "Point-source calibrator tied directly to the lecture text. It uses the course point-source conversion convention."
+        }
+      };
+
+      const state = {
+        taperDb: clamp(parseNumberParam("taper", 12), 0, 20),
+        diameterM: clamp(parseNumberParam("diameter", DEFAULT_DIAMETER_M), 1, 30),
+        wavelengthCm: clamp(parseNumberParam("wavelength", DEFAULT_WAVELENGTH_CM), 0.4, 12),
+        sourceId: parseSourceId(params.get("source")),
+        viewMode: parseViewMode(params.get("view")),
+        renderPending: false
+      };
+
+      const elements = {
+        sourceSelect: document.getElementById("sourceSelect"),
+        taperRange: document.getElementById("taperRange"),
+        taperNumber: document.getElementById("taperNumber"),
+        viewModeSelect: document.getElementById("viewModeSelect"),
+        diameterRange: document.getElementById("diameterRange"),
+        diameterNumber: document.getElementById("diameterNumber"),
+        wavelengthRange: document.getElementById("wavelengthRange"),
+        wavelengthNumber: document.getElementById("wavelengthNumber"),
+        taperReadout: document.getElementById("taperReadout"),
+        diameterReadout: document.getElementById("diameterReadout"),
+        wavelengthReadout: document.getElementById("wavelengthReadout"),
+        edgePowerMetric: document.getElementById("edgePowerMetric"),
+        effectiveDiameterMetric: document.getElementById("effectiveDiameterMetric"),
+        fwhmMetric: document.getElementById("fwhmMetric"),
+        sidelobeMetric: document.getElementById("sidelobeMetric"),
+        uniformScene: document.getElementById("uniformScene"),
+        taperedScene: document.getElementById("taperedScene"),
+        beamPlot: document.getElementById("beamPlot"),
+        couplingPlot: document.getElementById("couplingPlot"),
+        uniformEdgeText: document.getElementById("uniformEdgeText"),
+        uniformFwhmText: document.getElementById("uniformFwhmText"),
+        uniformSideText: document.getElementById("uniformSideText"),
+        taperEdgeText: document.getElementById("taperEdgeText"),
+        taperDeffText: document.getElementById("taperDeffText"),
+        taperSideText: document.getElementById("taperSideText"),
+        uniformFwhmMetric: document.getElementById("uniformFwhmMetric"),
+        taperFwhmMetric: document.getElementById("taperFwhmMetric"),
+        uniformSideMetric: document.getElementById("uniformSideMetric"),
+        taperSideMetric: document.getElementById("taperSideMetric"),
+        sourceFluxMetric: document.getElementById("sourceFluxMetric"),
+        sourceDiameterMetric: document.getElementById("sourceDiameterMetric"),
+        sourceBrightnessMetric: document.getElementById("sourceBrightnessMetric"),
+        sourceContributionMetric: document.getElementById("sourceContributionMetric"),
+        antennaTempMetric: document.getElementById("antennaTempMetric"),
+        totalTemperatureMetric: document.getElementById("totalTemperatureMetric"),
+        sourceModelNote: document.getElementById("sourceModelNote"),
+        sourceNarrative: document.getElementById("sourceNarrative"),
+        referencePointNote: document.getElementById("referencePointNote"),
+        couplingNarrative: document.getElementById("couplingNarrative"),
+        toolbarStatus: document.getElementById("toolbarStatus"),
+        currentSourceBadge: document.getElementById("currentSourceBadge"),
+        sourceTypeBadge: document.getElementById("sourceTypeBadge"),
+        sourceFrequencyBadge: document.getElementById("sourceFrequencyBadge"),
+        temperatureStatusBadge: document.getElementById("temperatureStatusBadge")
+      };
+
+      const taperPresetButtons = Array.from(document.querySelectorAll(".preset-btn"));
+      const diameterPresetButtons = Array.from(document.querySelectorAll(".diameter-preset-btn"));
+      const radialSamples = new Float32Array(R_SAMPLES);
+      const radialWeights = new Float32Array(R_SAMPLES);
+      const uValues = new Float32Array(U_SAMPLES);
+      const kernelRows = new Array(U_SAMPLES);
+
+      for (let j = 0; j < R_SAMPLES; j += 1) {
+        const r = (j + 0.5) / R_SAMPLES;
+        radialSamples[j] = r;
+        radialWeights[j] = r / R_SAMPLES;
+      }
+
+      for (let i = 0; i < U_SAMPLES; i += 1) {
+        uValues[i] = (i / (U_SAMPLES - 1)) * U_MAX;
+      }
+
+      precomputeKernel();
+
+      const uniformModel = computeBeamModel(0);
+      let taperedModel = computeBeamModel(state.taperDb);
+      let currentSourceMetrics = null;
+
+      bindPairedControl(elements.taperRange, elements.taperNumber, {
+        min: 0,
+        max: 20,
+        step: 0.5,
+        onChange(value) {
+          state.taperDb = value;
+          taperedModel = computeBeamModel(value);
+          updateUi();
+        }
+      });
+
+      bindPairedControl(elements.diameterRange, elements.diameterNumber, {
+        min: 1,
+        max: 30,
+        step: 0.1,
+        onChange(value) {
+          state.diameterM = value;
+          updateUi();
+        }
+      });
+
+      bindPairedControl(elements.wavelengthRange, elements.wavelengthNumber, {
+        min: 0.4,
+        max: 12,
+        step: 0.01,
+        onChange(value) {
+          state.wavelengthCm = value;
+          updateUi();
+        }
+      });
+
+      elements.sourceSelect.addEventListener("change", () => {
+        state.sourceId = parseSourceId(elements.sourceSelect.value);
+        updateUi();
+      });
+
+      elements.viewModeSelect.addEventListener("change", () => {
+        state.viewMode = parseViewMode(elements.viewModeSelect.value);
+        scheduleRender();
+      });
+
+      taperPresetButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const value = Number(button.dataset.preset);
+          state.taperDb = value;
+          elements.taperRange.value = String(value);
+          elements.taperNumber.value = String(value);
+          taperedModel = computeBeamModel(value);
+          updateUi();
+        });
+      });
+
+      diameterPresetButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const value = Number(button.dataset.diameter);
+          state.diameterM = value;
+          elements.diameterRange.value = String(value);
+          elements.diameterNumber.value = value.toFixed(1);
+          updateUi();
+        });
+      });
+
+      const resizeObserver = new ResizeObserver(() => scheduleRender());
+      [elements.uniformScene, elements.taperedScene, elements.beamPlot, elements.couplingPlot].forEach((canvas) => resizeObserver.observe(canvas));
+
+      updateUi();
+
+      function bindPairedControl(rangeEl, numberEl, config) {
+        const applyValue = (rawValue) => {
+          const rounded = Number(rawValue);
+          if (Number.isNaN(rounded)) {
+            return;
+          }
+          const value = clamp(rounded, config.min, config.max);
+          rangeEl.value = String(value);
+          numberEl.value = formatInputValue(value, config.step);
+          config.onChange(value);
+        };
+
+        rangeEl.addEventListener("input", () => applyValue(rangeEl.value));
+        numberEl.addEventListener("input", () => applyValue(numberEl.value));
+      }
+
+      function updateUi() {
+        syncControlValues();
+
+        const scaleArcmin = arcminPerU();
+        const taperEdgePercent = taperedModel.edgePowerRatio * 100;
+        const uniformFwhmArcmin = uniformModel.fwhmU * scaleArcmin;
+        const taperFwhmArcmin = taperedModel.fwhmU * scaleArcmin;
+        const taperDeff = state.diameterM * taperedModel.effectiveDiameterFactor;
+        const freqGHz = frequencyGHz();
+
+        currentSourceMetrics = computeSourceMetrics();
+
+        elements.taperReadout.textContent = `-${state.taperDb.toFixed(1)} dB`;
+        elements.diameterReadout.textContent = `${state.diameterM.toFixed(2)} m`;
+        elements.wavelengthReadout.textContent = `${state.wavelengthCm.toFixed(2)} cm`;
+
+        elements.edgePowerMetric.textContent = `${taperEdgePercent.toFixed(taperEdgePercent >= 10 ? 1 : 2)}%`;
+        elements.effectiveDiameterMetric.textContent = `${taperDeff.toFixed(2)} m`;
+        elements.fwhmMetric.textContent = `${taperFwhmArcmin.toFixed(1)} arcmin`;
+        elements.sidelobeMetric.textContent = `${formatDb(taperedModel.firstSidelobeDb)} dB`;
+
+        elements.uniformEdgeText.textContent = "Edge power 100%";
+        elements.uniformFwhmText.textContent = `FWHM ${uniformFwhmArcmin.toFixed(1)} arcmin`;
+        elements.uniformSideText.textContent = `First sidelobe ${formatDb(uniformModel.firstSidelobeDb)} dB`;
+
+        elements.taperEdgeText.textContent = `Edge power ${taperEdgePercent.toFixed(taperEdgePercent >= 10 ? 1 : 2)}%`;
+        elements.taperDeffText.textContent = `D_eff ${taperDeff.toFixed(2)} m`;
+        elements.taperSideText.textContent = `First sidelobe ${formatDb(taperedModel.firstSidelobeDb)} dB`;
+
+        elements.uniformFwhmMetric.textContent = `${uniformFwhmArcmin.toFixed(1)} arcmin`;
+        elements.taperFwhmMetric.textContent = `${taperFwhmArcmin.toFixed(1)} arcmin`;
+        elements.uniformSideMetric.textContent = `${formatDb(uniformModel.firstSidelobeDb)} dB`;
+        elements.taperSideMetric.textContent = `${formatDb(taperedModel.firstSidelobeDb)} dB`;
+
+        elements.sourceFluxMetric.textContent = formatFluxDensity(currentSourceMetrics.fluxJy);
+        elements.sourceDiameterMetric.textContent = currentSourceMetrics.isPoint ? "Point-like" : `${currentSourceMetrics.diameterArcmin.toFixed(1)} arcmin`;
+        elements.sourceBrightnessMetric.textContent = currentSourceMetrics.isPoint ? "Unresolved" : formatKelvin(currentSourceMetrics.brightnessTempK);
+        elements.sourceContributionMetric.textContent = formatKelvin(currentSourceMetrics.sourceExcessK);
+        elements.antennaTempMetric.textContent = formatKelvin(currentSourceMetrics.antennaTempK);
+        elements.totalTemperatureMetric.textContent = formatKelvin(currentSourceMetrics.totalMeasuredK);
+
+        elements.currentSourceBadge.textContent = currentSourceMetrics.shortLabel;
+        elements.sourceTypeBadge.textContent = currentSourceMetrics.isPoint ? "Point source" : "Extended disk";
+        elements.sourceFrequencyBadge.textContent = `${freqGHz.toFixed(1)} GHz`;
+        elements.temperatureStatusBadge.textContent = `T_tot = ${formatKelvin(currentSourceMetrics.totalMeasuredK)}`;
+
+        elements.sourceModelNote.textContent = currentSourceMetrics.modelNote;
+        elements.sourceNarrative.textContent = currentSourceMetrics.shortNarrative;
+        elements.couplingNarrative.textContent = currentSourceMetrics.narrative;
+        elements.toolbarStatus.textContent = currentSourceMetrics.toolbarStatus;
+        elements.referencePointNote.textContent = "Course reference: 1 Jy on a 10 m dish gives about 0.05 K with the lecture point-source convention.";
+
+        taperPresetButtons.forEach((button) => {
+          const preset = Number(button.dataset.preset);
+          button.classList.toggle("is-active", Math.abs(preset - state.taperDb) < 0.25);
+        });
+
+        diameterPresetButtons.forEach((button) => {
+          const preset = Number(button.dataset.diameter);
+          button.classList.toggle("is-active", Math.abs(preset - state.diameterM) < 0.05);
+        });
+
+        scheduleRender();
+      }
+
+      function syncControlValues() {
+        elements.sourceSelect.value = state.sourceId;
+        elements.taperRange.value = String(state.taperDb);
+        elements.taperNumber.value = formatInputValue(state.taperDb, 0.5);
+        elements.viewModeSelect.value = state.viewMode;
+        elements.diameterRange.value = String(state.diameterM);
+        elements.diameterNumber.value = formatInputValue(state.diameterM, 0.1);
+        elements.wavelengthRange.value = String(state.wavelengthCm);
+        elements.wavelengthNumber.value = formatInputValue(state.wavelengthCm, 0.01);
+      }
+
+      function scheduleRender() {
+        if (state.renderPending) {
+          return;
+        }
+        state.renderPending = true;
+        requestAnimationFrame(() => {
+          state.renderPending = false;
+          renderScene(elements.uniformScene, uniformModel, 0, "uniform");
+          renderScene(elements.taperedScene, taperedModel, state.taperDb, "tapered");
+          renderBeamPlot();
+          renderCouplingPlot();
+        });
+      }
+
+      function computeSourceMetrics() {
+        const source = SOURCE_DEFINITIONS[state.sourceId];
+        const wavelengthM = state.wavelengthCm / 100;
+        const freqGHz = frequencyGHz();
+        const effectiveDiameterM = state.diameterM * taperedModel.effectiveDiameterFactor;
+        const pointTaPerJy = lecturePointTaPerJy(effectiveDiameterM);
+
+        if (source.type === "point") {
+          const pointTaK = source.fluxJy * pointTaPerJy;
+          const antennaTempK = T_SKY_K + pointTaK;
+          const totalMeasuredK = antennaTempK + T_SYS_K;
+          return {
+            sourceId: state.sourceId,
+            shortLabel: source.shortLabel,
+            label: source.label,
+            isPoint: true,
+            diameterArcmin: 0,
+            fluxJy: source.fluxJy,
+            brightnessTempK: NaN,
+            averageBeamResponse: 1,
+            pointTaK,
+            sourceExcessK: pointTaK,
+            antennaTempK,
+            totalMeasuredK,
+            modelNote: source.note,
+            shortNarrative: "A point-source calibrator adds only a small excess on top of the blank-sky antenna temperature, so taper matters mainly through the effective diameter term.",
+            narrative: buildPointNarrative(pointTaK, antennaTempK, totalMeasuredK),
+            toolbarStatus: buildPointToolbarStatus(pointTaK, totalMeasuredK),
+            productRadiusArcmin: POINT_PROFILE_WIDTH_ARCMIN * 0.5
+          };
+        }
+
+        let fluxJy;
+        let brightnessTempK;
+        let modelNote = source.note;
+
+        if (source.type === "disk_tb") {
+          brightnessTempK = quietSunBrightnessTemp(freqGHz);
+          fluxJy = fluxJyFromBrightnessTemp(brightnessTempK, source.diameterArcmin, wavelengthM);
+        } else {
+          const clippedFreqGHz = clamp(freqGHz, source.validRangeGHz[0], source.validRangeGHz[1]);
+          fluxJy = evaluatePb17Flux(source.coeffs, clippedFreqGHz);
+          brightnessTempK = brightnessTempFromFlux(fluxJy, source.diameterArcmin, wavelengthM);
+          if (Math.abs(clippedFreqGHz - freqGHz) > 1e-6) {
+            modelNote = `${source.note} Published PB17 coefficients are clipped to ${source.validRangeGHz[0].toFixed(2)}–${source.validRangeGHz[1].toFixed(1)} GHz for this source.`;
+          }
+        }
+
+        const radiusArcmin = source.diameterArcmin * 0.5;
+        const averageBeamResponse = averageProfileWithinRadiusArcmin(taperedModel.profile, radiusArcmin, scaleArcminForState());
+        const beamFillFraction = beamCouplingFractionArcmin(taperedModel.profile, radiusArcmin, scaleArcminForState());
+        const pointTaK = fluxJy * pointTaPerJy;
+        const sourceExcessK = (brightnessTempK - T_SKY_K) * beamFillFraction;
+        const antennaTempK = T_SKY_K + sourceExcessK;
+        const totalMeasuredK = antennaTempK + T_SYS_K;
+
+        return {
+          sourceId: state.sourceId,
+          shortLabel: source.shortLabel,
+          label: source.label,
+          isPoint: false,
+          diameterArcmin: source.diameterArcmin,
+          fluxJy,
+          brightnessTempK,
+          averageBeamResponse,
+          beamFillFraction,
+          pointTaK,
+          sourceExcessK,
+          antennaTempK,
+          totalMeasuredK,
+          modelNote,
+          shortNarrative: buildDiskSummary(source.label, brightnessTempK, sourceExcessK, antennaTempK),
+          narrative: buildDiskNarrative(source.label, averageBeamResponse, beamFillFraction, sourceExcessK, antennaTempK, totalMeasuredK),
+          toolbarStatus: buildDiskToolbarStatus(source.label, sourceExcessK, totalMeasuredK),
+          productRadiusArcmin: radiusArcmin
+        };
+      }
+
+      function renderScene(canvas, model, edgeTaperDb, variant) {
+        const { ctx, width, height } = prepareCanvas(canvas);
+        ctx.clearRect(0, 0, width, height);
+
+        const sky = ctx.createLinearGradient(0, 0, 0, height);
+        sky.addColorStop(0, "#fbfcff");
+        sky.addColorStop(0.5, "#f1f4f8");
+        sky.addColorStop(1, "#dde5ed");
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, width, height);
+
+        const floor = ctx.createRadialGradient(width * 0.5, height * 0.92, 10, width * 0.5, height * 0.92, width * 0.48);
+        floor.addColorStop(0, "rgba(71, 102, 130, 0.11)");
+        floor.addColorStop(1, "rgba(71, 102, 130, 0)");
+        ctx.fillStyle = floor;
+        ctx.beginPath();
+        ctx.ellipse(width * 0.5, height * 0.92, width * 0.42, height * 0.075, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const view = {
+          ox: width * 0.5,
+          oy: height * 0.58,
+          scale: Math.min(width, height) * 0.31,
+          yaw: -0.88,
+          pitch: 0.62,
+          cameraDist: 6.2,
+          target: feedPoint()
+        };
+
+        drawDish(ctx, view, edgeTaperDb, variant);
+        if (state.viewMode === "feed" || state.viewMode === "both") {
+          drawFeedPattern(ctx, view, edgeTaperDb);
+        }
+        if (state.viewMode === "system" || state.viewMode === "both") {
+          drawRadiationPattern(ctx, view, edgeTaperDb);
+        }
+        drawFeedAndRays(ctx, view);
+
+        ctx.save();
+        ctx.fillStyle = "rgba(29, 29, 31, 0.62)";
+        ctx.font = "600 12px " + getUiFont();
+        ctx.fillText(variant === "uniform" ? "uniform edge illumination" : "tapered edge illumination", 14, 22);
+        ctx.restore();
+      }
+
+      function drawDish(ctx, view, edgeTaperDb, variant) {
+        const cells = [];
+        const rSteps = 18;
+        const phiSteps = 42;
+        for (let ir = 0; ir < rSteps; ir += 1) {
+          const r0 = ir / rSteps;
+          const r1 = (ir + 1) / rSteps;
+          for (let ip = 0; ip < phiSteps; ip += 1) {
+            const p0 = (ip / phiSteps) * Math.PI * 2;
+            const p1 = ((ip + 1) / phiSteps) * Math.PI * 2;
+            const quad3d = [
+              dishPoint(r0, p0),
+              dishPoint(r1, p0),
+              dishPoint(r1, p1),
+              dishPoint(r0, p1)
+            ];
+            const quad = quad3d.map((point) => projectPoint(point, view));
+            const avgDepth = quad.reduce((sum, point) => sum + point.depth, 0) / quad.length;
+            const avgR = (r0 + r1) * 0.5;
+            const power = illuminationPower(avgR, edgeTaperDb);
+            cells.push({
+              quad,
+              avgDepth,
+              fill: normalizedPowerColor(clamp(power + (variant === "uniform" ? 0.04 : 0), 0, 1), 0.88)
+            });
+          }
+        }
+
+        cells.sort((a, b) => b.avgDepth - a.avgDepth);
+        cells.forEach((cell) => {
+          ctx.beginPath();
+          ctx.moveTo(cell.quad[0].x, cell.quad[0].y);
+          for (let i = 1; i < cell.quad.length; i += 1) {
+            ctx.lineTo(cell.quad[i].x, cell.quad[i].y);
+          }
+          ctx.closePath();
+          ctx.fillStyle = cell.fill;
+          ctx.fill();
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
+          ctx.lineWidth = 0.55;
+          ctx.stroke();
+        });
+
+        ctx.save();
+        ctx.strokeStyle = "rgba(29, 29, 31, 0.14)";
+        ctx.lineWidth = 1;
+        for (let ir = 4; ir <= 16; ir += 4) {
+          const ring = [];
+          for (let ip = 0; ip <= phiSteps; ip += 1) {
+            ring.push(projectPoint(dishPoint(ir / rSteps, (ip / phiSteps) * Math.PI * 2), view));
+          }
+          traceLine(ctx, ring);
+        }
+        ctx.restore();
+      }
+
+      function drawFeedAndRays(ctx, view) {
+        const scale = antennaScale();
+        const feed = projectPoint(feedPoint(), view);
+        const feedBase = projectPoint({ x: 0, y: -0.08 * scale, z: 0 }, view);
+        const strutAngles = [0.35, 2.42, 4.5];
+
+        ctx.save();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "rgba(90, 105, 120, 0.7)";
+        strutAngles.forEach((phi) => {
+          const rim = projectPoint(dishPoint(1, phi), view);
+          ctx.beginPath();
+          ctx.moveTo(feed.x, feed.y);
+          ctx.lineTo(rim.x, rim.y);
+          ctx.stroke();
+        });
+        ctx.restore();
+
+        ctx.save();
+        const glow = ctx.createRadialGradient(feed.x, feed.y, 2, feed.x, feed.y, 44);
+        glow.addColorStop(0, "rgba(255, 176, 79, 0.32)");
+        glow.addColorStop(0.45, "rgba(255, 176, 79, 0.14)");
+        glow.addColorStop(1, "rgba(255, 176, 79, 0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(feed.x, feed.y, 44, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.save();
+        const hornTopScaled = projectPoint({ x: 0, y: 0.03 * scale, z: 0 }, view);
+        const hornLeft = projectPoint({ x: -0.13 * scale, y: -0.05 * scale, z: 0 }, view);
+        const hornRight = projectPoint({ x: 0.13 * scale, y: -0.05 * scale, z: 0 }, view);
+        ctx.beginPath();
+        ctx.moveTo(hornTopScaled.x, hornTopScaled.y);
+        ctx.lineTo(hornRight.x, hornRight.y);
+        ctx.lineTo(feedBase.x, feedBase.y);
+        ctx.lineTo(hornLeft.x, hornLeft.y);
+        ctx.closePath();
+        ctx.fillStyle = "rgba(48, 64, 78, 0.92)";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.26)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(feed.x, feed.y, 4.4, 0, Math.PI * 2);
+        ctx.fillStyle = "#dfb15b";
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawFeedPattern(ctx, view, edgeTaperDb) {
+        const cells = [];
+        const thetaSteps = 42;
+        const phiSteps = 64;
+        const thetaMax = feedPatternThetaMax(edgeTaperDb);
+        for (let it = 0; it < thetaSteps; it += 1) {
+          const t0 = (it / thetaSteps) * thetaMax;
+          const t1 = ((it + 1) / thetaSteps) * thetaMax;
+          for (let ip = 0; ip < phiSteps; ip += 1) {
+            const p0 = (ip / phiSteps) * Math.PI * 2;
+            const p1 = ((ip + 1) / phiSteps) * Math.PI * 2;
+            const shape0 = feedPatternShape(t0, edgeTaperDb);
+            const shape1 = feedPatternShape(t1, edgeTaperDb);
+            const quad3d = [
+              feedPatternPoint(t0, p0, edgeTaperDb, shape0),
+              feedPatternPoint(t1, p0, edgeTaperDb, shape1),
+              feedPatternPoint(t1, p1, edgeTaperDb, shape1),
+              feedPatternPoint(t0, p1, edgeTaperDb, shape0)
+            ];
+            const quad = quad3d.map((point) => projectPoint(point, view));
+            const avgDepth = quad.reduce((sum, point) => sum + point.depth, 0) / quad.length;
+            const power = clamp((shape0.signal + shape1.signal) * 0.5, 0, 1);
+            const alpha = 0.08 + 0.26 * Math.pow(power, 0.8);
+            cells.push({ quad, avgDepth, fill: normalizedPowerColor(power, alpha) });
+          }
+        }
+
+        cells.sort((a, b) => b.avgDepth - a.avgDepth);
+        cells.forEach((cell) => {
+          ctx.beginPath();
+          ctx.moveTo(cell.quad[0].x, cell.quad[0].y);
+          for (let i = 1; i < cell.quad.length; i += 1) {
+            ctx.lineTo(cell.quad[i].x, cell.quad[i].y);
+          }
+          ctx.closePath();
+          ctx.fillStyle = cell.fill;
+          ctx.fill();
+        });
+      }
+
+      function drawRadiationPattern(ctx, view, edgeTaperDb) {
+        drawBeamSilhouette(ctx, view, edgeTaperDb);
+
+        const cells = [];
+        const thetaSteps = 88;
+        const phiSteps = 104;
+        for (let it = 0; it < thetaSteps; it += 1) {
+          const t0 = (it / thetaSteps) * Math.PI;
+          const t1 = ((it + 1) / thetaSteps) * Math.PI;
+          for (let ip = 0; ip < phiSteps; ip += 1) {
+            const p0 = (ip / phiSteps) * Math.PI * 2;
+            const p1 = ((ip + 1) / phiSteps) * Math.PI * 2;
+            const shape0 = beamShape(t0, edgeTaperDb);
+            const shape1 = beamShape(t1, edgeTaperDb);
+            const quad3d = [
+              beamPoint(t0, p0, edgeTaperDb, shape0),
+              beamPoint(t1, p0, edgeTaperDb, shape1),
+              beamPoint(t1, p1, edgeTaperDb, shape1),
+              beamPoint(t0, p1, edgeTaperDb, shape0)
+            ];
+            const quad = quad3d.map((point) => projectPoint(point, view));
+            const avgDepth = quad.reduce((sum, point) => sum + point.depth, 0) / quad.length;
+            const power = clamp((shape0.signal + shape1.signal) * 0.5, 0, 1);
+            const alpha = 0.12 + 0.46 * Math.pow(power, 0.82);
+            cells.push({ quad, avgDepth, fill: normalizedPowerColor(power, alpha) });
+          }
+        }
+
+        cells.sort((a, b) => b.avgDepth - a.avgDepth);
+        cells.forEach((cell) => {
+          ctx.beginPath();
+          ctx.moveTo(cell.quad[0].x, cell.quad[0].y);
+          for (let i = 1; i < cell.quad.length; i += 1) {
+            ctx.lineTo(cell.quad[i].x, cell.quad[i].y);
+          }
+          ctx.closePath();
+          ctx.fillStyle = cell.fill;
+          ctx.fill();
+        });
+
+        ctx.save();
+        ctx.strokeStyle = "rgba(41, 84, 124, 0.46)";
+        ctx.lineWidth = 1;
+        for (let it = 3; it <= 16; it += 4) {
+          const ring = [];
+          const theta = (it / thetaSteps) * Math.PI;
+          for (let ip = 0; ip <= phiSteps; ip += 1) {
+            ring.push(projectPoint(beamPoint(theta, (ip / phiSteps) * Math.PI * 2, edgeTaperDb), view));
+          }
+          traceLine(ctx, ring);
+        }
+        ctx.restore();
+      }
+
+      function drawBeamSilhouette(ctx, view, edgeTaperDb) {
+        const front = [];
+        const back = [];
+        const steps = 120;
+        for (let i = 0; i <= steps; i += 1) {
+          const theta = (i / steps) * Math.PI;
+          const shape = beamShape(theta, edgeTaperDb);
+          front.push(projectPoint(beamPoint(theta, 0, edgeTaperDb, shape), view));
+          back.push(projectPoint(beamPoint(theta, Math.PI, edgeTaperDb, shape), view));
+        }
+
+        const gradient = ctx.createLinearGradient(0, view.oy - view.scale * 2.4, 0, view.oy + view.scale * 1.35);
+        gradient.addColorStop(0, "rgba(228, 104, 45, 0.22)");
+        gradient.addColorStop(0.34, "rgba(251, 205, 88, 0.2)");
+        gradient.addColorStop(0.66, "rgba(64, 184, 195, 0.16)");
+        gradient.addColorStop(1, "rgba(42, 104, 186, 0.1)");
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(front[0].x, front[0].y);
+        for (let i = 1; i < front.length; i += 1) {
+          ctx.lineTo(front[i].x, front[i].y);
+        }
+        for (let i = back.length - 1; i >= 0; i -= 1) {
+          ctx.lineTo(back[i].x, back[i].y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        ctx.strokeStyle = "rgba(36, 83, 128, 0.34)";
+        ctx.lineWidth = 1.05;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function renderBeamPlot() {
+        const { ctx, width, height } = prepareCanvas(elements.beamPlot);
+        ctx.clearRect(0, 0, width, height);
+
+        const pad = { top: 18, right: 18, bottom: 58, left: 52 };
+        const plotW = width - pad.left - pad.right;
+        const plotH = height - pad.top - pad.bottom;
+        const scaleArcmin = arcminPerU();
+        const xMax = FIXED_X_MAX_ARCMIN;
+
+        const yFromDb = (db) => pad.top + ((0 - db) / (0 - PLOT_DB_FLOOR)) * plotH;
+        const xFromAngle = (angleArcmin) => pad.left + ((angleArcmin + xMax) / (2 * xMax)) * plotW;
+
+        fillPlotBackground(ctx, pad.left, pad.top, plotW, plotH);
+
+        ctx.strokeStyle = "rgba(90, 116, 128, 0.18)";
+        ctx.lineWidth = 1;
+        [-40, -30, -20, -10, -3, 0].forEach((db) => {
+          const y = yFromDb(db);
+          ctx.beginPath();
+          ctx.moveTo(pad.left, y);
+          ctx.lineTo(pad.left + plotW, y);
+          ctx.stroke();
+        });
+
+        const xTicks = 6;
+        for (let i = -xTicks; i <= xTicks; i += 1) {
+          const angle = (i / xTicks) * xMax;
+          const x = xFromAngle(angle);
+          ctx.beginPath();
+          ctx.moveTo(x, pad.top);
+          ctx.lineTo(x, pad.top + plotH);
+          ctx.stroke();
+        }
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(pad.left, pad.top, plotW, plotH);
+        ctx.clip();
+
+        drawBeamCurve(ctx, uniformModel.profile, scaleArcmin, xFromAngle, yFromDb, getComputedStyle(document.documentElement).getPropertyValue("--curve-uniform").trim(), true);
+        drawBeamCurve(ctx, taperedModel.profile, scaleArcmin, xFromAngle, yFromDb, getComputedStyle(document.documentElement).getPropertyValue("--curve-tapered").trim(), false);
+
+        const uniformHalf = (uniformModel.fwhmU * scaleArcmin) / 2;
+        const taperHalf = (taperedModel.fwhmU * scaleArcmin) / 2;
+        drawMarkerPair(ctx, uniformHalf, xFromAngle, pad.top, plotH, "rgba(196, 106, 57, 0.26)");
+        drawMarkerPair(ctx, taperHalf, xFromAngle, pad.top, plotH, "rgba(22, 122, 130, 0.26)");
+        ctx.restore();
+
+        ctx.strokeStyle = "rgba(29, 29, 31, 0.62)";
+        ctx.setLineDash([6, 6]);
+        ctx.lineWidth = 1.1;
+        const minus3Y = yFromDb(-3);
+        ctx.beginPath();
+        ctx.moveTo(pad.left, minus3Y);
+        ctx.lineTo(pad.left + plotW, minus3Y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        drawAxes(ctx, pad, plotW, plotH, xTicks, xMax, yFromDb, xFromAngle, "Angular Offset From Boresight (arcmin, fixed ±120)", "Normalized Power (dB)");
+        [-40, -30, -20, -10, -3, 0].forEach((db) => {
+          ctx.fillStyle = "rgba(29, 29, 31, 0.64)";
+          ctx.font = `600 12px ${getUiFont()}`;
+          ctx.textAlign = "right";
+          ctx.fillText(`${db}`, pad.left - 8, yFromDb(db) + 4);
+        });
+      }
+
+      function renderCouplingPlot() {
+        const { ctx, width, height } = prepareCanvas(elements.couplingPlot);
+        ctx.clearRect(0, 0, width, height);
+
+        const pad = { top: 18, right: 18, bottom: 58, left: 52 };
+        const plotW = width - pad.left - pad.right;
+        const plotH = height - pad.top - pad.bottom;
+        const xMax = FIXED_X_MAX_ARCMIN;
+        const xFromAngle = (angleArcmin) => pad.left + ((angleArcmin + xMax) / (2 * xMax)) * plotW;
+        const yFromNorm = (value) => pad.top + (1 - value) * plotH;
+        const beamColor = getComputedStyle(document.documentElement).getPropertyValue("--curve-tapered").trim();
+        const sourceColor = getComputedStyle(document.documentElement).getPropertyValue("--curve-source").trim();
+        const productColor = getComputedStyle(document.documentElement).getPropertyValue("--curve-product").trim();
+
+        fillPlotBackground(ctx, pad.left, pad.top, plotW, plotH);
+
+        ctx.strokeStyle = "rgba(90, 116, 128, 0.18)";
+        ctx.lineWidth = 1;
+        [0, 0.25, 0.5, 0.75, 1].forEach((norm) => {
+          const y = yFromNorm(norm);
+          ctx.beginPath();
+          ctx.moveTo(pad.left, y);
+          ctx.lineTo(pad.left + plotW, y);
+          ctx.stroke();
+        });
+
+        const xTicks = 6;
+        for (let i = -xTicks; i <= xTicks; i += 1) {
+          const angle = (i / xTicks) * xMax;
+          const x = xFromAngle(angle);
+          ctx.beginPath();
+          ctx.moveTo(x, pad.top);
+          ctx.lineTo(x, pad.top + plotH);
+          ctx.stroke();
+        }
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(pad.left, pad.top, plotW, plotH);
+        ctx.clip();
+
+        if (!currentSourceMetrics.isPoint) {
+          const radius = currentSourceMetrics.productRadiusArcmin;
+          const leftX = xFromAngle(-radius);
+          const rightX = xFromAngle(radius);
+          ctx.fillStyle = "rgba(90, 116, 128, 0.08)";
+          ctx.fillRect(leftX, yFromNorm(1), rightX - leftX, plotH);
+
+          ctx.strokeStyle = sourceColor;
+          ctx.setLineDash([7, 6]);
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(leftX, yFromNorm(1));
+          ctx.lineTo(rightX, yFromNorm(1));
+          ctx.moveTo(leftX, yFromNorm(0));
+          ctx.lineTo(leftX, yFromNorm(1));
+          ctx.moveTo(rightX, yFromNorm(0));
+          ctx.lineTo(rightX, yFromNorm(1));
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          ctx.beginPath();
+          const productStepArcmin = (2 * xMax) / 420;
+          let started = false;
+          for (let angle = -radius; angle <= radius + 1e-6; angle += productStepArcmin) {
+            const beamValue = sampleBeamAtAngleArcmin(angle);
+            const x = xFromAngle(angle);
+            const y = yFromNorm(beamValue);
+            if (!started) {
+              ctx.moveTo(x, yFromNorm(0));
+              ctx.lineTo(x, y);
+              started = true;
+            } else {
+              ctx.lineTo(x, y);
+            }
+          }
+          ctx.lineTo(xFromAngle(radius), yFromNorm(0));
+          ctx.closePath();
+          ctx.fillStyle = "rgba(175, 81, 39, 0.2)";
+          ctx.fill();
+          ctx.strokeStyle = productColor;
+          ctx.lineWidth = 1.8;
+          ctx.stroke();
+        } else {
+          const markerHalfWidth = POINT_PROFILE_WIDTH_ARCMIN * 0.5;
+          ctx.fillStyle = "rgba(90, 116, 128, 0.08)";
+          ctx.fillRect(xFromAngle(-markerHalfWidth), pad.top, xFromAngle(markerHalfWidth) - xFromAngle(-markerHalfWidth), plotH);
+          ctx.strokeStyle = sourceColor;
+          ctx.setLineDash([7, 6]);
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(xFromAngle(0), pad.top);
+          ctx.lineTo(xFromAngle(0), pad.top + plotH);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          ctx.fillStyle = "rgba(175, 81, 39, 0.18)";
+          ctx.beginPath();
+          ctx.arc(xFromAngle(0), yFromNorm(1), 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.strokeStyle = beamColor;
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        let started = false;
+        const stepArcmin = (2 * xMax) / 560;
+        for (let angle = -xMax; angle <= xMax + 1e-6; angle += stepArcmin) {
+          const x = xFromAngle(angle);
+          const y = yFromNorm(sampleBeamAtAngleArcmin(angle));
+          if (!started) {
+            ctx.moveTo(x, y);
+            started = true;
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        drawAxes(ctx, pad, plotW, plotH, xTicks, xMax, yFromNorm, xFromAngle, "Angular Offset From Boresight (arcmin, fixed ±120)", "Normalized Beam / Source");
+        [0, 0.25, 0.5, 0.75, 1].forEach((norm) => {
+          ctx.fillStyle = "rgba(29, 29, 31, 0.64)";
+          ctx.font = `600 12px ${getUiFont()}`;
+          ctx.textAlign = "right";
+          ctx.fillText(norm.toFixed(2).replace(/\.00$/, ""), pad.left - 8, yFromNorm(norm) + 4);
+        });
+      }
+
+      function drawBeamCurve(ctx, profile, scaleArcmin, xFromAngle, yFromDb, color, dashed) {
+        ctx.beginPath();
+        ctx.setLineDash(dashed ? [7, 6] : []);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.5;
+        for (let i = profile.length - 1; i >= 0; i -= 1) {
+          const angle = -uValues[i] * scaleArcmin;
+          const db = clamp(10 * Math.log10(Math.max(profile[i], 1e-12)), PLOT_DB_FLOOR, 0);
+          const x = xFromAngle(angle);
+          const y = yFromDb(db);
+          if (i === profile.length - 1) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        for (let i = 1; i < profile.length; i += 1) {
+          const angle = uValues[i] * scaleArcmin;
+          const db = clamp(10 * Math.log10(Math.max(profile[i], 1e-12)), PLOT_DB_FLOOR, 0);
+          const x = xFromAngle(angle);
+          const y = yFromDb(db);
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      function drawMarkerPair(ctx, halfWidth, xFromAngle, top, plotH, color) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.2;
+        [-halfWidth, halfWidth].forEach((angle) => {
+          const x = xFromAngle(angle);
+          ctx.beginPath();
+          ctx.moveTo(x, top);
+          ctx.lineTo(x, top + plotH);
+          ctx.stroke();
+        });
+      }
+
+      function fillPlotBackground(ctx, x, y, width, height) {
+        const bg = ctx.createLinearGradient(0, y, 0, y + height);
+        bg.addColorStop(0, "rgba(255,255,255,0.99)");
+        bg.addColorStop(1, "rgba(249,250,252,0.99)");
+        ctx.fillStyle = bg;
+        ctx.fillRect(x, y, width, height);
+      }
+
+      function drawAxes(ctx, pad, plotW, plotH, xTicks, xMax, yTransform, xTransform, xLabel, yLabel) {
+        ctx.strokeStyle = "rgba(29, 29, 31, 0.7)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, pad.top + plotH);
+        ctx.lineTo(pad.left, pad.top);
+        ctx.moveTo(pad.left, pad.top + plotH);
+        ctx.lineTo(pad.left + plotW, pad.top + plotH);
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(29, 29, 31, 0.68)";
+        ctx.font = `600 12px ${getUiFont()}`;
+        ctx.textAlign = "center";
+        ctx.fillText(xLabel, pad.left + plotW / 2, pad.top + plotH + 40);
+
+        ctx.save();
+        ctx.translate(14, pad.top + plotH / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText(yLabel, 0, 0);
+        ctx.restore();
+
+        ctx.textAlign = "center";
+        for (let i = -xTicks; i <= xTicks; i += 1) {
+          const angle = (i / xTicks) * xMax;
+          ctx.fillText(`${Math.round(angle)}`, xTransform(angle), pad.top + plotH + 18);
+        }
+      }
+
+      function computeBeamModel(edgeTaperDb) {
+        const amplitudeAtEdge = Math.pow(10, -edgeTaperDb / 20);
+        const logEdge = Math.log(Math.max(amplitudeAtEdge, 1e-6));
+        const amplitudes = new Float32Array(R_SAMPLES);
+
+        let sumField = 0;
+        let sumPower = 0;
+        let sumArea = 0;
+
+        for (let j = 0; j < R_SAMPLES; j += 1) {
+          const amplitude = edgeTaperDb === 0 ? 1 : Math.exp(logEdge * radialSamples[j] * radialSamples[j]);
+          amplitudes[j] = amplitude;
+          const w = radialWeights[j];
+          sumField += amplitude * w;
+          sumPower += amplitude * amplitude * w;
+          sumArea += w;
+        }
+
+        const profile = new Float32Array(U_SAMPLES);
+        const field0 = sumField;
+        for (let i = 0; i < U_SAMPLES; i += 1) {
+          const kernel = kernelRows[i];
+          let amp = 0;
+          for (let j = 0; j < R_SAMPLES; j += 1) {
+            amp += amplitudes[j] * kernel[j];
+          }
+          profile[i] = Math.pow(amp / field0, 2);
+        }
+
+        const illuminationEfficiency = (sumField * sumField) / Math.max(sumPower * sumArea, 1e-10);
+        const effectiveDiameterFactor = Math.sqrt(illuminationEfficiency);
+        const fwhmU = findHalfPowerWidth(profile);
+        const firstNullIndex = findFirstMinimumIndex(profile);
+        const firstSidelobe = findFirstSidelobe(profile, firstNullIndex);
+
+        return {
+          amplitudes,
+          profile,
+          edgePowerRatio: amplitudeAtEdge * amplitudeAtEdge,
+          illuminationEfficiency,
+          effectiveDiameterFactor,
+          fwhmU,
+          firstNullIndex,
+          firstSidelobeDb: 10 * Math.log10(Math.max(firstSidelobe.value, 1e-12))
+        };
+      }
+
+      function precomputeKernel() {
+        for (let i = 0; i < U_SAMPLES; i += 1) {
+          const row = new Float32Array(R_SAMPLES);
+          const u = uValues[i];
+          for (let j = 0; j < R_SAMPLES; j += 1) {
+            row[j] = besselJ0(u * radialSamples[j]) * radialWeights[j];
+          }
+          kernelRows[i] = row;
+        }
+      }
+
+      function findHalfPowerWidth(profile) {
+        for (let i = 1; i < profile.length; i += 1) {
+          if (profile[i] <= 0.5) {
+            const y1 = profile[i - 1];
+            const y2 = profile[i];
+            const x1 = uValues[i - 1];
+            const x2 = uValues[i];
+            const t = (0.5 - y1) / (y2 - y1);
+            return 2 * (x1 + (x2 - x1) * t);
+          }
+        }
+        return 0;
+      }
+
+      function findFirstMinimumIndex(profile) {
+        for (let i = 4; i < profile.length - 2; i += 1) {
+          if (profile[i] < 0.04 && profile[i] <= profile[i - 1] && profile[i] <= profile[i + 1]) {
+            return i;
+          }
+        }
+        let minIndex = 1;
+        for (let i = 2; i < Math.min(100, profile.length - 1); i += 1) {
+          if (profile[i] < profile[minIndex]) {
+            minIndex = i;
+          }
+        }
+        return minIndex;
+      }
+
+      function findFirstSidelobe(profile, startIndex) {
+        let nextMin = profile.length - 1;
+        for (let i = startIndex + 2; i < profile.length - 2; i += 1) {
+          if (profile[i] <= profile[i - 1] && profile[i] <= profile[i + 1]) {
+            nextMin = i;
+            break;
+          }
+        }
+
+        let bestValue = profile[startIndex + 1] || 0;
+        for (let i = startIndex + 1; i < nextMin; i += 1) {
+          if (profile[i] > bestValue) {
+            bestValue = profile[i];
+          }
+        }
+
+        return { value: bestValue };
+      }
+
+      function beamPoint(theta, phi, edgeTaperDb, shape = null) {
+        const beam = shape || beamShape(theta, edgeTaperDb);
+        const scale = 1.52 / Math.pow(relativeBeamScale(), 0.42);
+        const feed = feedPoint();
+        const origin = { x: feed.x, y: feed.y + 0.32 * antennaScale(), z: feed.z };
+        return {
+          x: origin.x + scale * beam.radius * Math.sin(theta) * Math.cos(phi),
+          y: origin.y + scale * beam.radius * Math.cos(theta),
+          z: origin.z + scale * beam.radius * Math.sin(theta) * Math.sin(phi)
+        };
+      }
+
+      function feedPatternPoint(theta, phi, edgeTaperDb, shape = null) {
+        const feedShape = shape || feedPatternShape(theta, edgeTaperDb);
+        const feed = feedPoint();
+        const wavelengthScale = 0.84 + 0.34 * Math.sqrt(feedWavelengthFactor());
+        const reach = antennaScale() * wavelengthScale * feedShape.reach;
+        return {
+          x: feed.x + reach * Math.sin(theta) * Math.cos(phi),
+          y: feed.y - reach * Math.cos(theta),
+          z: feed.z + reach * Math.sin(theta) * Math.sin(phi)
+        };
+      }
+
+      function dishPoint(r, phi) {
+        const scale = antennaScale();
+        const radius = 1.74 * r * scale;
+        return {
+          x: radius * Math.cos(phi),
+          y: (-1.12 + 0.58 * r * r) * scale,
+          z: radius * Math.sin(phi)
+        };
+      }
+
+      function feedPoint() {
+        return { x: 0, y: 0.02 * antennaScale(), z: 0 };
+      }
+
+      function projectPoint(point, view) {
+        const tx = point.x - (view.target?.x || 0);
+        const ty = point.y - (view.target?.y || 0);
+        const tz = point.z - (view.target?.z || 0);
+        const cy = Math.cos(view.yaw);
+        const sy = Math.sin(view.yaw);
+        const x1 = tx * cy - tz * sy;
+        const z1 = tx * sy + tz * cy;
+        const cp = Math.cos(view.pitch);
+        const sp = Math.sin(view.pitch);
+        const y2 = ty * cp - z1 * sp;
+        const z2 = ty * sp + z1 * cp;
+        const perspective = view.cameraDist / (view.cameraDist + z2 + 2.9);
+        return {
+          x: view.ox + x1 * view.scale * perspective,
+          y: view.oy - y2 * view.scale * perspective,
+          depth: z2
+        };
+      }
+
+      function prepareCanvas(canvas) {
+        const rect = canvas.getBoundingClientRect();
+        const width = Math.max(1, rect.width);
+        const height = Math.max(1, rect.height);
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const displayWidth = Math.round(width * dpr);
+        const displayHeight = Math.round(height * dpr);
+        if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+          canvas.width = displayWidth;
+          canvas.height = displayHeight;
+        }
+        const ctx = canvas.getContext("2d");
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return { ctx, width, height };
+      }
+
+      function lecturePointTaPerJy(diameterM) {
+        return (2e-26 * diameterM * diameterM) / (Math.PI * BOLTZMANN);
+      }
+
+      function frequencyGHz() {
+        return GHZ_PER_CM / state.wavelengthCm;
+      }
+
+      function arcminPerU() {
+        const lambdaM = state.wavelengthCm / 100;
+        return (lambdaM / (Math.PI * state.diameterM)) * ARC_MIN_PER_RAD;
+      }
+
+      function scaleArcminForState() {
+        return arcminPerU();
+      }
+
+      function fluxJyFromBrightnessTemp(temperatureK, diameterArcmin, wavelengthM) {
+        const solidAngle = diskSolidAngleSteradian(diameterArcmin);
+        return (2 * BOLTZMANN * temperatureK * solidAngle / (wavelengthM * wavelengthM)) / 1e-26;
+      }
+
+      function brightnessTempFromFlux(fluxJy, diameterArcmin, wavelengthM) {
+        const solidAngle = diskSolidAngleSteradian(diameterArcmin);
+        return fluxJy * 1e-26 * wavelengthM * wavelengthM / (2 * BOLTZMANN * solidAngle);
+      }
+
+      function diskSolidAngleSteradian(diameterArcmin) {
+        const radiusRad = (diameterArcmin * 0.5) * ARC_MIN_TO_RAD;
+        return Math.PI * radiusRad * radiusRad;
+      }
+
+      function evaluatePb17Flux(coeffs, freqGHz) {
+        const logG = Math.log10(freqGHz);
+        let logS = 0;
+        for (let i = 0; i < coeffs.length; i += 1) {
+          logS += coeffs[i] * Math.pow(logG, i);
+        }
+        return Math.pow(10, logS);
+      }
+
+      function quietSunBrightnessTemp(freqGHz) {
+        const anchors = [
+          { freq: 1, temp: 2.0e5 },
+          { freq: 2.8, temp: 1.0e5 },
+          { freq: 5, temp: 6.0e4 },
+          { freq: 10, temp: 2.2e4 },
+          { freq: 18, temp: 1.1e4 },
+          { freq: 30, temp: 8.2e3 },
+          { freq: 80, temp: 6.2e3 }
+        ];
+
+        const clippedFreq = clamp(freqGHz, anchors[0].freq, anchors[anchors.length - 1].freq);
+        for (let i = 1; i < anchors.length; i += 1) {
+          const lo = anchors[i - 1];
+          const hi = anchors[i];
+          if (clippedFreq <= hi.freq) {
+            const t = (Math.log10(clippedFreq) - Math.log10(lo.freq)) / (Math.log10(hi.freq) - Math.log10(lo.freq));
+            return Math.pow(10, lerp(Math.log10(lo.temp), Math.log10(hi.temp), t));
+          }
+        }
+        return anchors[anchors.length - 1].temp;
+      }
+
+      function averageProfileWithinRadiusArcmin(profile, radiusArcmin, scaleArcmin) {
+        const radiusU = radiusArcmin / Math.max(scaleArcmin, 1e-6);
+        if (radiusU <= 1e-5) {
+          return 1;
+        }
+        const steps = 240;
+        let sum = 0;
+        for (let i = 0; i < steps; i += 1) {
+          const u = radiusU * (i + 0.5) / steps;
+          sum += sampleProfileAtU(profile, u) * u;
+        }
+        return clamp((2 * sum * (radiusU / steps)) / Math.max(radiusU * radiusU, 1e-8), 0, 1);
+      }
+
+      function beamCouplingFractionArcmin(profile, radiusArcmin, scaleArcmin) {
+        const radiusU = radiusArcmin / Math.max(scaleArcmin, 1e-6);
+        if (radiusU <= 1e-5) {
+          return 0;
+        }
+        const numerator = radialProfileIntegral(profile, radiusU);
+        const denominator = radialProfileIntegral(profile, U_MAX);
+        return clamp(numerator / Math.max(denominator, 1e-8), 0, 1);
+      }
+
+      function radialProfileIntegral(profile, maxU) {
+        const clippedMaxU = clamp(maxU, 0, U_MAX);
+        const steps = 520;
+        let sum = 0;
+        for (let i = 0; i < steps; i += 1) {
+          const u = clippedMaxU * (i + 0.5) / steps;
+          sum += sampleProfileAtU(profile, u) * u;
+        }
+        return sum * (clippedMaxU / steps);
+      }
+
+      function sampleBeamAtAngleArcmin(angleArcmin) {
+        const u = Math.abs(angleArcmin) / Math.max(scaleArcminForState(), 1e-6);
+        return sampleProfileAtU(taperedModel.profile, u);
+      }
+
+      function sampleProfileAtU(profile, u) {
+        if (u <= 0) {
+          return profile[0];
+        }
+        if (u >= U_MAX) {
+          return 0;
+        }
+        const index = (u / U_MAX) * (U_SAMPLES - 1);
+        const lo = Math.floor(index);
+        const hi = Math.min(U_SAMPLES - 1, lo + 1);
+        const t = index - lo;
+        return lerp(profile[lo], profile[hi], t);
+      }
+
+      function antennaScale() {
+        return clamp(state.diameterM / DEFAULT_DIAMETER_M, 0.45, 3.6);
+      }
+
+      function beamShape(theta, edgeTaperDb) {
+        const taperNorm = clamp(edgeTaperDb / 20, 0, 1);
+        const physicalFactor = relativeBeamScale();
+        const mainWidth = physicalFactor * (0.37 + 0.09 * taperNorm);
+        const sideGain = 0.25 * (1 - 0.72 * taperNorm);
+        const main = 1.1 * Math.exp(-0.92 * Math.pow(theta / mainWidth, 1.78));
+        const sideEnvelope = Math.exp(-0.72 * theta);
+        const oscillation = Math.pow(Math.max(0, Math.sin((theta - mainWidth * 0.94) * (6.8 - 0.8 * taperNorm))), 2.0);
+        const side = sideGain * sideEnvelope * smoothstep(mainWidth * 0.96, mainWidth * 1.24, theta) * oscillation;
+        const back = 0.1 * Math.exp(-Math.pow((theta - Math.PI) / 0.38, 2));
+        const raw = main + side + back;
+        return {
+          radius: 0.06 + raw,
+          signal: clamp(raw / 1.12, 0, 1)
+        };
+      }
+
+      function feedPatternShape(theta, edgeTaperDb) {
+        const width = feedPatternWidth(edgeTaperDb);
+        const raw = Math.exp(-1.9 * Math.pow(theta / Math.max(width, 0.18), 2.15));
+        return {
+          signal: clamp(raw, 0, 1),
+          reach: 0.46 + 0.72 * Math.pow(clamp(raw, 0, 1), 0.82)
+        };
+      }
+
+      function feedPatternWidth(edgeTaperDb) {
+        const taperNorm = clamp(edgeTaperDb / 20, 0, 1);
+        return clamp((1.06 - 0.62 * taperNorm) * Math.sqrt(feedWavelengthFactor()), 0.22, 1.4);
+      }
+
+      function feedPatternThetaMax(edgeTaperDb) {
+        return clamp(feedPatternWidth(edgeTaperDb) * 1.18, 0.5, 1.35);
+      }
+
+      function feedWavelengthFactor() {
+        return clamp(state.wavelengthCm / DEFAULT_WAVELENGTH_CM, 0.35, 3.2);
+      }
+
+      function relativeBeamScale() {
+        return clamp(
+          (state.wavelengthCm / state.diameterM) / (DEFAULT_WAVELENGTH_CM / DEFAULT_DIAMETER_M),
+          0.18,
+          3.2
+        );
+      }
+
+      function normalizedPowerColor(power, alpha = 1) {
+        const hue = lerp(214, 18, clamp(power, 0, 1));
+        const sat = lerp(72, 84, clamp(power, 0, 1));
+        const light = lerp(42, 52, clamp(power, 0, 1));
+        return `hsla(${hue.toFixed(1)}, ${sat.toFixed(1)}%, ${light.toFixed(1)}%, ${alpha.toFixed(3)})`;
+      }
+
+      function illuminationPower(r, edgeTaperDb) {
+        if (edgeTaperDb === 0) {
+          return 1;
+        }
+        const ampEdge = Math.pow(10, -edgeTaperDb / 20);
+        const amplitude = Math.exp(Math.log(Math.max(ampEdge, 1e-6)) * r * r);
+        return amplitude * amplitude;
+      }
+
+      function besselJ0(x) {
+        if (x === 0) {
+          return 1;
+        }
+        const steps = 16;
+        let sum = 0;
+        for (let k = 0; k <= steps; k += 1) {
+          const t = (k / steps) * Math.PI;
+          const weight = k === 0 || k === steps ? 1 : k % 2 === 0 ? 2 : 4;
+          sum += weight * Math.cos(x * Math.sin(t));
+        }
+        return sum / (3 * steps);
+      }
+
+      function buildPointNarrative(pointTaK, antennaTempK, totalMeasuredK) {
+        const eovsaTaK = 20 * lecturePointTaPerJy(2.1);
+        const cal27TaK = 20 * lecturePointTaPerJy(27);
+        return `A 20 Jy calibrator adds only ${formatKelvin(pointTaK)} above a ${formatKelvin(T_SKY_K)} blank sky with the current tapered setup, giving ${formatKelvin(antennaTempK)} on source and ${formatKelvin(totalMeasuredK)} after adding instrument noise. On a 2.1 m dish that source term is about ${formatKelvin(eovsaTaK)}, while a 27 m dish would raise it to about ${formatKelvin(cal27TaK)} before taper loss.`;
+      }
+
+      function buildPointToolbarStatus(pointTaK, totalMeasuredK) {
+        return `A 20 Jy calibrator adds only ${formatKelvin(pointTaK)} here, so the total stays near ${formatKelvin(totalMeasuredK)} and a larger dish matters for calibration.`;
+      }
+
+      function buildDiskSummary(label, brightnessTempK, sourceExcessK, antennaTempK) {
+        return `${label} starts at ${formatKelvin(brightnessTempK)} brightness temperature, but the antenna only sees a beam-weighted source excess of ${formatKelvin(sourceExcessK)} on top of ${formatKelvin(T_SKY_K)} sky, for ${formatKelvin(antennaTempK)} on source.`;
+      }
+
+      function buildDiskNarrative(label, averageBeamResponse, beamFillFraction, sourceExcessK, antennaTempK, totalMeasuredK) {
+        const responsePct = (averageBeamResponse * 100).toFixed(1);
+        const fillPct = (beamFillFraction * 100).toFixed(1);
+        if (label === "Quiet Sun") {
+          return `The quiet solar disk averages ${responsePct}% of the peak beam across its face, while about ${fillPct}% of the beam solid angle lands on the source and the rest sees blank sky. Even so, the source adds ${formatKelvin(sourceExcessK)}, giving ${formatKelvin(antennaTempK)} for T_a and ${formatKelvin(totalMeasuredK)} for T_tot.`;
+        }
+        return `${label} averages ${responsePct}% of the peak beam across the disk and fills about ${fillPct}% of the beam solid angle, with the rest of the beam on blank sky. That source term is easy to separate conceptually, but it still sits far below the solar case once the full T_tot is considered.`;
+      }
+
+      function buildDiskToolbarStatus(label, sourceExcessK, totalMeasuredK) {
+        if (label === "Quiet Sun") {
+          return `Quiet-Sun beam dilution still adds about ${formatKelvin(sourceExcessK)} above the sky, so T_tot lands near ${formatKelvin(totalMeasuredK)}.`;
+        }
+        return `${label} adds about ${formatKelvin(sourceExcessK)} in the current setup, so the total stays near ${formatKelvin(totalMeasuredK)}.`;
+      }
+
+      function formatFluxDensity(valueJy) {
+        if (!Number.isFinite(valueJy)) {
+          return "n/a";
+        }
+        if (valueJy >= 1e5) {
+          return `${(valueJy / 1e4).toFixed(valueJy >= 5e5 ? 0 : 1)} SFU`;
+        }
+        if (valueJy >= 1e3) {
+          return `${(valueJy / 1e3).toFixed(valueJy >= 1e4 ? 0 : 1)} kJy`;
+        }
+        if (valueJy >= 10) {
+          return `${valueJy.toFixed(1)} Jy`;
+        }
+        return `${valueJy.toFixed(2)} Jy`;
+      }
+
+      function formatKelvin(valueK) {
+        if (!Number.isFinite(valueK)) {
+          return "n/a";
+        }
+        if (Math.abs(valueK) >= 1e6) {
+          return `${(valueK / 1e6).toFixed(2)} MK`;
+        }
+        if (Math.abs(valueK) >= 1e3) {
+          return `${valueK.toFixed(0)} K`;
+        }
+        if (Math.abs(valueK) >= 1) {
+          return `${valueK.toFixed(2)} K`;
+        }
+        return `${valueK.toFixed(3)} K`;
+      }
+
+      function formatRatio(value) {
+        if (!Number.isFinite(value)) {
+          return "n/a";
+        }
+        if (value >= 100) {
+          return value.toFixed(0);
+        }
+        if (value >= 10) {
+          return value.toFixed(1);
+        }
+        if (value >= 1) {
+          return value.toFixed(2);
+        }
+        if (value >= 0.1) {
+          return value.toFixed(3);
+        }
+        return value.toExponential(1).replace("e+", "e");
+      }
+
+      function traceLine(ctx, points) {
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i += 1) {
+          ctx.lineTo(points[i].x, points[i].y);
+        }
+        ctx.stroke();
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
+      }
+
+      function smoothstep(edge0, edge1, x) {
+        const t = clamp((x - edge0) / Math.max(edge1 - edge0, 1e-6), 0, 1);
+        return t * t * (3 - 2 * t);
+      }
+
+      function formatDb(db) {
+        const sign = db > 0 ? "+" : "";
+        return `${sign}${db.toFixed(1)}`;
+      }
+
+      function formatInputValue(value, step) {
+        const decimals = step >= 1 ? 0 : String(step).split(".")[1].length;
+        return value.toFixed(decimals);
+      }
+
+      function getUiFont() {
+        return '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif';
+      }
+
+      function parseNumberParam(name, fallback) {
+        const raw = params.get(name);
+        if (raw === null || raw === "") {
+          return fallback;
+        }
+        const value = Number(raw);
+        return Number.isFinite(value) ? value : fallback;
+      }
+
+      function parseViewMode(raw) {
+        return raw === "feed" || raw === "system" || raw === "both" ? raw : "both";
+      }
+
+      function parseSourceId(raw) {
+        return SOURCE_DEFINITIONS[raw] ? raw : DEFAULT_SOURCE_ID;
+      }
+    })();
+  </script>
+</body>
+</html>

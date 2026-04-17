@@ -1,0 +1,2079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EOVSA Three-Stage Frequency Tuning</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #eef1f4;
+      --bg-deep: #dde4eb;
+      --panel: rgba(255, 255, 255, 0.92);
+      --panel-strong: #ffffff;
+      --ink: #1f1f1f;
+      --muted: #5e6772;
+      --grid: rgba(31, 31, 31, 0.12);
+      --shadow: 0 18px 48px rgba(31, 41, 55, 0.1);
+      --radius: 22px;
+      --rf: #111111;
+      --mix1: #2563eb;
+      --mix2: #2563eb;
+      --dig: #86b93b;
+      --warn: #111111;
+      --band-bg: #ffffff;
+      --dashed: rgba(17, 17, 17, 0.5);
+      --ui-font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --ui-font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --math-font: "STIX Two Text", "Cambria Math", "STIXGeneral", "Times New Roman", serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--ui-font-text);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.06), transparent 28%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+      padding: 24px;
+    }
+
+    .shell {
+      max-width: 1360px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero,
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(31, 31, 31, 0.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .hero {
+      display: grid;
+      gap: 14px;
+      padding: 24px 26px 20px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-family: var(--ui-font-display);
+      font-size: clamp(1.8rem, 3.6vw, 3.2rem);
+      line-height: 1.05;
+      letter-spacing: -0.025em;
+    }
+
+    .hero p,
+    .panel p,
+    .callout p,
+    .notes li {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .hero-copy {
+      display: grid;
+      gap: 12px;
+    }
+
+    .hero-copy strong {
+      color: var(--ink);
+    }
+
+    .formula-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .formula-pill,
+    .mini-card,
+    .tag,
+    .segment {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(31, 31, 31, 0.08);
+      border-radius: 18px;
+    }
+
+    .formula-pill {
+      padding: 10px 14px;
+      font-family: var(--math-font);
+      font-size: 1rem;
+      color: var(--ink);
+    }
+
+    .control-panel {
+      display: grid;
+      gap: 16px;
+      padding: 18px;
+      position: sticky;
+      top: 24px;
+    }
+
+    .controls {
+      display: grid;
+      gap: 14px;
+    }
+
+    .control-panel .panel-headline {
+      display: grid;
+      gap: 6px;
+    }
+
+    .control-panel .panel-headline h2 {
+      margin: 0;
+      font-family: var(--ui-font-display);
+      font-size: 1.4rem;
+      line-height: 1;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+
+    .control-panel .panel-headline p {
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .knob-row {
+      display: grid;
+      grid-template-columns: 190px minmax(0, 1fr);
+      gap: 16px;
+      align-items: center;
+    }
+
+    .control {
+      display: grid;
+      gap: 8px;
+    }
+
+    .inline-control-row {
+      display: grid;
+      grid-template-columns: minmax(220px, 320px) auto;
+      gap: 12px;
+      align-items: end;
+      justify-content: start;
+    }
+
+    .control label,
+    .mini-card .label,
+    .panel h2,
+    .tag-label,
+    .notes h3 {
+      font-size: 0.84rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .range-wrap,
+    .select-wrap {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .range-wrap.compact {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--rf);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .knob-panel {
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+    }
+
+    .knob-shell {
+      width: 172px;
+      height: 172px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 34% 30%, rgba(255,255,255,0.92), rgba(255,255,255,0.16) 34%, rgba(0,0,0,0.08) 80%),
+        linear-gradient(135deg, #f2e2c4 0%, #d0b080 50%, #a0682a 100%);
+      box-shadow:
+        inset 0 10px 20px rgba(255,255,255,0.38),
+        inset 0 -14px 22px rgba(80, 42, 10, 0.28),
+        0 18px 30px rgba(84, 60, 34, 0.16);
+      border: 1px solid rgba(95, 60, 22, 0.18);
+      position: relative;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .knob-shell:active {
+      cursor: grabbing;
+    }
+
+    .knob-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .knob-caption {
+      font-size: 0.82rem;
+      color: var(--muted);
+      text-align: center;
+      max-width: 18ch;
+      line-height: 1.35;
+    }
+
+    .slot-note {
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    select {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(32, 37, 45, 0.14);
+      background: var(--panel-strong);
+      color: var(--ink);
+      padding: 11px 12px;
+      font-size: 0.98rem;
+    }
+
+    .value-pill {
+      min-width: 78px;
+      text-align: center;
+      border-radius: 999px;
+      padding: 9px 12px;
+      font-weight: 700;
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--rf);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .mini-card {
+      padding: 16px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .mini-card .value {
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+
+    .stages {
+      display: grid;
+      gap: 18px;
+    }
+
+    .control-strip {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--panel);
+      border: 1px solid rgba(31,31,31,0.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      padding: 12px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .cs-block {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cs-block label {
+      font-size: 0.82rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .cs-block select {
+      width: auto;
+      padding: 7px 10px;
+      font-size: 0.9rem;
+      border-radius: 10px;
+    }
+
+    .cs-slider-block {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .cs-slider-block input[type="range"] {
+      width: 160px;
+      flex: 0 0 160px;
+    }
+
+    #rfValue {
+      width: 136px;
+      flex: 0 0 136px;
+      text-align: center;
+      font-size: 0.88rem;
+      padding: 6px 10px;
+      white-space: nowrap;
+    }
+
+    #slotValue {
+      width: 84px;
+      flex: 0 0 84px;
+      white-space: nowrap;
+      font-size: 0.88rem;
+    }
+
+    .cs-ordering {
+      font-size: 0.82rem;
+      padding: 6px 12px;
+    }
+
+    @media (max-width: 720px) {
+      .control-strip { position: static; }
+    }
+
+    .panel {
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel h2 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 0.8rem;
+    }
+
+    .panel-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .stage-title {
+      font-family: var(--ui-font-display);
+      font-size: 1.45rem;
+      line-height: 1;
+      color: var(--ink);
+    }
+
+    .stage-subtitle {
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .viz-frame {
+      background: var(--band-bg);
+      border: 1px solid rgba(31, 31, 31, 0.08);
+      border-radius: 18px;
+      overflow: hidden;
+      padding: 12px;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tag {
+      padding: 8px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.92rem;
+      color: var(--ink);
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      flex: 0 0 14px;
+    }
+
+    .swatch.rf { background: var(--rf); }
+    .swatch.mix1 { background: var(--mix1); }
+    .swatch.mix2 { background: var(--mix2); }
+    .swatch.dig { background: var(--dig); }
+    .swatch.warn { background: var(--warn); }
+
+    .side-column {
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .callout {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+    }
+
+    .sequence {
+      display: grid;
+      gap: 10px;
+    }
+
+    .segment {
+      padding: 12px 14px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .segment strong {
+      font-size: 1rem;
+    }
+
+    .notes {
+      display: grid;
+      gap: 12px;
+    }
+
+    .notes h3 {
+      margin: 0;
+      color: var(--ink);
+    }
+
+    .notes ul {
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .footer {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .footer a {
+      color: var(--mix2);
+    }
+
+    .inline-emphasis {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    /* ── Mixer Math section ─────────────────────────────────────────── */
+    .mixer-section {
+      display: grid;
+      gap: 16px;
+      padding: 20px 22px;
+    }
+
+    .mixer-header {
+      display: grid;
+      gap: 6px;
+    }
+
+    .mixer-header h2 {
+      margin: 0;
+      font-family: var(--ui-font-display);
+      font-size: 1.45rem;
+      line-height: 1;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+      text-transform: none;
+    }
+
+    .mixer-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.96rem;
+      line-height: 1.5;
+    }
+
+    .mixer-plots {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .mixer-canvas-wrap {
+      background: var(--band-bg);
+      border: 1px solid rgba(31,31,31,0.08);
+      border-radius: 18px;
+      overflow: hidden;
+      padding: 10px 14px 8px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .mixer-canvas-label {
+      font-size: 0.82rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .mixer-canvas-wrap canvas {
+      display: block;
+      width: 100%;
+      height: 340px;
+    }
+
+    .mixer-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .mixer-control {
+      display: grid;
+      gap: 6px;
+    }
+
+    .mixer-control label {
+      font-size: 0.76rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .mixer-control .range-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .mixer-control input[type="range"] {
+      width: 100%;
+    }
+
+    .mixer-val {
+      min-width: 70px;
+      text-align: center;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--ink);
+    }
+
+    .mixer-val.rf-val  { color: #c0392b; background: rgba(192,57,43,0.09); }
+    .mixer-val.lo-val  { color: #2563eb; background: rgba(37,99,235,0.1); }
+
+    .mixer-rf-legend {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mixer-legend-title {
+      font-size: 0.74rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .mixer-rf-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+
+    @media (max-width: 720px) {
+      .mixer-plots    { grid-template-columns: 1fr; }
+      .mixer-controls { grid-template-columns: 1fr; }
+    }
+    /* ── end Mixer Math section ─────────────────────────────────────── */
+
+    @media (max-width: 1080px) {
+      .metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 14px;
+      }
+
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .hero,
+      .panel,
+      .callout {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .range-wrap,
+      .select-wrap,
+      .inline-control-row {
+        grid-template-columns: 1fr;
+      }
+
+      .knob-row {
+        grid-template-columns: 1fr;
+      }
+
+      .knob-panel {
+        justify-items: start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div class="hero-copy">
+        <h1>Three Frequency Conversions, One Tuned RF Slice</h1>
+        <p>
+          This page turns the EOVSA downconversion chain into a visual story. Adjust the RF tuning slot, then watch
+          the same spectral slice move through the <strong>tunable first mixer</strong>, the <strong>fixed second LO</strong>,
+          and the <strong>digitizer aliasing step</strong>.
+        </p>
+        <div class="formula-strip">
+          <div class="formula-pill">Stage 1: <span id="formulaLo1">ν<sub>LO1</sub> = ν<sub>RF,low</sub> + 20.5 GHz</span></div>
+          <div class="formula-pill">Stage 2: <span>ν<sub>IF2</sub> = 21.15 GHz − ν<sub>IF1</sub></span></div>
+          <div class="formula-pill">Stage 3: <span id="formulaClock">ν<sub>dig</sub> = f<sub>clock</sub> − ν<sub>IF2</sub></span></div>
+        </div>
+        <p>
+          The key idea is not just that frequencies move. <span class="inline-emphasis">The ordering flips each time a mirror conversion happens.</span>
+          After one mirror the RF order is inverted, after two it is restored, and after the third it is inverted again by the 1200 MHz digitizer clock.
+        </p>
+      </div>
+
+      <div class="metrics">
+        <div class="mini-card">
+          <div class="label">RF band</div>
+          <div class="value" id="metricRf">1.0-1.5 GHz</div>
+        </div>
+        <div class="mini-card">
+          <div class="label">First LO</div>
+          <div class="value" id="metricLo1">21.5 GHz</div>
+        </div>
+        <div class="mini-card">
+          <div class="label">Second IF</div>
+          <div class="value" id="metricIf2">650-1150 MHz</div>
+        </div>
+        <div class="mini-card">
+          <div class="label">Digitized band</div>
+          <div class="value" id="metricDigitized">50-550 MHz</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 0. Mixer Math ──────────────────────────────────────────────── -->
+    <section class="panel mixer-section" id="mixerSection">
+      <div class="mixer-header">
+        <h2>0. Mixer Math</h2>
+        <p>
+          A mixer multiplies two sinusoids: RF at frequency
+          <em>f</em><sub>RF</sub> and local oscillator at
+          <em>f</em><sub>LO</sub>. The product contains <strong>no energy at
+          the original frequencies</strong> — only at their sum
+          <em>f</em><sub>LO</sub>&nbsp;+&nbsp;<em>f</em><sub>RF</sub> and
+          difference |<em>f</em><sub>LO</sub>&nbsp;−&nbsp;<em>f</em><sub>RF</sub>|.
+          A bandpass filter then selects whichever product is useful.
+          The same colormap (turbo_r) colors the RF band in Stage 1.
+        </p>
+      </div>
+      <div class="mixer-plots">
+        <div class="mixer-canvas-wrap">
+          <div class="mixer-canvas-label">Time domain</div>
+          <canvas id="mixerTimeCanvas"></canvas>
+        </div>
+        <div class="mixer-canvas-wrap">
+          <div class="mixer-canvas-label">Frequency domain</div>
+          <canvas id="mixerFreqCanvas"></canvas>
+        </div>
+      </div>
+      <div class="mixer-controls">
+        <div class="mixer-control">
+          <label for="mixerLoSlider">LO&#x2081; frequency (21.5 – 38.0 GHz, matches Stage 1)</label>
+          <div class="range-row">
+            <input id="mixerLoSlider" type="range" min="21.5" max="38.0" step="0.5" value="21.5">
+            <span class="mixer-val lo-val" id="mixerLoVal">21.5 GHz</span>
+          </div>
+        </div>
+        <div class="mixer-rf-legend" id="mixerRfLegend">
+          <span class="mixer-legend-title">Fixed RF tones (1–18 GHz):</span>
+        </div>
+      </div>
+    </section>
+    <!-- ── end 0. Mixer Math ──────────────────────────────────────────── -->
+
+    <div class="control-strip" id="controlStrip">
+      <div class="cs-block">
+        <label for="tuningMode">Mode</label>
+        <select id="tuningMode">
+          <option value="legacy34">34 slots · 500 MHz</option>
+          <option value="modern52" selected>50 slots · 325 MHz (since 2019)</option>
+        </select>
+      </div>
+      <div class="cs-block cs-slider-block">
+        <label for="rfSlider">RF slot</label>
+        <input id="rfSlider" type="range" min="0" max="49" step="1" value="0">
+        <div class="value-pill" id="rfValue">1.0–1.3 GHz</div>
+        <span class="slot-note" id="slotValue">Slot 1 of 50</span>
+      </div>
+      <div class="value-pill cs-ordering" id="orderingValue">Inverted</div>
+    </div>
+
+    <div class="stages">
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="stage-title">1. Tunable first conversion</div>
+            <div class="stage-subtitle" id="stage1Subtitle">The RF band is mirrored around a selectable first LO and lands in the fixed high-IF window.</div>
+          </div>
+          <h2>RF to high IF</h2>
+        </div>
+        <p id="stage1Text">
+          For a chosen RF slice, EOVSA sets the first LO so that the selected band maps into the
+          fixed high-IF filter. Because this is a mirror conversion, the low RF edge becomes the high edge after mixing.
+        </p>
+        <div class="viz-frame">
+          <svg id="stage1Svg" viewBox="0 0 920 500" aria-label="First conversion diagram"></svg>
+        </div>
+        <div class="legend">
+          <div class="tag"><span class="swatch rf"></span>Original 1–18 GHz RF band</div>
+          <div class="tag"><span class="swatch mix1"></span>Inverted RF after mixing with LO₁</div>
+          <div class="tag" id="stage1PassedLegend"><span class="swatch dig"></span>Slice passed by the fixed high-IF filter</div>
+          <div class="tag" id="stage1FilterLegend"><span class="swatch warn"></span>Fixed high-IF filter</div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="stage-title">2. Fixed second conversion</div>
+            <div class="stage-subtitle" id="stage2Subtitle">A fixed 21.15 GHz LO mirrors the high IF down to the low-IF band.</div>
+          </div>
+          <h2>High IF to low IF</h2>
+        </div>
+        <p id="stage2Text">
+          The second mirror undoes the first inversion, restoring the original RF spectral order.
+          The IF filter selects the useful band inside the broader 600–1200 MHz passband.
+        </p>
+        <div class="viz-frame">
+          <svg id="stage2Svg" viewBox="0 0 920 500" aria-label="Second conversion diagram"></svg>
+        </div>
+        <div class="legend">
+          <div class="tag" id="stage2LegendInput"><span class="swatch mix1"></span>High IF input</div>
+          <div class="tag" id="stage2LegendOutput"><span class="swatch mix2"></span>Low IF output</div>
+          <div class="tag"><span class="swatch warn"></span>600–1200 MHz IF filter</div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="stage-title">3. Digitizer as a third conversion</div>
+            <div class="stage-subtitle" id="stage3Subtitle">Sampling mirrors the second IF into baseband; the details depend on the digitizer clock.</div>
+          </div>
+          <h2>Low IF to digitized IF</h2>
+        </div>
+        <p id="stage3Text">
+          With the 1200 MHz production clock, the second IF lands cleanly in the target band.
+          This is a third mirror, so the final digital ordering is inverted relative to the original RF slice.
+        </p>
+        <div class="viz-frame">
+          <svg id="stage3Svg" viewBox="0 0 920 500" aria-label="Third conversion diagram"></svg>
+        </div>
+        <div class="legend" id="stage3Legend">
+          <div class="tag"><span class="swatch mix2"></span>Second IF entering the ADC</div>
+          <div class="tag"><span class="swatch dig"></span>Digitized target band</div>
+          <div class="tag"><span class="swatch warn"></span>Desired clean region</div>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <script>
+    const rfSlider = document.getElementById("rfSlider");
+    const tuningMode = document.getElementById("tuningMode");
+
+    const rfValue = document.getElementById("rfValue");
+    const slotValue = document.getElementById("slotValue");
+    const orderingValue = document.getElementById("orderingValue");
+    const metricRf = document.getElementById("metricRf");
+    const metricLo1 = document.getElementById("metricLo1");
+    const metricIf2 = document.getElementById("metricIf2");
+    const metricDigitized = document.getElementById("metricDigitized");
+    const formulaLo1 = document.getElementById("formulaLo1");
+    const formulaClock = document.getElementById("formulaClock");
+    const stage1Subtitle = document.getElementById("stage1Subtitle");
+    const stage1Text = document.getElementById("stage1Text");
+    const stage1PassedLegend = document.getElementById("stage1PassedLegend");
+    const stage1FilterLegend = document.getElementById("stage1FilterLegend");
+    const stage2Subtitle = document.getElementById("stage2Subtitle");
+    const stage2Text = document.getElementById("stage2Text");
+    const stage2LegendInput = document.getElementById("stage2LegendInput");
+    const stage2LegendOutput = document.getElementById("stage2LegendOutput");
+    const stage3Subtitle = document.getElementById("stage3Subtitle");
+    const stage3Text = document.getElementById("stage3Text");
+
+    const stage1Svg = document.getElementById("stage1Svg");
+    const stage2Svg = document.getElementById("stage2Svg");
+    const stage3Svg = document.getElementById("stage3Svg");
+
+    // Stage-1 geometry constants (must match values inside stage1())
+    const S1 = Object.freeze({ left: 76, width: 768, rfMin: 1, rfMax: 18, rfAxisY: 104, vbWidth: 920 });
+    let rfDrag = false;
+
+    const styles = getComputedStyle(document.documentElement);
+    const colors = {
+      ink: styles.getPropertyValue("--ink").trim(),
+      muted: styles.getPropertyValue("--muted").trim(),
+      grid: styles.getPropertyValue("--grid").trim(),
+      rf: styles.getPropertyValue("--rf").trim(),
+      mix1: styles.getPropertyValue("--mix1").trim(),
+      mix2: styles.getPropertyValue("--mix2").trim(),
+      dig: styles.getPropertyValue("--dig").trim(),
+      warn: styles.getPropertyValue("--warn").trim(),
+      dashed: styles.getPropertyValue("--dashed").trim()
+    };
+
+    const knobConfig = {
+      cx: 86,
+      cy: 86,
+      radius: 60,
+      startAngle: -140,
+      endAngle: 140
+    };
+
+    const tuningModes = {
+      legacy34: {
+        id: "legacy34",
+        label: "34 slots, 500 MHz",
+        slotWidth: 0.5,
+        filterLow: 20.0,
+        filterHigh: 20.5,
+        availableStarts: Array.from({ length: 34 }, (_, i) => 1 + i * 0.5),
+        caption: "Drag the knob or use arrow keys to step through the 34 tuning slots."
+      },
+      modern52: {
+        id: "modern52",
+        label: "54 slots, 325 MHz (since 2019)",
+        slotWidth: 0.325,
+        filterLow: 20.0,
+        filterHigh: 20.325,
+        availableStarts: Array.from({ length: 52 }, (_, i) => i)
+          .filter((i) => i !== 2 && i !== 3)
+          .map((i) => 1 + i * 0.325),
+        caption: "Uses the 2019 325 MHz tuning grid; notch-filter bands 3 and 4 are skipped, leaving 50 usable slots."
+      }
+    };
+
+    function getTuningConfig() {
+      return tuningModes[tuningMode.value] || tuningModes.legacy34;
+    }
+
+    function fmtGHz(value) {
+      return `${value.toFixed(1)} GHz`;
+    }
+
+    function fmtMHz(value) {
+      return `${Math.round(value)} MHz`;
+    }
+
+    function bandLabel(low, high, unit) {
+      return `${low.toFixed(1)}-${high.toFixed(1)} ${unit}`;
+    }
+
+    function clearSvg(svg) {
+      while (svg.firstChild) {
+        svg.removeChild(svg.firstChild);
+      }
+    }
+
+    function addSvg(tag, attrs, parent) {
+      const node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+      Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
+      parent.appendChild(node);
+      return node;
+    }
+
+    function xScale(value, min, max, left, width) {
+      return left + ((value - min) / (max - min)) * width;
+    }
+
+    function fmtFreq(value) {
+      return value.toFixed(3).replace(/\.?0+$/, "");
+    }
+
+    function slotToAngle(slot) {
+      const maxSlot = Math.max(1, Number(rfSlider.max));
+      const fraction = slot / maxSlot;
+      return knobConfig.startAngle + fraction * (knobConfig.endAngle - knobConfig.startAngle);
+    }
+
+    function angleToSlot(angle) {
+      const maxSlot = Math.max(1, Number(rfSlider.max));
+      const clamped = Math.max(knobConfig.startAngle, Math.min(knobConfig.endAngle, angle));
+      const fraction = (clamped - knobConfig.startAngle) / (knobConfig.endAngle - knobConfig.startAngle);
+      return Math.round(fraction * maxSlot);
+    }
+
+    function polar(cx, cy, radius, angleDeg) {
+      const angle = (angleDeg - 90) * Math.PI / 180;
+      return {
+        x: cx + radius * Math.cos(angle),
+        y: cy + radius * Math.sin(angle)
+      };
+    }
+
+    function describeArc(cx, cy, radius, startAngle, endAngle) {
+      const start = polar(cx, cy, radius, endAngle);
+      const end = polar(cx, cy, radius, startAngle);
+      const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+      return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`;
+    }
+
+    function drawAxis(svg, y, min, max, left, width, ticks, unit) {
+      addSvg("line", { x1: left, y1: y, x2: left + width, y2: y, stroke: colors.ink, "stroke-width": 2 }, svg);
+      ticks.forEach((tick) => {
+        const x = xScale(tick, min, max, left, width);
+        addSvg("line", { x1: x, y1: y - 7, x2: x, y2: y + 7, stroke: colors.ink, "stroke-width": 1.5 }, svg);
+        const label = addSvg("text", {
+          x,
+          y: y + 26,
+          "text-anchor": "middle",
+          "font-size": 16,
+          fill: colors.muted
+        }, svg);
+        label.textContent = `${tick}${unit}`;
+      });
+    }
+
+    function drawBand(svg, y, min, max, left, width, bandLow, bandHigh, color, label, options = {}) {
+      const x1 = xScale(bandLow, min, max, left, width);
+      const x2 = xScale(bandHigh, min, max, left, width);
+      addSvg("rect", {
+        x: x1,
+        y: y - 18,
+        width: x2 - x1,
+        height: 36,
+        rx: 12,
+        fill: color,
+        opacity: options.opacity || 0.85
+      }, svg);
+      if (options.dashed) {
+        addSvg("rect", {
+          x: x1,
+          y: y - 22,
+          width: x2 - x1,
+          height: 44,
+          rx: 15,
+          fill: "none",
+          stroke: options.stroke || colors.warn,
+          "stroke-width": options.strokeWidth || 2,
+          "stroke-dasharray": "8 6"
+        }, svg);
+      }
+      const text = addSvg("text", {
+        x: (x1 + x2) / 2,
+        y: y + 5,
+        "text-anchor": "middle",
+        "font-size": 16,
+        "font-weight": 700,
+        fill: options.textColor || "#ffffff"
+      }, svg);
+      text.textContent = label;
+      return { x1, x2 };
+    }
+
+    function bandpassPath(x1, x2, y, shoulder = 24, height = 36) {
+      return [
+        `M ${x1 - shoulder} ${y}`,
+        `Q ${x1 - shoulder * 0.35} ${y} ${x1 - 8} ${y - height + 8}`,
+        `Q ${x1 - 2} ${y - height} ${x1 + 10} ${y - height}`,
+        `L ${x2 - 10} ${y - height}`,
+        `Q ${x2 + 2} ${y - height} ${x2 + 8} ${y - height + 8}`,
+        `Q ${x2 + shoulder * 0.35} ${y} ${x2 + shoulder} ${y}`
+      ].join(" ");
+    }
+
+    function drawBandpass(svg, y, min, max, left, width, bandLow, bandHigh, color, label, options = {}) {
+      const x1 = xScale(bandLow, min, max, left, width);
+      const x2 = xScale(bandHigh, min, max, left, width);
+      addSvg("path", {
+        d: bandpassPath(x1, x2, y, options.shoulder || 28, options.height || 40),
+        fill: options.fill || "none",
+        stroke: color,
+        "stroke-width": options.strokeWidth || 3
+      }, svg);
+      const text = addSvg("text", {
+        x: (x1 + x2) / 2,
+        y: y - (options.height || 40) - 8,
+        "text-anchor": "middle",
+        "font-size": 15,
+        fill: options.textColor || color
+      }, svg);
+      text.textContent = label;
+      return { x1, x2 };
+    }
+
+    function drawVerticalWindow(svg, x1, x2, top, bottom, color, label, dashed = true) {
+      [x1, x2].forEach((x) => {
+        addSvg("line", {
+          x1: x,
+          y1: top,
+          x2: x,
+          y2: bottom,
+          stroke: color,
+          "stroke-width": 2,
+          "stroke-dasharray": dashed ? "10 7" : "none"
+        }, svg);
+      });
+      if (label) {
+        const text = addSvg("text", {
+          x: (x1 + x2) / 2,
+          y: top + 20,
+          "text-anchor": "middle",
+          "font-size": 16,
+          fill: color
+        }, svg);
+        text.textContent = label;
+      }
+    }
+
+    function drawLoMarker(svg, x, axisY, label, options = {}) {
+      const stemTop = axisY + (options.offsetTop || 52);
+      const stemBottom = axisY + (options.offsetBottom || 18);
+      addSvg("line", {
+        x1: x,
+        y1: stemTop,
+        x2: x,
+        y2: stemBottom,
+        stroke: options.color || colors.ink,
+        "stroke-width": 2
+      }, svg);
+      addSvg("path", {
+        d: `M ${x - 7} ${stemBottom} L ${x + 7} ${stemBottom} L ${x} ${stemBottom - 14} z`,
+        fill: options.color || colors.ink
+      }, svg);
+      const text = addSvg("text", {
+        x,
+        y: stemTop + 24,
+        "text-anchor": "middle",
+        "font-size": 16,
+        "font-weight": 700,
+        fill: options.color || colors.ink
+      }, svg);
+      text.textContent = label;
+    }
+
+    function drawArrow(svg, x1, y1, x2, y2, color, label) {
+      addSvg("line", {
+        x1,
+        y1,
+        x2,
+        y2,
+        stroke: color,
+        "stroke-width": 3,
+        "marker-end": "url(#arrowhead)"
+      }, svg);
+      const text = addSvg("text", {
+        x: (x1 + x2) / 2,
+        y: (y1 + y2) / 2 - 8,
+        "text-anchor": "middle",
+        "font-size": 15,
+        "font-weight": 700,
+        fill: color
+      }, svg);
+      text.textContent = label;
+    }
+
+    function defineArrow(svg) {
+      const defs = addSvg("defs", {}, svg);
+      const marker = addSvg("marker", {
+        id: "arrowhead",
+        markerWidth: 8,
+        markerHeight: 8,
+        refX: 7,
+        refY: 4,
+        orient: "auto"
+      }, defs);
+      addSvg("path", { d: "M0,0 L8,4 L0,8 z", fill: colors.ink }, marker);
+    }
+
+    // ── Colormap: turbo_r (reversed, 5%-clipped) ────────────────────────
+    // t=0 → dark red (low RF freq), t=1 → blue-violet (high RF freq)
+    function parularColor(t) {
+      t = Math.max(0, Math.min(1, t));
+      const stops = [
+        [0.000, [152,  18,   7]],
+        [0.167, [227,  78,  14]],
+        [0.333, [238, 181,  22]],
+        [0.500, [142, 247,  85]],
+        [0.667, [ 28, 204, 189]],
+        [0.833, [ 22, 160, 245]],
+        [1.000, [ 56,  52, 119]]
+      ];
+      let i = 0;
+      while (i < stops.length - 2 && t > stops[i + 1][0]) i++;
+      const [t0, c0] = stops[i], [t1, c1] = stops[i + 1];
+      const u = (t1 > t0) ? (t - t0) / (t1 - t0) : 0;
+      return `rgb(${Math.round(c0[0]+u*(c1[0]-c0[0]))},${Math.round(c0[1]+u*(c1[1]-c0[1]))},${Math.round(c0[2]+u*(c1[2]-c0[2]))})`;
+    }
+    function rfToParula(fRF, fMin = 1, fMax = 18) {
+      return parularColor((fRF - fMin) / (fMax - fMin));
+    }
+    // ── end Colormap ─────────────────────────────────────────────────────
+
+    function ensureStage1Gradients(svg, rfMin, rfMax, mixMin, mixMax, left, width, lo1) {
+      const defs = addSvg("defs", {}, svg);
+
+      const rfGradient = addSvg("linearGradient", {
+        id: "stage1-rf-gradient",
+        x1: xScale(rfMin, rfMin, rfMax, left, width),
+        y1: 0,
+        x2: xScale(rfMax, rfMin, rfMax, left, width),
+        y2: 0,
+        gradientUnits: "userSpaceOnUse"
+      }, defs);
+      // parula_r: low RF (1 GHz) = yellow → high RF (18 GHz) = blue-violet
+      [
+        ["0%",   parularColor(0.000)],
+        ["17%",  parularColor(0.167)],
+        ["33%",  parularColor(0.333)],
+        ["50%",  parularColor(0.500)],
+        ["67%",  parularColor(0.667)],
+        ["83%",  parularColor(0.833)],
+        ["100%", parularColor(1.000)]
+      ].forEach(([offset, color]) => {
+        addSvg("stop", { offset, "stop-color": color }, rfGradient);
+      });
+
+      const mixGradient = addSvg("linearGradient", {
+        id: "stage1-mix-gradient",
+        x1: xScale(lo1 - rfMax, mixMin, mixMax, left, width),
+        y1: 0,
+        x2: xScale(lo1 - rfMin, mixMin, mixMax, left, width),
+        y2: 0,
+        gradientUnits: "userSpaceOnUse"
+      }, defs);
+      // parula_r reversed for mix output (high-side LO inverts spectrum)
+      [
+        ["0%",   parularColor(1.000)],
+        ["17%",  parularColor(0.833)],
+        ["33%",  parularColor(0.667)],
+        ["50%",  parularColor(0.500)],
+        ["67%",  parularColor(0.333)],
+        ["83%",  parularColor(0.167)],
+        ["100%", parularColor(0.000)]
+      ].forEach(([offset, color]) => {
+        addSvg("stop", { offset, "stop-color": color }, mixGradient);
+      });
+    }
+
+    function renderKnob(slot) {
+      clearSvg(knobSvg);
+      const angle = slotToAngle(slot);
+      const { cx, cy, radius, startAngle, endAngle } = knobConfig;
+
+      addSvg("path", {
+        d: describeArc(cx, cy, radius + 10, startAngle, endAngle),
+        fill: "none",
+        stroke: "rgba(32, 37, 45, 0.12)",
+        "stroke-width": 8,
+        "stroke-linecap": "round"
+      }, knobSvg);
+
+      addSvg("path", {
+        d: describeArc(cx, cy, radius + 10, startAngle, angle),
+        fill: "none",
+        stroke: colors.rf,
+        "stroke-width": 8,
+        "stroke-linecap": "round"
+      }, knobSvg);
+
+      const maxSlot = Number(rfSlider.max);
+      for (let i = 0; i <= maxSlot; i += 1) {
+        const tickAngle = slotToAngle(i);
+        const inner = polar(cx, cy, radius + 18, tickAngle);
+        const outer = polar(cx, cy, radius + (i % 2 === 0 ? 28 : 24), tickAngle);
+        addSvg("line", {
+          x1: inner.x,
+          y1: inner.y,
+          x2: outer.x,
+          y2: outer.y,
+          stroke: i === slot ? colors.rf : "rgba(32, 37, 45, 0.22)",
+          "stroke-width": i === slot ? 2.6 : 1.3,
+          "stroke-linecap": "round"
+        }, knobSvg);
+      }
+
+      addSvg("circle", {
+        cx,
+        cy,
+        r: radius,
+        fill: "rgba(255,255,255,0.08)",
+        stroke: "rgba(95, 60, 22, 0.18)",
+        "stroke-width": 1.2
+      }, knobSvg);
+
+      addSvg("circle", {
+        cx,
+        cy,
+        r: 44,
+        fill: "rgba(255,248,238,0.28)",
+        stroke: "rgba(255,255,255,0.3)",
+        "stroke-width": 1
+      }, knobSvg);
+
+      const pointer = polar(cx, cy, radius - 14, angle);
+      addSvg("line", {
+        x1: cx,
+        y1: cy,
+        x2: pointer.x,
+        y2: pointer.y,
+        stroke: colors.ink,
+        "stroke-width": 6,
+        "stroke-linecap": "round"
+      }, knobSvg);
+
+      addSvg("circle", {
+        cx,
+        cy,
+        r: 10,
+        fill: colors.ink
+      }, knobSvg);
+
+      const label = addSvg("text", {
+        x: cx,
+        y: cy + 46,
+        "text-anchor": "middle",
+        "font-size": 14,
+        "font-weight": 700,
+        fill: colors.ink
+      }, knobSvg);
+      label.textContent = `BAND ${slot + 1}`;
+    }
+
+    function knobAngleFromPointer(event) {
+      const rect = knobShell.getBoundingClientRect();
+      const x = event.clientX - rect.left - rect.width / 2;
+      const y = event.clientY - rect.top - rect.height / 2;
+      const raw = Math.atan2(y, x) * 180 / Math.PI + 90;
+      if (raw < -180) {
+        return raw + 360;
+      }
+      if (raw > 180) {
+        return raw - 360;
+      }
+      return raw;
+    }
+
+    function updateSlot(nextSlot) {
+      const clamped = Math.max(0, Math.min(Number(rfSlider.max), nextSlot));
+      rfSlider.value = clamped;
+      render();
+    }
+
+    function stage1(state) {
+      clearSvg(stage1Svg);
+      const left = 76;
+      const width = 768;
+      const rfAxisY = 104;
+      const mixAxisY = 274;
+      const rfMin = 1;
+      const rfMax = 18;
+      const mixMin = 0;
+      const mixMax = 40;
+      const filterLow = state.filterLow;
+      const filterHigh = state.filterHigh;
+      const rfLowX = xScale(state.rfLow, rfMin, rfMax, left, width);
+      const rfHighX = xScale(state.rfHigh, rfMin, rfMax, left, width);
+      const mixBandLow = state.lo1 - 18;
+      const mixBandHigh = state.lo1 - 1;
+      const filterLowX = xScale(filterLow, mixMin, mixMax, left, width);
+      const filterHighX = xScale(filterHigh, mixMin, mixMax, left, width);
+      const selectedLowInMix = state.lo1 - state.rfHigh;
+      const selectedHighInMix = state.lo1 - state.rfLow;
+      const selectedRfCenterX = (rfLowX + rfHighX) / 2;
+      const selectedLowInMixX = xScale(selectedLowInMix, mixMin, mixMax, left, width);
+      const selectedHighInMixX = xScale(selectedHighInMix, mixMin, mixMax, left, width);
+      const selectedMixCenterX = (selectedLowInMixX + selectedHighInMixX) / 2;
+
+      ensureStage1Gradients(stage1Svg, rfMin, rfMax, mixMin, mixMax, left, width, state.lo1);
+
+      drawAxis(stage1Svg, rfAxisY, rfMin, rfMax, left, width, [1, 5, 9, 13, 18], " GHz");
+      drawAxis(stage1Svg, mixAxisY, mixMin, mixMax, left, width, [0, 5, 10, 15, 20, 25, 30, 35, 40], " GHz");
+
+      const rfText = addSvg("text", {
+        x: left - 10,
+        y: 36,
+        "font-size": 15,
+        "font-weight": 600,
+        fill: colors.muted
+      }, stage1Svg);
+      rfText.textContent = "RF input (1–18 GHz)";
+
+      const mixText = addSvg("text", {
+        x: left - 10,
+        y: 192,
+        "font-size": 15,
+        "font-weight": 600,
+        fill: colors.muted
+      }, stage1Svg);
+      mixText.textContent = "After mixing with LO₁";
+
+      drawBandpass(stage1Svg, rfAxisY, rfMin, rfMax, left, width, 1, 18, "url(#stage1-rf-gradient)", "1-18 GHz RF", {
+        textColor: colors.ink
+      });
+      drawBand(stage1Svg, rfAxisY, rfMin, rfMax, left, width, state.rfLow, state.rfHigh, colors.dig, "", {
+        opacity: 0.52,
+        textColor: colors.ink
+      });
+      // Transparent drag handle over the RF slice
+      const _rfDragHandle = addSvg("rect", {
+        x: rfLowX - 6, y: rfAxisY - 24,
+        width: Math.max(rfHighX - rfLowX + 12, 24), height: 48,
+        rx: 13, fill: "transparent", cursor: "grab", style: "touch-action:none"
+      }, stage1Svg);
+      _rfDragHandle.addEventListener("pointerdown", (e) => {
+        rfDrag = true; e.preventDefault();
+      });
+
+      drawBandpass(stage1Svg, mixAxisY, mixMin, mixMax, left, width, mixBandLow, mixBandHigh, "url(#stage1-mix-gradient)", "");
+      drawBand(stage1Svg, mixAxisY, mixMin, mixMax, left, width, selectedLowInMix, selectedHighInMix, colors.dig, "", {
+        opacity: 0.52,
+        textColor: colors.ink
+      });
+      // Shaded filter passband region
+      addSvg("rect", {
+        x: filterLowX,
+        y: mixAxisY - 62,
+        width: filterHighX - filterLowX,
+        height: 96,
+        fill: "#f59e0b",
+        opacity: 0.18
+      }, stage1Svg);
+      drawVerticalWindow(
+        stage1Svg,
+        filterLowX,
+        filterHighX,
+        mixAxisY - 62,
+        mixAxisY + 34,
+        colors.warn,
+        ""
+      );
+
+      // X-crossing dashed lines: show that low RF → high IF and high RF → low IF (mirror inversion)
+      addSvg("line", {
+        x1: rfLowX, y1: rfAxisY + 8,
+        x2: selectedHighInMixX, y2: mixAxisY - 8,
+        stroke: colors.dig,
+        "stroke-width": 1.5,
+        "stroke-dasharray": "5 4",
+        opacity: 0.55
+      }, stage1Svg);
+      addSvg("line", {
+        x1: rfHighX, y1: rfAxisY + 8,
+        x2: selectedLowInMixX, y2: mixAxisY - 8,
+        stroke: colors.dig,
+        "stroke-width": 1.5,
+        "stroke-dasharray": "5 4",
+        opacity: 0.55
+      }, stage1Svg);
+
+      // Bracket ticks at slot edges to mark the selection
+      [rfLowX, rfHighX].forEach(x => {
+        addSvg("line", { x1: x, y1: rfAxisY - 28, x2: x, y2: rfAxisY - 6,
+          stroke: colors.dig, "stroke-width": 2 }, stage1Svg);
+      });
+
+      const rfBandText = addSvg("text", {
+        x: selectedRfCenterX,
+        y: rfAxisY + 42,
+        "text-anchor": "middle",
+        "font-size": 14,
+        "font-weight": 700,
+        fill: colors.dig
+      }, stage1Svg);
+      rfBandText.textContent = `${fmtFreq(state.rfLow)}–${fmtFreq(state.rfHigh)} GHz`;
+
+      const loMarkerX = xScale(state.lo1, mixMin, mixMax, left, width);
+      drawLoMarker(stage1Svg, loMarkerX, mixAxisY, `LO1 = ${state.lo1.toFixed(1)} GHz`, {
+        color: colors.mix2,
+        offsetTop: 52,
+        offsetBottom: 20
+      });
+
+      const filterLabel = addSvg("text", {
+        x: (filterLowX + filterHighX) / 2,
+        y: mixAxisY - 70,
+        "text-anchor": "middle",
+        "font-size": 14,
+        fill: colors.ink
+      }, stage1Svg);
+      filterLabel.textContent = `${fmtFreq(filterLow)}-${fmtFreq(filterHigh)} GHz Filter`;
+
+      const invertedBandLabel = addSvg("text", {
+        x: xScale((mixBandLow + mixBandHigh) / 2, mixMin, mixMax, left, width),
+        y: mixAxisY - 48,
+        "text-anchor": "middle",
+        "font-size": 13,
+        fill: colors.ink
+      }, stage1Svg);
+      invertedBandLabel.textContent = "Inverted 18-1 GHz RF";
+
+      const mappedBandLabel = addSvg("text", {
+        x: selectedMixCenterX,
+        y: mixAxisY + 48,
+        "text-anchor": "middle",
+        "font-size": 13,
+        "font-weight": 700,
+        fill: colors.ink
+      }, stage1Svg);
+      mappedBandLabel.textContent = `${fmtFreq(state.rfHigh)}-${fmtFreq(state.rfLow)} GHz (inverted)`;
+
+      const relation = addSvg("text", {
+        x: left + 8,
+        y: 462,
+        "text-anchor": "start",
+        "font-size": 14,
+        fill: colors.muted
+      }, stage1Svg);
+      relation.textContent = `Selected RF = LO1 - ${fmtFreq(filterHigh)} to LO1 - ${fmtFreq(filterLow)} GHz = ${fmtFreq(state.rfLow)}-${fmtFreq(state.rfHigh)} GHz`;
+    }
+
+    function stage2(state) {
+      clearSvg(stage2Svg);
+      defineArrow(stage2Svg);
+      const left = 76, width = 768;
+      const topY = 104, botY = 274;
+      const LO2 = 21.15;
+      const { filterLow, filterHigh, if2Low, if2High, rfLow, rfHigh, lo1 } = state;
+      const bandMHz = Math.round((filterHigh - filterLow) * 1000);
+      const pad = bandMHz * 0.8;
+
+      // Both axes use same ±pad around the band → same scale
+      const tMin = Math.min(filterLow - pad / 1000, LO2 - 1.0);
+      const tMax = Math.max(filterHigh + pad / 1000, LO2 + 0.15);
+      const bMin = if2Low - pad;
+      const bMax = if2High + pad;
+
+      // Gradients
+      const defs = addSvg("defs", {}, stage2Svg);
+      const gx1 = xScale(filterLow, tMin, tMax, left, width);
+      const gx2 = xScale(filterHigh, tMin, tMax, left, width);
+
+      // Top gradient: INVERTED (high RF at filterLow, low RF at filterHigh)
+      const topGrad = addSvg("linearGradient", {
+        id: "s2-top", x1: gx1, y1: 0, x2: gx2, y2: 0, gradientUnits: "userSpaceOnUse"
+      }, defs);
+      [[0, rfHigh], [0.25, rfHigh - 0.25*(rfHigh-rfLow)], [0.5, (rfLow+rfHigh)/2],
+       [0.75, rfLow + 0.25*(rfHigh-rfLow)], [1, rfLow]].forEach(([t, f]) =>
+        addSvg("stop", { offset: `${Math.round(t*100)}%`, "stop-color": rfToParula(f) }, topGrad));
+
+      // Bottom gradient: DIRECT (low RF at if2Low, high RF at if2High)
+      const bx1 = xScale(if2Low, bMin, bMax, left, width);
+      const bx2 = xScale(if2High, bMin, bMax, left, width);
+      const botGrad = addSvg("linearGradient", {
+        id: "s2-bot", x1: bx1, y1: 0, x2: bx2, y2: 0, gradientUnits: "userSpaceOnUse"
+      }, defs);
+      [[0, rfLow], [0.25, rfLow + 0.25*(rfHigh-rfLow)], [0.5, (rfLow+rfHigh)/2],
+       [0.75, rfHigh - 0.25*(rfHigh-rfLow)], [1, rfHigh]].forEach(([t, f]) =>
+        addSvg("stop", { offset: `${Math.round(t*100)}%`, "stop-color": rfToParula(f) }, botGrad));
+
+      // Section labels
+      const topLbl = addSvg("text", { x: left - 10, y: 36, "font-size": 15, "font-weight": 600, fill: colors.muted }, stage2Svg);
+      topLbl.textContent = "High IF — inverted RF spectrum";
+      const botLbl = addSvg("text", { x: left - 10, y: 192, "font-size": 15, "font-weight": 600, fill: colors.muted }, stage2Svg);
+      botLbl.textContent = "Second IF — direct RF spectrum restored";
+
+      // GHz axis ticks for top: band edges only (center label would crowd the narrow band)
+      drawAxis(stage2Svg, topY, tMin, tMax, left, width, [filterLow, filterHigh], " GHz");
+
+      // MHz axis ticks for bottom: band edges only
+      drawAxis(stage2Svg, botY, bMin, bMax, left, width, [if2Low, if2High], " MHz");
+
+      // High IF bandpass (inverted gradient)
+      drawBandpass(stage2Svg, topY, tMin, tMax, left, width, filterLow, filterHigh,
+        "url(#s2-top)", `${fmtFreq(filterLow)}–${fmtFreq(filterHigh)} GHz`,
+        { fill: "rgba(255,255,255,0.08)", textColor: colors.ink });
+      // Inverted RF labels at top-plot band edges (high RF on left, low RF on right)
+      // RF freq labels shifted inward from band edges so they don't stack on tick labels
+      const rfLblTop1 = addSvg("text", { x: gx1 + 14, y: topY - 16, "text-anchor": "start",
+        "font-size": 13, fill: rfToParula(rfHigh) }, stage2Svg);
+      rfLblTop1.textContent = `${fmtFreq(rfHigh)} GHz`;
+      const rfLblTop2 = addSvg("text", { x: gx2 - 14, y: topY - 16, "text-anchor": "end",
+        "font-size": 13, fill: rfToParula(rfLow) }, stage2Svg);
+      rfLblTop2.textContent = `${fmtFreq(rfLow)} GHz`;
+
+      // IF filter bracket on bottom axis (mode-dependent lower bound, no center label)
+      const ifFilterLow = if2Low === 825 ? 775 : 600;
+      const xIfFiltL = xScale(ifFilterLow, bMin, bMax, left, width);
+      const xIfFiltH = xScale(1200, bMin, bMax, left, width);
+      drawVerticalWindow(stage2Svg, xIfFiltL, xIfFiltH, botY - 70, botY + 38, colors.warn, "");
+      // RF freq label next to each bracket line
+      const rfBotFiltL = addSvg("text", { x: xIfFiltL, y: botY + 56, "text-anchor": "middle",
+        "font-size": 13, fill: colors.warn }, stage2Svg);
+      rfBotFiltL.textContent = `${fmtFreq(ifFilterLow / 1000 + lo1 - LO2)} GHz`;
+      const rfBotFiltH = addSvg("text", { x: xIfFiltH, y: botY + 56, "text-anchor": "middle",
+        "font-size": 13, fill: colors.warn }, stage2Svg);
+      rfBotFiltH.textContent = `${fmtFreq(1.2 + lo1 - LO2)} GHz`;
+
+      // Second IF bandpass (direct gradient)
+      drawBandpass(stage2Svg, botY, bMin, bMax, left, width, if2Low, if2High,
+        "url(#s2-bot)", `${if2Low}–${if2High} MHz`,
+        { fill: "rgba(255,255,255,0.08)", textColor: colors.ink });
+
+      // Cross-over lines (filterLow ↔ if2High, filterHigh ↔ if2Low) showing mirror
+      const xTL = xScale(filterLow, tMin, tMax, left, width);
+      const xTH = xScale(filterHigh, tMin, tMax, left, width);
+      const xBL = xScale(if2Low, bMin, bMax, left, width);
+      const xBH = xScale(if2High, bMin, bMax, left, width);
+      // filterLow (high RF color) ↔ if2High (high RF color)
+      addSvg("line", { x1: xTL, y1: topY + 8, x2: xBH, y2: botY - 8,
+        stroke: rfToParula(rfHigh), "stroke-width": 1.5, "stroke-dasharray": "5 4", opacity: 0.6 }, stage2Svg);
+      // filterHigh (low RF color) ↔ if2Low (low RF color)
+      addSvg("line", { x1: xTH, y1: topY + 8, x2: xBL, y2: botY - 8,
+        stroke: rfToParula(rfLow), "stroke-width": 1.5, "stroke-dasharray": "5 4", opacity: 0.6 }, stage2Svg);
+
+      // LO2 marker
+      const xLO2 = xScale(LO2, tMin, tMax, left, width);
+      if (xLO2 >= left && xLO2 <= left + width) {
+        addSvg("line", { x1: xLO2, y1: topY + 14, x2: xLO2, y2: topY + 52,
+          stroke: colors.ink, "stroke-width": 1.8, "stroke-dasharray": "6 4" }, stage2Svg);
+        addSvg("path", { d: `M ${xLO2-6} ${topY+14} L ${xLO2+6} ${topY+14} L ${xLO2} ${topY+3} z`,
+          fill: colors.ink }, stage2Svg);
+        const loTxt = addSvg("text", { x: xLO2, y: topY + 68, "text-anchor": "middle",
+          "font-size": 14, "font-weight": 700, fill: colors.ink }, stage2Svg);
+        loTxt.textContent = "LO₂ = 21.15 GHz";
+      }
+
+      // Footer note
+      const note = addSvg("text", { x: left + width - 8, y: 462, "text-anchor": "end",
+        "font-size": 14, fill: colors.muted }, stage2Svg);
+      note.textContent = "\u2192 Second mirror restores direct RF ordering \u2014 independent of digitizer clock";
+
+      // ── Bottom annotation: RF slot + LO chain ─────────────────────────
+      const rfMidColor = rfToParula((rfLow + rfHigh) / 2);
+      const aY = 405;
+      const rfTag = addSvg("text", { x: left, y: aY, "font-size": 15, "font-weight": 700,
+        fill: rfMidColor }, stage2Svg);
+      rfTag.textContent = `RF: ${fmtFreq(rfLow)}–${fmtFreq(rfHigh)} GHz`;
+
+      const lo1Tag = addSvg("text", { x: left + 300, y: aY, "font-size": 15,
+        fill: colors.ink }, stage2Svg);
+      lo1Tag.textContent = `LO\u2081 = ${fmtFreq(lo1)} GHz`;
+
+      const lo2Tag = addSvg("text", { x: left + 580, y: aY, "font-size": 15,
+        fill: colors.ink }, stage2Svg);
+      lo2Tag.textContent = `LO\u2082 = 21.15 GHz (fixed)`;
+
+      const chainAnno = addSvg("text", { x: left, y: aY + 28, "font-size": 13,
+        fill: colors.muted }, stage2Svg);
+      chainAnno.textContent = `${fmtFreq(rfLow)}–${fmtFreq(rfHigh)} GHz  \u2192  ${fmtFreq(filterLow)}–${fmtFreq(filterHigh)} GHz (high IF)  \u2192  ${if2Low}–${if2High} MHz (second IF)`;
+    }
+
+    function stage3(state) {
+      clearSvg(stage3Svg);
+      defineArrow(stage3Svg);
+      const left = 76, width = 768;
+      const topY = 104, botY = 274;
+      const clock = 1200;
+      const { if2Low, if2High, rfLow, rfHigh, lo1, filterLow, filterHigh } = state;
+      const bandMHz = if2High - if2Low;
+      const pad = bandMHz * 0.8;
+
+      const tMin = if2Low - pad, tMax = if2High + pad;
+
+      // Top axis: second IF — band edges only to avoid tick label crowding
+      drawAxis(stage3Svg, topY, tMin, tMax, left, width, [if2Low, if2High], " MHz");
+
+      // Top gradient: DIRECT (low RF at if2Low, high RF at if2High)
+      const defs = addSvg("defs", {}, stage3Svg);
+      const tx1 = xScale(if2Low, tMin, tMax, left, width);
+      const tx2 = xScale(if2High, tMin, tMax, left, width);
+      const topGrad = addSvg("linearGradient", {
+        id: "s3-top", x1: tx1, y1: 0, x2: tx2, y2: 0, gradientUnits: "userSpaceOnUse"
+      }, defs);
+      [[0, rfLow], [0.25, rfLow+0.25*(rfHigh-rfLow)], [0.5, (rfLow+rfHigh)/2],
+       [0.75, rfHigh-0.25*(rfHigh-rfLow)], [1, rfHigh]].forEach(([t, f]) =>
+        addSvg("stop", { offset: `${Math.round(t*100)}%`, "stop-color": rfToParula(f) }, topGrad));
+
+      drawBandpass(stage3Svg, topY, tMin, tMax, left, width, if2Low, if2High,
+        "url(#s3-top)", `${if2Low}–${if2High} MHz`,
+        { fill: "rgba(255,255,255,0.08)", textColor: colors.ink });
+
+      // Section labels
+      const topLbl = addSvg("text", { x: left - 10, y: 36, "font-size": 15, "font-weight": 600, fill: colors.muted }, stage3Svg);
+      topLbl.textContent = "Second IF entering the digitizer";
+      const botLbl = addSvg("text", { x: left - 10, y: 192, "font-size": 15, "font-weight": 600, fill: colors.muted }, stage3Svg);
+
+      const digLow = clock - if2High;
+      const digHigh = clock - if2Low;
+      const bMin = digLow - pad, bMax = digHigh + pad;
+      drawAxis(stage3Svg, botY, bMin, bMax, left, width, [digLow, digHigh], " MHz");
+
+      // Bottom gradient: INVERTED (high RF at digLow, low RF at digHigh — third mirror inverts again)
+      const bx1 = xScale(digLow, bMin, bMax, left, width);
+      const bx2 = xScale(digHigh, bMin, bMax, left, width);
+      const botGrad = addSvg("linearGradient", {
+        id: "s3-bot", x1: bx1, y1: 0, x2: bx2, y2: 0, gradientUnits: "userSpaceOnUse"
+      }, defs);
+      [[0, rfHigh], [0.25, rfHigh-0.25*(rfHigh-rfLow)], [0.5, (rfLow+rfHigh)/2],
+       [0.75, rfLow+0.25*(rfHigh-rfLow)], [1, rfLow]].forEach(([t, f]) =>
+        addSvg("stop", { offset: `${Math.round(t*100)}%`, "stop-color": rfToParula(f) }, botGrad));
+
+      drawBandpass(stage3Svg, botY, bMin, bMax, left, width, digLow, digHigh,
+        "url(#s3-bot)", `${digLow}–${digHigh} MHz`,
+        { fill: "rgba(255,255,255,0.08)", textColor: colors.ink });
+      const xDigL = xScale(digLow, bMin, bMax, left, width);
+      const xDigH = xScale(digHigh, bMin, bMax, left, width);
+      drawVerticalWindow(stage3Svg, xDigL, xDigH, botY - 62, botY + 50, colors.dig, "", false);
+      // "Clean band" label to the right of the bracket
+      const cleanLbl = addSvg("text", { x: xDigH + 12, y: botY - 50, "text-anchor": "start",
+        "font-size": 14, "font-weight": 700, fill: colors.dig }, stage3Svg);
+      cleanLbl.textContent = "Clean band";
+      // RF labels next to bracket lines (inverted: digLow↔rfHigh, digHigh↔rfLow)
+      const rfAtDigL = addSvg("text", { x: xDigL, y: botY + 80, "text-anchor": "middle",
+        "font-size": 13, fill: rfToParula(rfHigh) }, stage3Svg);
+      rfAtDigL.textContent = `${fmtFreq(rfHigh)} GHz`;
+      const rfAtDigH = addSvg("text", { x: xDigH, y: botY + 80, "text-anchor": "middle",
+        "font-size": 13, fill: rfToParula(rfLow) }, stage3Svg);
+      rfAtDigH.textContent = `${fmtFreq(rfLow)} GHz`;
+
+      // Cross-over lines (if2Low ↔ digHigh, if2High ↔ digLow — third mirror inverts)
+      addSvg("line", {
+        x1: xScale(if2Low, tMin, tMax, left, width), y1: topY + 8,
+        x2: xScale(digHigh, bMin, bMax, left, width), y2: botY - 8,
+        stroke: rfToParula(rfLow), "stroke-width": 1.5, "stroke-dasharray": "5 4", opacity: 0.6
+      }, stage3Svg);
+      addSvg("line", {
+        x1: xScale(if2High, tMin, tMax, left, width), y1: topY + 8,
+        x2: xScale(digLow, bMin, bMax, left, width), y2: botY - 8,
+        stroke: rfToParula(rfHigh), "stroke-width": 1.5, "stroke-dasharray": "5 4", opacity: 0.6
+      }, stage3Svg);
+
+      botLbl.textContent = `Digitized band (${digLow}–${digHigh} MHz) — mirror about 1200 MHz`;
+
+      const note = addSvg("text", { x: left + width - 8, y: 462, "text-anchor": "end",
+        "font-size": 14, fill: colors.muted }, stage3Svg);
+      note.textContent = "\u2192 Third mirror: final digital order is inverted relative to RF";
+
+      // ── Bottom annotation: RF slot + LO chain ─────────────────────────
+      const rfMidColor = rfToParula((rfLow + rfHigh) / 2);
+      const aY = 405;
+      const rfTag = addSvg("text", { x: left, y: aY, "font-size": 15, "font-weight": 700,
+        fill: rfMidColor }, stage3Svg);
+      rfTag.textContent = `RF: ${fmtFreq(rfLow)}–${fmtFreq(rfHigh)} GHz`;
+
+      const lo1Tag = addSvg("text", { x: left + 300, y: aY, "font-size": 15,
+        fill: colors.ink }, stage3Svg);
+      lo1Tag.textContent = `LO\u2081 = ${fmtFreq(lo1)} GHz`;
+
+      const lo2Tag = addSvg("text", { x: left + 580, y: aY, "font-size": 15,
+        fill: colors.ink }, stage3Svg);
+      lo2Tag.textContent = `LO\u2082 = 21.15 GHz  |  Clock = ${clock} MHz`;
+
+      const chainAnno = addSvg("text", { x: left, y: aY + 28, "font-size": 13,
+        fill: colors.muted }, stage3Svg);
+      chainAnno.textContent = `${fmtFreq(rfLow)}–${fmtFreq(rfHigh)} GHz  \u2192  ${fmtFreq(filterLow)}–${fmtFreq(filterHigh)} GHz  \u2192  ${if2Low}–${if2High} MHz  \u2192  digitized`;
+    }
+
+    // ── Mixer Math ──────────────────────────────────────────────────────
+    (function () {
+      const timeCanvas = document.getElementById('mixerTimeCanvas');
+      const freqCanvas = document.getElementById('mixerFreqCanvas');
+      const loSliderM  = document.getElementById('mixerLoSlider');
+      const loValEl    = document.getElementById('mixerLoVal');
+      const legendEl   = document.getElementById('mixerRfLegend');
+
+      const RF_FREQS = [1, 9, 18]; // fixed representative RF tones (GHz)
+      const RF_MIN = 1, RF_MAX = 18;
+      const C_LO   = 'rgba(110,118,128,0.9)'; // gray for LO
+      const C_AXIS = '#bbc3cd';
+      const FONT   = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif';
+
+      // Build legend badges (colors refreshed on each renderMixer call)
+      const legendBadges = RF_FREQS.map(f => {
+        const span = document.createElement('span');
+        span.className = 'mixer-rf-badge';
+        span.textContent = `${f} GHz`;
+        legendEl.appendChild(span);
+        return { span, f };
+      });
+
+      function updateLegendBadges() {
+        legendBadges.forEach(({ span, f }) => {
+          span.style.background = rfToParula(f, RF_MIN, RF_MAX);
+        });
+      }
+
+
+      function dprSetup(canvas) {
+        const dpr = window.devicePixelRatio || 1;
+        const W = canvas.offsetWidth, H = canvas.offsetHeight;
+        canvas.width  = W * dpr;  canvas.height = H * dpr;
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return { ctx, W, H };
+      }
+
+      // ── Time domain ───────────────────────────────────────────────────
+      // All rows share one time window T = 10/fLO so the carrier density
+      // is consistent across LO, RF, and product rows.
+      //   • LO row:     shows 10 clean carrier cycles
+      //   • RF row:     shows slow RF sinusoid over the same window
+      //   • ×LO row:    shows AM product — carrier at fLO, envelope at fRF
+      function drawMixerTime(fLO) {
+        const { ctx, W, H } = dprSetup(timeCanvas);
+        ctx.clearRect(0, 0, W, H);
+
+        const T_shared = 10 / fLO; // same time window for every row
+        const rows = [
+          { label: 'LO', sub: `${fLO.toFixed(1)} GHz`, color: C_LO,
+            T: T_shared, fn: t => Math.cos(2 * Math.PI * fLO * t),
+            product: false, dividerAfter: true }
+        ];
+        RF_FREQS.forEach(fRF => {
+          const color = rfToParula(fRF, RF_MIN, RF_MAX);
+          const fIF   = Math.abs(fLO - fRF);
+          rows.push({
+            label: `RF ${fRF}`, sub: `${fRF} GHz`, color, T: T_shared,
+            fn: t => Math.cos(2 * Math.PI * fRF * t),
+            product: false, dividerAfter: false
+          });
+          rows.push({
+            label: '\u00D7LO', sub: `IF ${fIF.toFixed(1)} GHz`, color, T: T_shared,
+            fn: t => Math.cos(2 * Math.PI * fRF * t) * Math.cos(2 * Math.PI * fLO * t),
+            product: true, fIF, dividerAfter: true
+          });
+        });
+        rows[rows.length - 1].dividerAfter = false;
+
+        const PAD_L = 72, PAD_R = 8, PAD_T = 6, PAD_B = 4;
+        const plotW = W - PAD_L - PAD_R;
+        const rowH  = (H - PAD_T - PAD_B) / rows.length;
+
+        rows.forEach((row, i) => {
+          const yOff = PAD_T + i * rowH;
+          const yMid = yOff + rowH * 0.5;
+          const amp  = rowH * 0.32;
+          // Use more samples for dense high-freq carriers in product rows
+          const N = Math.min(plotW * 4, 3000);
+
+          // Zero axis
+          ctx.strokeStyle = 'rgba(180,190,200,0.35)';
+          ctx.lineWidth = 0.6;
+          ctx.beginPath(); ctx.moveTo(PAD_L, yMid); ctx.lineTo(PAD_L + plotW, yMid); ctx.stroke();
+
+          // Waveform
+          ctx.strokeStyle = row.color;
+          ctx.lineWidth = row.product ? 1.2 : 1.5;
+          if (row.product) ctx.globalAlpha = 0.82;
+          ctx.beginPath();
+          for (let k = 0; k <= N; k++) {
+            const t = (k / N) * row.T;
+            const x = PAD_L + (k / N) * plotW;
+            const y = yMid - amp * row.fn(t);
+            k === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+
+          // For product rows: draw the IF component ±cos(2π·fIF·t) as dashed overlay.
+          // fIF = |fLO − fRF| is the slow beat that survives a bandpass filter.
+          // This makes the ordering intuitive: RF closest to LO → smallest fIF → slowest dashes.
+          if (row.product && row.fIF !== undefined) {
+            ctx.strokeStyle = row.color;
+            ctx.lineWidth = 3;
+            ctx.globalAlpha = 0.5;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            for (let k = 0; k <= N; k++) {
+              const t = (k / N) * row.T;
+              const x = PAD_L + (k / N) * plotW;
+              const y = yMid - amp * Math.cos(2 * Math.PI * row.fIF * t);
+              k === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.globalAlpha = 1;
+          }
+
+          // Label
+          ctx.font = `${row.product ? '500' : '600'} 10.5px ${FONT}`;
+          ctx.fillStyle = row.color;
+          ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+          ctx.fillText(row.label, PAD_L - 3, yMid - 4);
+          ctx.font = `9.5px ${FONT}`; ctx.fillStyle = 'rgba(90,100,110,0.72)';
+          ctx.fillText(row.sub, PAD_L - 3, yMid + 6);
+
+          // Divider
+          if (row.dividerAfter) {
+            const heavy = i === 0;
+            ctx.strokeStyle = heavy ? 'rgba(140,155,170,0.5)' : 'rgba(180,190,200,0.25)';
+            ctx.lineWidth = heavy ? 1 : 0.6;
+            ctx.setLineDash(heavy ? [] : [3, 4]);
+            ctx.beginPath(); ctx.moveTo(PAD_L, yOff + rowH); ctx.lineTo(PAD_L + plotW, yOff + rowH); ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        });
+      }
+
+      // ── Freq domain: two stacked axes (RF+LO input / mixer output) ───
+      function drawMixerFreq(fLO) {
+        const { ctx, W, H } = dprSetup(freqCanvas);
+        ctx.clearRect(0, 0, W, H);
+
+        // Scale must fit sum products (fLO + 17 GHz at most)
+        const fMax  = (fLO + RF_MAX) * 1.06;
+        const PAD_L = 12, PAD_R = 14;
+        const plotW = W - PAD_L - PAD_R;
+        const halfH = H / 2;
+
+        function xOf(f) { return PAD_L + (f / fMax) * (plotW - 8); }
+
+        function drawAxis(yTop, axisLabel, lines, patchFrom) {
+          const labelH  = 15;
+          const bottomH = 26;
+          const plotH   = halfH - labelH - bottomH;
+          const yAx     = yTop + labelH + plotH;
+
+          // Section label
+          ctx.font = `700 10px ${FONT}`; ctx.fillStyle = '#5e6772';
+          ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+          ctx.fillText(axisLabel, PAD_L, yTop + 2);
+
+          // Gray "not used" patch (drawn before lines so lines appear on top)
+          if (patchFrom != null) {
+            const xPatch = xOf(patchFrom);
+            ctx.fillStyle = 'rgba(160,170,180,0.18)';
+            ctx.fillRect(xPatch, yTop + labelH, plotW - 8 - (xPatch - PAD_L), plotH);
+            // "not used" label
+            ctx.font = `italic 9.5px ${FONT}`; ctx.fillStyle = 'rgba(120,130,140,0.7)';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('not used below', xPatch + (plotW - 8 - (xPatch - PAD_L)) / 2, yTop + labelH + plotH * 0.25);
+          }
+
+          // Axis line + arrow
+          ctx.strokeStyle = C_AXIS; ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.moveTo(PAD_L, yAx); ctx.lineTo(PAD_L + plotW - 6, yAx); ctx.stroke();
+          ctx.fillStyle = C_AXIS;
+          ctx.beginPath();
+          ctx.moveTo(PAD_L + plotW, yAx);
+          ctx.lineTo(PAD_L + plotW - 8, yAx - 3.5);
+          ctx.lineTo(PAD_L + plotW - 8, yAx + 3.5);
+          ctx.fill();
+          ctx.font = `9.5px ${FONT}`; ctx.fillStyle = C_AXIS;
+          ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+          ctx.fillText('f (GHz)', PAD_L + plotW - 1, yAx + 10);
+
+          // Tone lines
+          lines.forEach(({ f, color, hFrac, topLabel, botLabel, lineW, dash, botYOff }) => {
+            const x  = xOf(f);
+            const h  = plotH * hFrac;
+            const y0 = yAx - h;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineW || 2.2;
+            ctx.setLineDash(dash ? [4, 3] : []);
+            ctx.beginPath(); ctx.moveTo(x, yAx); ctx.lineTo(x, y0); ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = color;
+            ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x - 3.5, y0 + 7); ctx.lineTo(x + 3.5, y0 + 7); ctx.fill();
+
+            ctx.font = `600 10px ${FONT}`; ctx.fillStyle = color;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+            ctx.fillText(topLabel, x, y0 - 2);
+
+            ctx.font = `9.5px ${FONT}`; ctx.textBaseline = 'top';
+            ctx.fillText(botLabel, x, yAx + 4 + (botYOff || 0));
+          });
+        }
+
+        // ── Top axis: RF tones + LO (dashed) ─────────────────────────
+        const rfLines = RF_FREQS.map(fRF => ({
+          f: fRF, color: rfToParula(fRF, RF_MIN, RF_MAX),
+          hFrac: 0.65, topLabel: `${fRF}`, botLabel: `${fRF} GHz`
+        }));
+        rfLines.push({ f: fLO, color: C_LO, hFrac: 0.82, topLabel: 'LO', botLabel: `${fLO.toFixed(1)}`, lineW: 1.8, dash: true });
+        drawAxis(2, 'RF + LO input', rfLines, null);
+
+        // ── Bottom axis: |LO−RF| (solid) + LO+RF (solid) + LO (dashed) ──
+        const outLines = [];
+        RF_FREQS.forEach(fRF => {
+          const color = rfToParula(fRF, RF_MIN, RF_MAX);
+          const fDiff = Math.abs(fLO - fRF);
+          const fSum  = fLO + fRF;
+          outLines.push({ f: fDiff, color, hFrac: 0.68, topLabel: `${fDiff.toFixed(1)}`, botLabel: `${fDiff.toFixed(1)} GHz` });
+          outLines.push({ f: fSum,  color, hFrac: 0.68, topLabel: `${fSum.toFixed(1)}`,  botLabel: `${fSum.toFixed(1)} GHz` });
+        });
+        outLines.push({ f: fLO, color: C_LO, hFrac: 0.82, topLabel: 'LO', botLabel: `${fLO.toFixed(1)}`, lineW: 1.8, dash: true, botYOff: 12 });
+        // Gray patch starts just left of the smallest sum product
+        const sumMin = fLO + Math.min(...RF_FREQS);
+        drawAxis(halfH + 2, 'Mixer output: |LO\u2212RF| and LO+RF', outLines, sumMin * 0.97);
+      }
+
+      function renderMixer() {
+        const fLO = parseFloat(loSliderM.value);
+        loValEl.textContent = `${fLO.toFixed(1)} GHz`;
+        updateLegendBadges();
+        drawMixerTime(fLO);
+        drawMixerFreq(fLO);
+      }
+
+      loSliderM.addEventListener('input', renderMixer);
+      new ResizeObserver(renderMixer).observe(document.getElementById('mixerSection'));
+      renderMixer();
+    })();
+    // ── end Mixer Math ──────────────────────────────────────────────────
+
+    function render() {
+      const tuning = getTuningConfig();
+      const slot = Math.max(0, Math.min(Number(rfSlider.value), tuning.availableStarts.length - 1));
+      const clock = 1200;
+      const rfLow = tuning.availableStarts[slot];
+      const rfHigh = rfLow + tuning.slotWidth;
+      const lo1 = rfLow + tuning.filterHigh;
+      const LO2 = 21.15;
+      const if2Low = Math.round((LO2 - tuning.filterHigh) * 1000);
+      const if2High = Math.round((LO2 - tuning.filterLow) * 1000);
+
+      const state = {
+        slot,
+        clock,
+        rfLow,
+        rfHigh,
+        lo1,
+        filterLow: tuning.filterLow,
+        filterHigh: tuning.filterHigh,
+        if2Low,
+        if2High
+      };
+
+      rfSlider.max = String(tuning.availableStarts.length - 1);
+      rfSlider.value = String(slot);
+      rfValue.textContent = `${fmtFreq(rfLow)}-${fmtFreq(rfHigh)} GHz`;
+      slotValue.textContent = `Slot ${slot + 1} of ${tuning.availableStarts.length}`;
+      metricRf.textContent = `${fmtFreq(rfLow)}-${fmtFreq(rfHigh)} GHz`;
+      metricLo1.textContent = `${fmtFreq(lo1)} GHz`;
+      metricIf2.textContent = `${if2Low}-${if2High} MHz`;
+      formulaLo1.innerHTML = `ν<sub>LO1</sub> = ${fmtFreq(rfLow)} + ${fmtFreq(tuning.filterHigh)} = ${fmtFreq(lo1)} GHz`;
+      stage1Subtitle.textContent = `The RF band is mirrored around a selectable first LO and lands in the fixed ${fmtFreq(tuning.filterLow)}-${fmtFreq(tuning.filterHigh)} GHz window.`;
+      stage1Text.textContent = `For a chosen ${fmtFreq(tuning.slotWidth * 1000)} MHz RF slice, EOVSA sets the first LO so that the selected band maps into the fixed ${fmtFreq(tuning.filterLow)}-${fmtFreq(tuning.filterHigh)} GHz high-IF filter. Because this is a mirror conversion, the low RF edge becomes the high edge after mixing.`;
+      stage1PassedLegend.innerHTML = `<span class="swatch dig"></span>Slice passed by the fixed ${fmtFreq(tuning.filterLow)}-${fmtFreq(tuning.filterHigh)} GHz filter`;
+      stage1FilterLegend.innerHTML = `<span class="swatch warn"></span>Fixed ${fmtFreq(tuning.filterLow)}-${fmtFreq(tuning.filterHigh)} GHz filter`;
+
+      stage2Subtitle.textContent = `A fixed 21.15 GHz LO mirrors the ${fmtFreq(tuning.filterLow)}\u2013${fmtFreq(tuning.filterHigh)} GHz high IF down to the ${if2Low}\u2013${if2High} MHz band.`;
+      stage2Text.textContent = `The second mirror undoes the first inversion, restoring the original RF spectral order. The IF filter selects the useful ${if2High - if2Low} MHz band inside the broader 600\u20131200 MHz passband.`;
+      stage2LegendInput.innerHTML = `<span class="swatch mix1"></span>${fmtFreq(tuning.filterLow)}\u2013${fmtFreq(tuning.filterHigh)} GHz high IF`;
+      stage2LegendOutput.innerHTML = `<span class="swatch mix2"></span>${if2Low}\u2013${if2High} MHz low IF`;
+
+      const digLow = clock - if2High;
+      const digHigh = clock - if2Low;
+      orderingValue.textContent = "Inverted";
+      metricDigitized.textContent = `${digLow}-${digHigh} MHz`;
+      formulaClock.innerHTML = `ν<sub>dig</sub> = 1200 MHz − ν<sub>IF2</sub>`;
+      stage3Subtitle.textContent = `The 1200 MHz clock mirrors the ${if2Low}\u2013${if2High} MHz second IF cleanly into ${digLow}\u2013${digHigh} MHz.`;
+      stage3Text.textContent = `With the 1200 MHz production clock, the ${if2Low}\u2013${if2High} MHz second IF lands cleanly in a ${digLow}\u2013${digHigh} MHz target band. This is a third mirror, so the final digital ordering is inverted relative to the original RF slice.`;
+
+      try { stage1(state); } catch (e) { console.error("stage1 render error:", e); }
+      try { stage2(state); } catch (e) { console.error("stage2 render error:", e); }
+      try { stage3(state); } catch (e) { console.error("stage3 render error:", e); }
+    }
+
+    // RF slice drag — document-level so pointer capture survives re-renders
+    function svgXToSlot(svgX) {
+      const freq = S1.rfMin + (svgX - S1.left) / S1.width * (S1.rfMax - S1.rfMin);
+      const tuning = getTuningConfig();
+      let best = 0, bestDist = Infinity;
+      tuning.availableStarts.forEach((start, i) => {
+        const d = Math.abs(freq - (start + tuning.slotWidth / 2));
+        if (d < bestDist) { bestDist = d; best = i; }
+      });
+      return best;
+    }
+    document.addEventListener("pointermove", (e) => {
+      if (!rfDrag) return;
+      const bbox = stage1Svg.getBoundingClientRect();
+      const svgX = (e.clientX - bbox.left) / bbox.width * S1.vbWidth;
+      updateSlot(svgXToSlot(svgX));
+    });
+    document.addEventListener("pointerup",     () => { rfDrag = false; });
+    document.addEventListener("pointercancel", () => { rfDrag = false; });
+
+    rfSlider.addEventListener("input", render);
+    tuningMode.addEventListener("change", () => {
+      rfSlider.value = "0";
+      render();
+    });
+
+    rfSlider.addEventListener("keydown", (event) => {
+      const slot = Number(rfSlider.value);
+      if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+        event.preventDefault(); updateSlot(slot + 1);
+      } else if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
+        event.preventDefault(); updateSlot(slot - 1);
+      } else if (event.key === "Home") {
+        event.preventDefault(); updateSlot(0);
+      } else if (event.key === "End") {
+        event.preventDefault(); updateSlot(Number(rfSlider.max));
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>

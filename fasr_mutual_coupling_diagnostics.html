@@ -1,0 +1,4186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>FASR Shadowing &amp; Coupling Diagnostics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #f3ede3;
+  --panel: rgba(255,250,244,0.90);
+  --panel-strong: rgba(255,255,255,0.96);
+  --ink: #1f2a30;
+  --muted: #5f6b73;
+  --accent: #c8553d;
+  --sub-a: #2d7d9a;
+  --sub-b: #b46b28;
+  --danger: #cf4d3a;
+  --helper: #72808a;
+  --plane: #8eb9c8;
+  --shadow: 0 18px 40px rgba(64,46,30,0.12);
+  --shadow-soft: 0 12px 30px rgba(64,46,30,0.08);
+  --radius: 18px;
+  --gap: 18px;
+  --ui-font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --ui-font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --math-font: "STIX Two Text", "Cambria Math", "STIXGeneral", "Times New Roman", serif;
+}
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--ui-font-text);
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(255,255,255,0.85), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(200,85,61,0.10), transparent 22%),
+    linear-gradient(135deg,#eee2d2 0%,#f3ede3 48%,#e6eee8 100%);
+  min-height: 100vh;
+}
+canvas, input, button { max-width: 100%; }
+.page {
+  width: min(1480px, calc(100vw - 24px));
+  margin: 18px auto 40px;
+  display: grid;
+  gap: var(--gap);
+}
+.panel {
+  background: var(--panel);
+  border: 1px solid rgba(31,42,48,0.08);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
+  backdrop-filter: blur(14px);
+}
+.hero {
+  padding: 20px 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.hero-main { display: grid; gap: 8px; }
+.eyebrow {
+  font-size: 0.78rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+}
+.hero h1 {
+  font-family: var(--ui-font-display);
+  font-size: clamp(1.75rem, 3.2vw, 2.7rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+}
+.hero-note { color: var(--muted); font-size: 0.9rem; }
+.hero-chips, .chip-row, .legend-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip {
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(31,42,48,0.08);
+  background: rgba(255,255,255,0.82);
+  font-size: 0.76rem;
+  line-height: 1;
+  color: var(--muted);
+}
+.chip strong { color: var(--ink); font-weight: 700; }
+.layout {
+  display: grid;
+  grid-template-columns: minmax(340px, 400px) minmax(0, 1fr);
+  gap: var(--gap);
+  align-items: start;
+}
+@media (max-width: 1080px) {
+  .layout { grid-template-columns: 1fr; }
+}
+.controls {
+  padding: 20px 18px;
+  display: grid;
+  gap: 16px;
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,244,239,0.92));
+  box-shadow: var(--shadow-soft);
+}
+@media (max-width: 1080px) {
+  .controls {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}
+.ctrl-section { display: grid; gap: 10px; }
+.ctrl-section-title {
+  font-family: var(--ui-font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: var(--muted);
+  border-bottom: 1px solid rgba(31,42,48,0.10);
+  padding-bottom: 6px;
+}
+.ctrl-row {
+  display: grid;
+  grid-template-columns: minmax(96px, max-content) minmax(120px, 1fr) 78px minmax(30px, max-content);
+  gap: 8px;
+  align-items: center;
+}
+.ctrl-row label {
+  font-size: 0.82rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+input[type="number"], input[type="text"] {
+  width: 100%;
+  min-width: 0;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(31,42,48,0.16);
+  background: rgba(255,255,255,0.78);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.82rem;
+  text-align: right;
+}
+input[type="file"] {
+  width: 100%;
+  font: inherit;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+.ctrl-unit {
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.ctrl-readout {
+  font-size: 0.78rem;
+  color: var(--sub-a);
+  line-height: 1.35;
+  margin-top: 2px;
+  padding-left: calc(96px + 8px);
+}
+.btn-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+button {
+  font-family: var(--ui-font-text);
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 14px;
+  background: #2d5f9a;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  box-shadow: 0 10px 22px rgba(45,95,154,0.16);
+}
+button:hover { opacity: 0.86; }
+button.secondary {
+  background: rgba(31,42,48,0.10);
+  color: var(--ink);
+  box-shadow: none;
+}
+button.warn {
+  background: rgba(207,77,58,0.92);
+  box-shadow: 0 10px 22px rgba(207,77,58,0.16);
+}
+.mini-note {
+  font-size: 0.74rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+.ctrl-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ctrl-subnote {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(31,42,48,0.42);
+}
+.layer-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(31,42,48,0.08);
+  background: rgba(255,255,255,0.74);
+  font-size: 0.76rem;
+  color: var(--ink);
+  line-height: 1;
+  white-space: nowrap;
+}
+.layer-toggle input {
+  accent-color: var(--accent);
+}
+.btn-row.tight button {
+  flex: 1 1 140px;
+}
+.inspector-grid {
+  display: grid;
+  gap: 8px;
+}
+.inspector-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.meta-box {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(31,42,48,0.08);
+}
+.meta-box strong {
+  display: block;
+  color: var(--muted);
+  font-size: 0.69rem;
+  margin-bottom: 4px;
+  letter-spacing: 0.02em;
+}
+.view {
+  display: grid;
+  gap: var(--gap);
+}
+.row-3, .row-2 {
+  display: grid;
+  gap: var(--gap);
+}
+.row-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.row-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 1180px) {
+  .row-3, .row-2 { grid-template-columns: 1fr; }
+}
+.plot-card {
+  padding: 16px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(250,249,247,0.82));
+  border: 1px solid rgba(31,42,48,0.08);
+  display: grid;
+  gap: 10px;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+.plot-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.plot-title strong {
+  font-family: var(--ui-font-display);
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.plot-title span {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+.metric-chip {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.70);
+  border: 1px solid rgba(31,42,48,0.08);
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
+.metric-chip strong {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.metric-chip span {
+  color: var(--ink);
+  font-weight: 600;
+}
+.plot-card canvas {
+  width: 100%;
+  display: block;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(247,248,250,0.92), rgba(241,242,245,0.78));
+  border: 1px solid rgba(31,42,48,0.08);
+}
+.canvas-sm { height: 360px; }
+.canvas-array {
+  aspect-ratio: 1 / 1;
+  height: auto;
+}
+.canvas-md {
+  aspect-ratio: 1 / 1;
+  height: auto;
+}
+.canvas-psf { height: 220px; }
+.canvas-prof { height: 150px; }
+.canvas-sky { height: 620px; }
+.canvas-ortho { height: 380px; }
+.canvas-ortho-map { height: 380px; }
+.ortho-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 12px;
+  align-items: start;
+}
+.ortho-pane {
+  display: grid;
+  gap: 8px;
+}
+.subpane-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.subpane-head strong {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.subpane-head span {
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+@media (max-width: 1180px) {
+  .ortho-split {
+    grid-template-columns: 1fr;
+  }
+}
+.sky-wrap {
+  position: relative;
+}
+.sky-overlay {
+  position: absolute;
+  inset: 12px;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.74), rgba(255,255,255,0.36));
+  border: 1px solid rgba(31,42,48,0.08);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+.sky-overlay.active {
+  opacity: 1;
+}
+.sky-tooltip {
+  position: absolute;
+  min-width: 160px;
+  max-width: 240px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(20, 28, 34, 0.92);
+  color: rgba(255,255,255,0.96);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 10px 22px rgba(17,24,39,0.24);
+  pointer-events: none;
+  transform: translate(12px, -12px);
+  z-index: 8;
+}
+.sky-tooltip strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.79rem;
+}
+.sky-tooltip .mini {
+  display: block;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.72);
+  margin-top: 2px;
+}
+.sky-overlay-label {
+  font-size: 0.76rem;
+  color: var(--ink);
+  font-weight: 600;
+}
+.sky-progress {
+  position: relative;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(31,42,48,0.10);
+}
+.sky-progress::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 34%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(200,85,61,0.28), rgba(200,85,61,0.92), rgba(200,85,61,0.28));
+  animation: sky-progress 1.05s ease-in-out infinite;
+}
+@keyframes sky-progress {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
+.uv-psf-wrap {
+  display: grid;
+  gap: 10px;
+}
+.legend-bar {
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(31,42,48,0.14);
+}
+.sub-a { background: var(--sub-a); }
+.sub-b { background: var(--sub-b); }
+.disk { background: rgba(120,128,136,0.80); }
+.risk { background: rgba(207,77,58,0.90); }
+.beam { background: rgba(90,133,163,0.75); }
+.cal { background: rgba(231, 205, 96, 0.95); }
+.canvas3d-hint {
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+.status-line {
+  font-size: 0.76rem;
+  color: var(--muted);
+  min-height: 1.1em;
+}
+.status-line strong { color: var(--ink); }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="page">
+  <section class="panel hero">
+    <div class="hero-main">
+      <div class="eyebrow">FASR Diagnostics</div>
+      <h1>Shadowing, Coupling Risk, UV &amp; PSF</h1>
+      <div class="hero-note">Dual-subarray layout editor for FASR-A and FASR-B.</div>
+    </div>
+    <div class="hero-chips">
+      <div class="chip"><strong>Cmd</strong> drag antenna in E/N</div>
+      <div class="chip"><strong>Click</strong> select antenna</div>
+      <div class="chip"><strong>Sky dome</strong> taller context view</div>
+      <div class="chip"><strong>UV</strong> separate A and B</div>
+    </div>
+  </section>
+
+  <div class="layout">
+    <aside class="controls panel">
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">FASR-A</div>
+        <div class="ctrl-meta-row">
+          <div class="mini-note" id="cfgInfoA">fasr-a_random_spiral_hybrid_120.cfg</div>
+          <label class="layer-toggle" title="Show FASR-A in the sky dome">
+            <input type="checkbox" id="chkSkyA" checked/>
+            <span>Sky dome</span>
+          </label>
+        </div>
+        <div class="ctrl-subnote">Config</div>
+        <input type="file" id="fileCfgA" accept=".cfg"/>
+        <div class="ctrl-subnote">Geometry</div>
+        <div class="ctrl-row">
+          <label for="slPedA">Pedestal</label>
+          <input type="range" id="slPedA" min="-10" max="20" step="0.1" value="0"/>
+          <input type="number" id="numPedA" min="-10" max="20" step="0.1" value="0"/>
+          <span class="ctrl-unit">m</span>
+        </div>
+        <div class="ctrl-row">
+          <label for="slFreqA">Freq A</label>
+          <input type="range" id="slFreqA" min="0.2" max="18" step="0.1" value="3"/>
+          <input type="number" id="numFreqA" min="0.2" max="18" step="0.1" value="3"/>
+          <span class="ctrl-unit">GHz</span>
+        </div>
+        <div class="ctrl-row">
+          <label for="slMarginA">Margin A</label>
+          <input type="range" id="slMarginA" min="0" max="6" step="0.1" value="0.4"/>
+          <input type="number" id="numMarginA" min="0" max="6" step="0.1" value="0.4"/>
+          <span class="ctrl-unit">m</span>
+        </div>
+        <div class="btn-row tight">
+          <button class="secondary" id="btnResetA">Reset A</button>
+          <button class="secondary" id="btnDownloadA">Download cfg A</button>
+        </div>
+      </div>
+
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">FASR-B</div>
+        <div class="ctrl-meta-row">
+          <div class="mini-note" id="cfgInfoB">fasr-b_spiral_72.cfg</div>
+          <label class="layer-toggle" title="Show FASR-B in the sky dome">
+            <input type="checkbox" id="chkSkyB" checked/>
+            <span>Sky dome</span>
+          </label>
+        </div>
+        <div class="ctrl-subnote">Config</div>
+        <input type="file" id="fileCfgB" accept=".cfg"/>
+        <div class="ctrl-subnote">Geometry</div>
+        <div class="ctrl-row">
+          <label for="slPedB">Pedestal</label>
+          <input type="range" id="slPedB" min="-10" max="20" step="0.1" value="0"/>
+          <input type="number" id="numPedB" min="-10" max="20" step="0.1" value="0"/>
+          <span class="ctrl-unit">m</span>
+        </div>
+        <div class="ctrl-row">
+          <label for="slFreqB">Freq B</label>
+          <input type="range" id="slFreqB" min="0.2" max="18" step="0.1" value="3"/>
+          <input type="number" id="numFreqB" min="0.2" max="18" step="0.1" value="3"/>
+          <span class="ctrl-unit">GHz</span>
+        </div>
+        <div class="ctrl-row">
+          <label for="slMarginB">Margin B</label>
+          <input type="range" id="slMarginB" min="0" max="12" step="0.1" value="1.2"/>
+          <input type="number" id="numMarginB" min="0" max="12" step="0.1" value="1.2"/>
+          <span class="ctrl-unit">m</span>
+        </div>
+        <div class="btn-row tight">
+          <button class="secondary" id="btnResetB">Reset B</button>
+          <button class="secondary" id="btnDownloadB">Download cfg B</button>
+        </div>
+      </div>
+
+      <div class="ctrl-section" id="selectedInspectorSection">
+        <div class="ctrl-section-title">Selected Antenna</div>
+        <div class="inspector-grid hidden" id="selectedInspector">
+          <div class="inspector-meta">
+            <div class="meta-box"><strong>Pad</strong><span id="selPad">-</span></div>
+            <div class="meta-box"><strong>Subarray</strong><span id="selSub">-</span></div>
+            <div class="meta-box"><strong>Dish</strong><span id="selDiam">-</span></div>
+          </div>
+          <div class="ctrl-row">
+            <label for="selE">E</label>
+            <div></div>
+            <input type="number" id="selE" step="0.01" value="0"/>
+            <span class="ctrl-unit">m</span>
+          </div>
+          <div class="ctrl-row">
+            <label for="selN">N</label>
+            <div></div>
+            <input type="number" id="selN" step="0.01" value="0"/>
+            <span class="ctrl-unit">m</span>
+          </div>
+          <div class="ctrl-row">
+            <label for="selU">U</label>
+            <div></div>
+            <input type="number" id="selU" step="0.01" value="0"/>
+            <span class="ctrl-unit">m</span>
+          </div>
+          <div class="btn-row">
+            <button class="secondary" id="btnResetSelected">Reset selected</button>
+            <button class="secondary" id="btnClearSelection">Clear</button>
+          </div>
+        </div>
+        <div class="mini-note" id="inspectorEmpty">Select an antenna from Array Configuration.</div>
+      </div>
+
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">Source Direction</div>
+        <div class="ctrl-row">
+          <label for="slHA">Hour Angle</label>
+          <input type="range" id="slHA" min="-6" max="6" step="0.1" value="0"/>
+          <input type="number" id="numHA" min="-6" max="6" step="0.1" value="0"/>
+          <span class="ctrl-unit">h</span>
+        </div>
+        <div class="ctrl-readout" id="roHA">HA = 0.0 h</div>
+        <div class="ctrl-row">
+          <label for="slDec">Dec</label>
+          <input type="range" id="slDec" min="-60" max="80" step="1" value="20"/>
+          <input type="number" id="numDec" min="-60" max="80" step="1" value="20"/>
+          <span class="ctrl-unit">deg</span>
+        </div>
+        <div class="ctrl-readout" id="roDec">Dec = +20 deg</div>
+        <div class="ctrl-row">
+          <label for="slDOY">Day of Year</label>
+          <input type="range" id="slDOY" min="1" max="365" step="1" value="80"/>
+          <input type="number" id="numDOY" min="1" max="365" step="1" value="80"/>
+          <span class="ctrl-unit"></span>
+        </div>
+        <div class="ctrl-readout" id="roDOY">Mar 21</div>
+        <div class="ctrl-row">
+          <label for="slCalJy">Cal min</label>
+          <input type="range" id="slCalJy" min="0.2" max="20" step="0.1" value="2.0"/>
+          <input type="number" id="numCalJy" min="0.2" max="20" step="0.1" value="2.0"/>
+          <span class="ctrl-unit">Jy</span>
+        </div>
+        <div class="ctrl-row">
+          <label for="slCalFreq">Cal freq</label>
+          <input type="range" id="slCalFreq" min="0.33" max="42" step="0.1" value="5.0"/>
+          <input type="number" id="numCalFreq" min="0.33" max="42" step="0.1" value="5.0"/>
+          <span class="ctrl-unit">GHz</span>
+        </div>
+        <div class="ctrl-row">
+          <label for="slDispScale">Display scale</label>
+          <input type="range" id="slDispScale" min="0" max="8" step="1" value="0"/>
+          <input type="number" id="numDispScale" min="1" max="256" step="1" value="1"/>
+          <span class="ctrl-unit">x</span>
+        </div>
+        <div class="ctrl-meta-row">
+          <div class="ctrl-readout" id="roCalJy">A/B precise calibrators ≥ 2.0 Jy @ 5.0 GHz</div>
+          <div class="ctrl-readout" id="roDispScale">Display scale: 1x</div>
+          <label class="layer-toggle" title="Show calibrator trajectories on the sky dome">
+            <input type="checkbox" id="chkCalTracks"/>
+            <span>Cal tracks</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">Earth Rotation</div>
+        <div class="btn-row">
+          <button id="earthRotBtn" class="secondary" style="min-width:118px;">Snapshot</button>
+          <button id="btnResetAll" class="warn">Reset All</button>
+        </div>
+        <div class="ctrl-row">
+          <label for="slDur">Duration</label>
+          <input type="range" id="slDur" min="1" max="12" step="0.5" value="6"/>
+          <input type="number" id="numDur" min="1" max="12" step="0.5" value="6"/>
+          <span class="ctrl-unit">hr</span>
+        </div>
+        <div class="ctrl-readout" id="roDur">Synthesis: 6.0 hr</div>
+      </div>
+
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">Status</div>
+        <div class="status-line" id="statusLine">Ready.</div>
+        <div class="metric-grid" id="controlStats">
+          <div class="metric-chip"><strong>Site</strong><span id="statSite">FASR</span></div>
+          <div class="metric-chip"><strong>Elevation</strong><span id="statEl">-</span></div>
+          <div class="metric-chip"><strong>A + B</strong><span id="statCounts">120 + 72</span></div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="view">
+      <div class="row-3">
+        <article class="plot-card">
+          <div class="plot-title">
+            <strong>Array Configuration</strong>
+            <span>click to select · Cmd-drag E / N</span>
+          </div>
+          <div class="legend-bar">
+            <span class="legend-item"><span class="swatch sub-a"></span>FASR-A</span>
+            <span class="legend-item"><span class="swatch sub-b"></span>FASR-B</span>
+            <span class="legend-item"><span class="swatch risk"></span>selected ring</span>
+          </div>
+          <canvas id="canvasArrayConfig" class="canvas-array"></canvas>
+          <div class="metric-grid" id="arrayMetrics"></div>
+        </article>
+
+        <article class="plot-card">
+          <div class="plot-title">
+            <strong>FASR-A UV + PSF</strong>
+            <span id="uvTitleA">120 antennas</span>
+          </div>
+          <div class="uv-psf-wrap">
+            <canvas id="canvasUVA" class="canvas-md"></canvas>
+            <canvas id="canvasPSFA" class="canvas-psf"></canvas>
+            <canvas id="canvasProfA" class="canvas-prof"></canvas>
+          </div>
+          <div class="metric-grid" id="uvMetricsA"></div>
+        </article>
+
+        <article class="plot-card">
+          <div class="plot-title">
+            <strong>FASR-B UV + PSF</strong>
+            <span id="uvTitleB">72 antennas</span>
+          </div>
+          <div class="uv-psf-wrap">
+            <canvas id="canvasUVB" class="canvas-md"></canvas>
+            <canvas id="canvasPSFB" class="canvas-psf"></canvas>
+            <canvas id="canvasProfB" class="canvas-prof"></canvas>
+          </div>
+          <div class="metric-grid" id="uvMetricsB"></div>
+        </article>
+      </div>
+
+      <article class="plot-card">
+        <div class="plot-title">
+          <strong>Sky Dome</strong>
+          <span id="skyTitle">39.58 deg N · Click to select · Cmd-drag E / N · Drag to rotate · Shift + drag to pan · Alt + drag or scroll to zoom</span>
+        </div>
+        <div class="legend-bar">
+          <span class="legend-item"><span class="swatch sub-a"></span>FASR-A ground disk</span>
+          <span class="legend-item"><span class="swatch sub-b"></span>FASR-B ground disk</span>
+          <span class="legend-item"><span class="swatch disk"></span>projected dish</span>
+          <span class="legend-item"><span class="swatch cal"></span>calibrator</span>
+          <span class="legend-item"><span class="swatch beam"></span>beam path</span>
+          <span class="legend-item"><span class="swatch risk"></span>shadow / coupling overlap</span>
+        </div>
+        <div class="sky-wrap">
+          <canvas id="canvasSkyDome" class="canvas-sky"></canvas>
+          <div class="sky-tooltip hidden" id="skyTooltip"></div>
+          <div class="sky-overlay hidden" id="skyComputeOverlay">
+            <div class="sky-overlay-label" id="skyComputeLabel">Computing diagnostics…</div>
+            <div class="sky-progress"></div>
+          </div>
+        </div>
+        <div class="canvas3d-hint">Click to select · Cmd-drag E / N · Drag to rotate · Shift + drag to pan · Alt + drag or scroll to zoom</div>
+        <div class="metric-grid" id="skyMetrics"></div>
+      </article>
+
+      <article class="plot-card">
+        <div class="plot-title">
+          <strong>Orth Plane + Array View</strong>
+          <span>Linked selection · synchronized visible set</span>
+        </div>
+        <div class="legend-bar">
+          <span class="legend-item"><span class="swatch sub-a"></span>FASR-A footprint</span>
+          <span class="legend-item"><span class="swatch sub-b"></span>FASR-B footprint</span>
+          <span class="legend-item"><span class="swatch risk"></span>shadow / coupling overlap</span>
+        </div>
+        <div class="ortho-split">
+          <div class="ortho-pane">
+            <div class="subpane-head">
+              <strong>Orth Plane (2D)</strong>
+              <span>Click to select · Drag to pan · Alt + drag or scroll to zoom</span>
+            </div>
+            <canvas id="canvasOrthoPlane" class="canvas-ortho"></canvas>
+          </div>
+          <div class="ortho-pane">
+            <div class="subpane-head">
+              <strong>Array Config (2D)</strong>
+              <span>Click to select · Cmd-drag E / N · Drag to pan · Alt + drag or scroll to zoom · linked to left view</span>
+            </div>
+            <canvas id="canvasOrthoArray3D" class="canvas-ortho-map"></canvas>
+          </div>
+        </div>
+      </article>
+    </section>
+  </div>
+</div>
+
+<script src="./fasr_calibrators.js"></script>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js';
+
+const UI_FONT_11 = '11px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif';
+const UI_FONT_12 = '12px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif';
+const UI_FONT_13 = '13px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif';
+const MATH_FONT_11 = '11px "STIX Two Text", "Cambria Math", "STIXGeneral", "Times New Roman", serif';
+
+const COLORS = {
+  ink: '#1f2a30',
+  muted: 'rgba(31,42,48,0.55)',
+  subA: '#2d7d9a',
+  subB: '#b46b28',
+  calibrator: '#e7cd60',
+  danger: 'rgba(207,77,58,0.92)',
+  dangerFill: 'rgba(207,77,58,0.44)',
+  dangerStroke: 'rgba(176,44,28,0.90)',
+  disk: 'rgba(107,114,128,0.22)',
+  diskStroke: 'rgba(90,98,107,0.65)',
+  beam: 'rgba(90,133,163,0.22)',
+  beamStroke: 'rgba(90,133,163,0.70)',
+  helper: 'rgba(31,42,48,0.08)',
+  axis: 'rgba(31,42,48,0.28)',
+  current: '#c8553d',
+};
+
+const CALIBRATOR_FLUX_FREQS = [0.33, 1.5, 5.0, 8.1, 15.0, 23.0, 42.0];
+const DISPLAY_SCALE_VALUES = [1, 2, 4, 8, 16, 32, 64, 128, 256];
+const ORTHO_MIN_HALFSPAN = 0.00375/8;
+const PRECISE_CALIBRATOR_CODES = new Set(['A', 'B']);
+const CALIBRATORS = Array.isArray(window.FASR_CALIBRATORS)
+  ? window.FASR_CALIBRATORS.filter(row => PRECISE_CALIBRATOR_CODES.has(row.pc))
+  : [];
+
+const DEFAULT_SITE = { lon: -114.42516, lat: 39.58461, alt: 0 };
+const DEFAULT_A_BASE_U = 1736.125;
+const DEFAULT_A_ANTS = [
+  ["A00", 34.656, 0.222, 0.000, 1.5],
+  ["A01", 37.932, 21.795, 0.000, 1.5],
+  ["A02", 33.618, 47.406, 0.000, 1.5],
+  ["A03", 19.523, 72.754, -0.000, 1.5],
+  ["A04", -5.171, 91.789, -0.000, 1.5],
+  ["A05", -39.144, 97.384, -0.000, 1.5],
+  ["A06", -78.346, 82.564, -0.000, 1.5],
+  ["A07", -115.791, 42.194, -0.000, 1.5],
+  ["A08", -141.963, -25.035, -0.000, 1.5],
+  ["A09", -145.972, -114.687, -0.000, 1.5],
+  ["A10", -117.536, -215.202, 0.000, 1.5],
+  ["A11", -49.641, -307.598, 0.000, 1.5],
+  ["A12", 58.434, -366.796, 0.000, 1.5],
+  ["A13", 198.297, -364.921, 0.000, 1.5],
+  ["A14", 350.565, -276.665, 0.000, 1.5],
+  ["A15", 484.776, -86.296, 0.000, 1.5],
+  ["A16", 561.857, 204.613, 0.000, 1.5],
+  ["A17", 539.654, 570.262, 0.000, 1.5],
+  ["A18", 381.514, 956.451, -0.000, 1.5],
+  ["A19", 67.191, 1281.316, -0.000, 1.5],
+  ["A20", -395.483, 1442.854, -0.000, 1.5],
+  ["A21", -960.600, 1334.339, -0.000, 1.5],
+  ["A22", -1538.887, 867.352, -0.000, 1.5],
+  ["A23", -2000.344, 0.222, -0.000, 1.5],
+  ["A24", -17.844, 39.552, -0.000, 1.5],
+  ["A25", -33.880, 32.447, -0.000, 1.5],
+  ["A26", -48.816, 14.793, -0.000, 1.5],
+  ["A27", -58.687, -13.720, -0.000, 1.5],
+  ["A28", -59.045, -50.985, -0.000, 1.5],
+  ["A29", -45.793, -91.959, 0.000, 1.5],
+  ["A30", -16.300, -128.600, 0.000, 1.5],
+  ["A31", 29.367, -150.493, 0.000, 1.5],
+  ["A32", 87.323, -146.288, 0.000, 1.5],
+  ["A33", 149.164, -105.967, 0.000, 1.5],
+  ["A34", 202.033, -23.756, 0.000, 1.5],
+  ["A35", 229.754, 98.736, 0.000, 1.5],
+  ["A36", 215.227, 249.780, 0.000, 1.5],
+  ["A37", 144.044, 406.008, -0.000, 1.5],
+  ["A38", 9.005, 532.985, -0.000, 1.5],
+  ["A39", -185.159, 588.615, -0.000, 1.5],
+  ["A40", -417.862, 529.777, -0.000, 1.5],
+  ["A41", -650.806, 322.003, -0.000, 1.5],
+  ["A42", -829.491, -48.796, -0.000, 1.5],
+  ["A43", -889.155, -564.436, -0.000, 1.5],
+  ["A44", -765.634, -1165.115, -0.000, 1.5],
+  ["A45", -410.649, -1745.885, 0.000, 1.5],
+  ["A46", 190.177, -2162.218, 0.000, 1.5],
+  ["A47", 999.656, -2247.197, 0.000, 1.5],
+  ["A48", -17.844, -39.108, 0.000, 1.5],
+  ["A49", -5.084, -53.575, 0.000, 1.5],
+  ["A50", 14.167, -61.532, 0.000, 1.5],
+  ["A51", 38.133, -58.368, 0.000, 1.5],
+  ["A52", 63.184, -40.137, 0.000, 1.5],
+  ["A53", 83.906, -4.759, 0.000, 1.5],
+  ["A54", 93.615, 46.703, 0.000, 1.5],
+  ["A55", 85.393, 108.966, 0.000, 1.5],
+  ["A56", 53.608, 171.989, -0.000, 1.5],
+  ["A57", -4.224, 221.321, -0.000, 1.5],
+  ["A58", -85.528, 239.624, -0.000, 1.5],
+  ["A59", -181.144, 209.528, -0.000, 1.5],
+  ["A60", -274.692, 117.682, -0.000, 1.5],
+  ["A61", -343.372, -40.421, -0.000, 1.5],
+  ["A62", -360.601, -255.654, -0.000, 1.5],
+  ["A63", -300.649, -501.652, 0.000, 1.5],
+  ["A64", -145.027, -733.724, 0.000, 1.5],
+  ["A65", 110.120, -891.599, 0.000, 1.5],
+  ["A66", 446.946, -906.989, 0.000, 1.5],
+  ["A67", 820.933, -716.214, 0.000, 1.5],
+  ["A68", 1160.085, -277.073, 0.000, 1.5],
+  ["A69", 1370.217, 412.212, 0.000, 1.5],
+  ["A70", 1347.679, 1295.533, 0.000, 1.5],
+  ["A71", 999.656, 2247.641, -0.000, 1.5],
+  ["A72", 15.208, 33.941, -0.000, 1.5],
+  ["A73", 3.605, 3.780, 0.000, 1.5],
+  ["A74", -5.907, 22.587, -0.000, 1.5],
+  ["A75", 7.174, -4.438, 0.000, 1.5],
+  ["A76", 8.899, 3.723, 0.000, 1.5],
+  ["A77", -10.932, 9.574, -0.000, 1.5],
+  ["A78", 6.820, -0.397, 0.000, 1.5],
+  ["A79", 28.419, -12.691, 0.000, 1.5],
+  ["A80", -4.384, -40.148, 0.000, 1.5],
+  ["A81", -0.520, 20.464, -0.000, 1.5],
+  ["A82", -27.391, -7.946, -0.000, 1.5],
+  ["A83", -2.898, 9.050, -0.000, 1.5],
+  ["A84", 3.174, 6.321, -0.000, 1.5],
+  ["A85", 0.347, -6.198, 0.000, 1.5],
+  ["A86", 1.189, 12.003, -0.000, 1.5],
+  ["A87", -12.956, 49.964, -0.000, 1.5],
+  ["A88", 27.212, 27.179, 0.000, 1.5],
+  ["A89", 7.032, 13.195, 0.000, 1.5],
+  ["A90", 13.913, 0.859, 0.000, 1.5],
+  ["A91", -31.505, 7.881, -0.000, 1.5],
+  ["A92", 2.398, -22.245, 0.000, 1.5],
+  ["A93", -11.509, -14.745, -0.000, 1.5],
+  ["A94", -16.732, -31.225, -0.000, 1.5],
+  ["A95", 9.602, -5.555, 0.000, 1.5],
+  ["A96", -8.035, 1.150, 0.000, 1.5],
+  ["A97", 19.195, -0.067, 0.000, 1.5],
+  ["A98", -5.820, 14.431, -0.000, 1.5],
+  ["A99", -2.567, 0.842, 0.000, 1.5],
+  ["A100", 6.942, -17.069, 0.000, 1.5],
+  ["A101", 13.882, 2.858, 0.000, 1.5],
+  ["A102", -20.126, 12.179, -0.000, 1.5],
+  ["A103", 19.021, -3.413, 0.000, 1.5],
+  ["A104", 14.492, -19.880, 0.000, 1.5],
+  ["A105", 13.391, -8.320, 0.000, 1.5],
+  ["A106", -10.054, -27.273, 0.000, 1.5],
+  ["A107", 4.145, -3.787, 0.000, 1.5],
+  ["A108", 22.672, -8.822, 0.000, 1.5],
+  ["A109", 3.956, -38.693, 0.000, 1.5],
+  ["A110", 22.299, 1.178, 0.000, 1.5],
+  ["A111", -30.525, 24.982, -0.000, 1.5],
+  ["A112", -16.222, 22.689, -0.000, 1.5],
+  ["A113", -1.737, -13.386, -0.000, 1.5],
+  ["A114", 31.488, -6.008, 0.000, 1.5],
+  ["A115", -11.170, 2.240, -0.000, 1.5],
+  ["A116", -22.571, -2.421, -0.000, 1.5],
+  ["A117", 2.056, -15.305, 0.000, 1.5],
+  ["A118", -9.857, 8.160, -0.000, 1.5],
+  ["A119", 2.370, 14.820, -0.000, 1.5],
+];
+
+const DEFAULT_B_BASE_U = 1736.125;
+const DEFAULT_B_ANTS = [
+  ["A00", 34.656, 0.222, 0.000, 6.2],
+  ["A01", 37.944, -21.303, 0.000, 6.2],
+  ["A02", 33.670, -46.873, 0.000, 6.2],
+  ["A03", 19.643, -72.216, 0.000, 6.2],
+  ["A04", -4.968, -91.313, 0.000, 6.2],
+  ["A05", -38.875, -97.068, 0.000, 6.2],
+  ["A06", -78.072, -82.511, -0.000, 6.2],
+  ["A07", -115.627, -42.479, -0.000, 6.2],
+  ["A08", -142.072, 24.410, -0.000, 6.2],
+  ["A09", -146.541, 113.847, -0.000, 6.2],
+  ["A10", -118.725, 214.435, -0.000, 6.2],
+  ["A11", -51.513, 307.365, -0.000, 6.2],
+  ["A12", 55.995, 367.688, -0.000, 6.2],
+  ["A13", 195.662, 367.560, -0.000, 6.2],
+  ["A14", 348.403, 281.522, 0.000, 6.2],
+  ["A15", 484.030, 93.464, 0.000, 6.2],
+  ["A16", 563.629, -195.673, 0.000, 6.2],
+  ["A17", 544.976, -560.926, 0.000, 6.2],
+  ["A18", 391.004, -949.021, 0.000, 6.2],
+  ["A19", 80.651, -1278.879, 0.000, 6.2],
+  ["A20", -379.479, -1448.853, 0.000, 6.2],
+  ["A21", -944.991, -1351.809, -0.000, 6.2],
+  ["A22", -1528.141, -897.852, -0.000, 6.2],
+  ["A23", -2000.071, -42.603, -0.000, 6.2],
+  ["A24", -17.844, 39.531, -0.000, 6.2],
+  ["A25", -5.113, 53.987, -0.000, 6.2],
+  ["A26", 14.099, 61.971, -0.000, 6.2],
+  ["A27", 38.036, 58.889, 0.000, 6.2],
+  ["A28", 63.095, 40.796, 0.000, 6.2],
+  ["A29", 83.891, 5.592, 0.000, 6.2],
+  ["A30", 93.768, -45.709, 0.000, 6.2],
+  ["A31", 85.813, -107.904, 0.000, 6.2],
+  ["A32", 54.368, -171.049, 0.000, 6.2],
+  ["A33", -3.122, -220.787, 0.000, 6.2],
+  ["A34", -84.202, -239.840, 0.000, 6.2],
+  ["A35", -179.865, -210.818, -0.000, 6.2],
+  ["A36", -273.902, -120.236, -0.000, 6.2],
+  ["A37", -343.650, 36.690, -0.000, 6.2],
+  ["A38", -362.565, 251.254, -0.000, 6.2],
+  ["A39", -304.796, 497.607, -0.000, 6.2],
+  ["A40", -151.514, 731.575, -0.000, 6.2],
+  ["A41", 101.724, 893.252, -0.000, 6.2],
+  ["A42", 437.874, 914.372, -0.000, 6.2],
+  ["A43", 813.325, 730.739, 0.000, 6.2],
+  ["A44", 1156.897, 298.948, 0.000, 6.2],
+  ["A45", 1374.848, -384.707, 0.000, 6.2],
+  ["A46", 1363.277, -1266.630, 0.000, 6.2],
+  ["A47", 1028.118, -2224.285, 0.000, 6.2],
+  ["A48", -17.844, -39.087, 0.000, 6.2],
+  ["A49", -33.862, -32.017, -0.000, 6.2],
+  ["A50", -48.800, -14.431, -0.000, 6.2],
+  ["A51", -58.710, 13.993, -0.000, 6.2],
+  ["A52", -59.158, 51.184, -0.000, 6.2],
+  ["A53", -46.047, 92.142, -0.000, 6.2],
+  ["A54", -16.728, 128.886, -0.000, 6.2],
+  ["A55", 28.783, 151.049, -0.000, 6.2],
+  ["A56", 86.673, 147.305, -0.000, 6.2],
+  ["A57", 148.633, 107.606, 0.000, 6.2],
+  ["A58", 201.896, 26.071, 0.000, 6.2],
+  ["A59", 230.347, -95.880, 0.000, 6.2],
+  ["A60", 216.876, -246.786, 0.000, 6.2],
+  ["A61", 146.956, -403.583, 0.000, 6.2],
+  ["A62", 13.131, -532.109, 0.000, 6.2],
+  ["A63", -180.265, -590.405, 0.000, 6.2],
+  ["A64", -413.146, -535.236, -0.000, 6.2],
+  ["A65", -647.731, -331.659, -0.000, 6.2],
+  ["A66", -829.909, 35.315, -0.000, 6.2],
+  ["A67", -895.008, 548.806, -0.000, 6.2],
+  ["A68", -778.449, 1150.571, -0.000, 6.2],
+  ["A69", -430.889, 1737.183, -0.000, 6.2],
+  ["A70", 163.833, 2165.148, -0.000, 6.2],
+  ["A71", 970.922, 2267.555, -0.000, 6.2],
+];
+
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+function solarDecDeg(doy) {
+  return -23.45 * Math.cos(2 * Math.PI * (doy + 10) / 365);
+}
+
+function doyToDateStr(doy) {
+  const d = new Date(2024, 0, doy);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function setupCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.round(canvas.clientWidth) || 200;
+  const H = Math.round(canvas.clientHeight) || 150;
+  canvas.width = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, width: W, height: H };
+}
+
+function drawWebGLFallback(canvas, title) {
+  const { ctx, width: W, height: H } = setupCanvas(canvas);
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, 'rgba(45,125,154,0.08)');
+  grad.addColorStop(1, 'rgba(180,107,40,0.06)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(31,42,48,0.12)';
+  ctx.lineWidth = 1.2;
+  ctx.strokeRect(10, 10, W - 20, H - 20);
+  ctx.fillStyle = COLORS.ink;
+  ctx.font = '600 16px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(title, W / 2, H / 2 - 12);
+  ctx.fillStyle = 'rgba(31,42,48,0.62)';
+  ctx.font = UI_FONT_12;
+  ctx.fillText('WebGL unavailable in this browser.', W / 2, H / 2 + 14);
+}
+
+function makeRenderer(canvas, fallbackTitle) {
+  const glOpts = {
+    alpha: true,
+    antialias: true,
+    powerPreference: 'default',
+    failIfMajorPerformanceCaveat: false,
+    premultipliedAlpha: true,
+  };
+  try {
+    const context =
+      canvas.getContext('webgl2', glOpts) ||
+      canvas.getContext('webgl', glOpts) ||
+      canvas.getContext('experimental-webgl', glOpts);
+    if (!context) throw new Error('WebGL unavailable');
+    const renderer = new THREE.WebGLRenderer({ canvas, context, antialias: true, alpha: true });
+    renderer.isFallback = false;
+    return renderer;
+  } catch (err) {
+    console.warn(`WebGL init failed for ${canvas.id}:`, err);
+    drawWebGLFallback(canvas, fallbackTitle);
+    return {
+      isFallback: true,
+      setPixelRatio() {},
+      setSize() { drawWebGLFallback(canvas, fallbackTitle); },
+      setClearColor() {},
+      render() {},
+    };
+  }
+}
+
+function geodeticToECEF(lonDeg, latDeg, alt = 0) {
+  const lon = lonDeg * Math.PI / 180;
+  const lat = latDeg * Math.PI / 180;
+  const a = 6378137.0;
+  const f = 1 / 298.257223563;
+  const e2 = f * (2 - f);
+  const sinLat = Math.sin(lat);
+  const cosLat = Math.cos(lat);
+  const N = a / Math.sqrt(1 - e2 * sinLat * sinLat);
+  return [
+    (N + alt) * cosLat * Math.cos(lon),
+    (N + alt) * cosLat * Math.sin(lon),
+    (N * (1 - e2) + alt) * sinLat,
+  ];
+}
+
+function enuToECEF(e, n, u, site) {
+  const lon = site.lon * Math.PI / 180;
+  const lat = site.lat * Math.PI / 180;
+  const [cx, cy, cz] = geodeticToECEF(site.lon, site.lat, site.alt);
+  return [
+    cx - Math.sin(lon) * e - Math.sin(lat) * Math.cos(lon) * n + Math.cos(lat) * Math.cos(lon) * u,
+    cy + Math.cos(lon) * e - Math.sin(lat) * Math.sin(lon) * n + Math.cos(lat) * Math.sin(lon) * u,
+    cz + Math.cos(lat) * n + Math.sin(lat) * u,
+  ];
+}
+
+function formatSite(site) {
+  return `${site.lat.toFixed(2)} deg N, ${Math.abs(site.lon).toFixed(2)} deg ${site.lon < 0 ? 'W' : 'E'}`;
+}
+
+function createSubarray(key, name, color, baseU, rows, fileName) {
+  const ants = rows.map(([pad, e, n, u, diam]) => ({ pad, e, n, u, diam }));
+  return {
+    key,
+    name,
+    color,
+    fileName,
+    baseU,
+    pedestal: 0,
+    margin: key === 'A' ? 0.4 : 1.2,
+    freq: 3.0,
+    showInSky: true,
+    ants,
+    origAnts: ants.map(ant => ({ ...ant })),
+  };
+}
+
+const state = {
+  site: { ...DEFAULT_SITE },
+  source: { ha: 0, dec: 20, doy: 80 },
+  previewSource: null,
+  calibrators: { minJy: 2.0, freq: 5.0, showTracks: false },
+  display: { symbolScale: 1 },
+  synth: { earthRotOn: false, durHours: 6 },
+  selected: null,
+  dragging: null,
+  result: null,
+  pendingSeq: 0,
+  appliedSeq: 0,
+  computeSeq: 0,
+  currentComputeSeq: 0,
+  appliedComputeSeq: 0,
+  computeDebounce: null,
+  workerWatchdog: null,
+  computePending: false,
+  subarrays: {
+    A: createSubarray('A', 'FASR-A', COLORS.subA, DEFAULT_A_BASE_U, DEFAULT_A_ANTS, 'fasr-a_random_spiral_hybrid_120.cfg'),
+    B: createSubarray('B', 'FASR-B', COLORS.subB, DEFAULT_B_BASE_U, DEFAULT_B_ANTS, 'fasr-b_spiral_72.cfg'),
+  },
+};
+
+const dom = {
+  statusLine: document.getElementById('statusLine'),
+  cfgInfoA: document.getElementById('cfgInfoA'),
+  cfgInfoB: document.getElementById('cfgInfoB'),
+  inspector: document.getElementById('selectedInspector'),
+  inspectorEmpty: document.getElementById('inspectorEmpty'),
+  selPad: document.getElementById('selPad'),
+  selSub: document.getElementById('selSub'),
+  selDiam: document.getElementById('selDiam'),
+  selE: document.getElementById('selE'),
+  selN: document.getElementById('selN'),
+  selU: document.getElementById('selU'),
+  arrayMetrics: document.getElementById('arrayMetrics'),
+  uvMetricsA: document.getElementById('uvMetricsA'),
+  uvMetricsB: document.getElementById('uvMetricsB'),
+  skyMetrics: document.getElementById('skyMetrics'),
+  statSite: document.getElementById('statSite'),
+  statEl: document.getElementById('statEl'),
+  statCounts: document.getElementById('statCounts'),
+  uvTitleA: document.getElementById('uvTitleA'),
+  uvTitleB: document.getElementById('uvTitleB'),
+  skyComputeOverlay: document.getElementById('skyComputeOverlay'),
+  skyComputeLabel: document.getElementById('skyComputeLabel'),
+  chkSkyA: document.getElementById('chkSkyA'),
+  chkSkyB: document.getElementById('chkSkyB'),
+  roHA: document.getElementById('roHA'),
+  roDec: document.getElementById('roDec'),
+  roDOY: document.getElementById('roDOY'),
+  roCalJy: document.getElementById('roCalJy'),
+  roDispScale: document.getElementById('roDispScale'),
+  chkCalTracks: document.getElementById('chkCalTracks'),
+  roDur: document.getElementById('roDur'),
+  skyTitle: document.getElementById('skyTitle'),
+  earthRotBtn: document.getElementById('earthRotBtn'),
+  skyTooltip: document.getElementById('skyTooltip'),
+  canvasArrayConfig: document.getElementById('canvasArrayConfig'),
+  canvasShadow: document.getElementById('canvasShadow'),
+  canvasCoupling: document.getElementById('canvasCoupling'),
+  canvasUVA: document.getElementById('canvasUVA'),
+  canvasUVB: document.getElementById('canvasUVB'),
+  canvasPSFA: document.getElementById('canvasPSFA'),
+  canvasPSFB: document.getElementById('canvasPSFB'),
+  canvasProfA: document.getElementById('canvasProfA'),
+  canvasProfB: document.getElementById('canvasProfB'),
+  canvasSky: document.getElementById('canvasSkyDome'),
+  canvasOrtho: document.getElementById('canvasOrthoPlane'),
+  canvasOrthoArray3D: document.getElementById('canvasOrthoArray3D'),
+};
+
+const arrayHitState = { transform: null };
+const skyHitState = { items: [], scale: 1, shadowPatches: [], couplingPatches: [] };
+const skyCalHitState = { items: [] };
+const orthoArrayHitState = { transform: null, linkedGlobals: [], drag: null };
+const orthoHitState = { items: [], bounds: null, view: null, drag: null };
+
+function combinedAnts() {
+  const ants = [];
+  let global = 0;
+  ['A', 'B'].forEach(subKey => {
+    const sub = state.subarrays[subKey];
+    sub.ants.forEach((ant, idx) => {
+      ants.push({
+        global,
+        subKey,
+        idx,
+        pad: ant.pad,
+        e: ant.e,
+        n: ant.n,
+        u: ant.u + sub.pedestal,
+        rawU: ant.u,
+        diam: ant.diam,
+        color: sub.color,
+        radius: ant.diam / 2,
+        exclusion: ant.diam / 2 + sub.margin,
+      });
+      global += 1;
+    });
+  });
+  return ants;
+}
+
+function selectedAntRef() {
+  if (!state.selected) return null;
+  const sub = state.subarrays[state.selected.subKey];
+  const ant = sub?.ants[state.selected.idx];
+  return ant ? { sub, ant } : null;
+}
+
+function selectedGlobalIndex() {
+  if (!state.selected) return -1;
+  return state.selected.subKey === 'A'
+    ? state.selected.idx
+    : state.subarrays.A.ants.length + state.selected.idx;
+}
+
+function setStatus(msg, strong = false) {
+  dom.statusLine.innerHTML = strong ? `<strong>${msg}</strong>` : msg;
+}
+
+function setSkyComputeOverlay(active, label = 'Computing diagnostics...') {
+  if (!dom.skyComputeOverlay) return;
+  dom.skyComputeLabel.textContent = label;
+  dom.skyComputeOverlay.classList.toggle('hidden', !active);
+  dom.skyComputeOverlay.classList.toggle('active', active);
+}
+
+function activeSourceState() {
+  return state.previewSource || state.source;
+}
+
+function formatFluxJy(value) {
+  if (!Number.isFinite(value)) return 'n/a';
+  if (value >= 10) return `${value.toFixed(1)} Jy`;
+  if (value >= 1) return `${value.toFixed(2)} Jy`;
+  return `${value.toFixed(3)} Jy`;
+}
+
+function interpolateCalibratorFlux(cal, freqGHz) {
+  const pairs = [];
+  CALIBRATOR_FLUX_FREQS.forEach((freq, idx) => {
+    const value = cal.f?.[idx];
+    if (Number.isFinite(value) && value > 0) pairs.push([freq, value]);
+  });
+  if (!pairs.length) return NaN;
+  for (const [freq, value] of pairs) {
+    if (Math.abs(freq - freqGHz) < 1e-6) return value;
+  }
+  if (pairs.length < 2) return NaN;
+  for (let i = 1; i < pairs.length; i++) {
+    const [f0, s0] = pairs[i - 1];
+    const [f1, s1] = pairs[i];
+    if (freqGHz >= f0 && freqGHz <= f1) {
+      const t = (freqGHz - f0) / Math.max(f1 - f0, 1e-9);
+      return s0 + t * (s1 - s0);
+    }
+  }
+  return NaN;
+}
+
+function wrapHourAngle(hours) {
+  let out = hours;
+  while (out <= -12) out += 24;
+  while (out > 12) out -= 24;
+  return out;
+}
+
+function computeVisibleCalibrators(source = activeSourceState()) {
+  const visible = [];
+  const threshold = state.calibrators.minJy;
+  const calFreq = state.calibrators.freq;
+  CALIBRATORS.forEach(cal => {
+    const flux = interpolateCalibratorFlux(cal, calFreq);
+    if (!Number.isFinite(flux) || flux < threshold) return;
+    const sky = sourceVectorMain(wrapHourAngle(source.ha - cal.ra), cal.dec);
+    if (sky.alt <= 0) return;
+    visible.push({ cal, flux, sky });
+  });
+  return visible;
+}
+
+function nearestDisplayScale(value) {
+  let best = DISPLAY_SCALE_VALUES[0];
+  let bestDist = Math.abs(value - best);
+  for (let i = 1; i < DISPLAY_SCALE_VALUES.length; i++) {
+    const candidate = DISPLAY_SCALE_VALUES[i];
+    const dist = Math.abs(value - candidate);
+    if (dist < bestDist) {
+      best = candidate;
+      bestDist = dist;
+    }
+  }
+  return best;
+}
+
+function updateReadouts() {
+  const source = activeSourceState();
+  const previewVec = sourceVectorMain(source.ha, source.dec);
+  const azDeg = ((((previewVec.az * 180 / Math.PI) % 360) + 360) % 360).toFixed(1);
+  const elLabel = previewVec.alt > 0 ? `${(previewVec.alt * 180 / Math.PI).toFixed(1)} deg` : 'Below horizon';
+  const ha = source.ha;
+  const haLabel = Math.abs(ha) < 0.05 ? '(transit)' : ha > 0 ? `(${Math.abs(ha).toFixed(1)}h E)` : `(${Math.abs(ha).toFixed(1)}h W)`;
+  dom.roHA.textContent = `HA = ${ha.toFixed(1)} h ${haLabel}`;
+  dom.roDec.textContent = `Dec = ${source.dec >= 0 ? '+' : ''}${source.dec.toFixed(0)} deg`;
+  dom.roDOY.textContent = `${doyToDateStr(source.doy)} | solar dec ${solarDecDeg(source.doy).toFixed(1)} deg`;
+  dom.roCalJy.textContent = `A/B precise calibrators >= ${state.calibrators.minJy.toFixed(1)} Jy @ ${state.calibrators.freq.toFixed(1)} GHz`;
+  dom.roDispScale.textContent = `Display scale: ${state.display.symbolScale}x`;
+  dom.roDur.textContent = `Synthesis: ${state.synth.durHours.toFixed(1)} hr`;
+  dom.cfgInfoA.textContent = `${state.subarrays.A.fileName} | ${state.subarrays.A.ants.length} ants`;
+  dom.cfgInfoB.textContent = `${state.subarrays.B.fileName} | ${state.subarrays.B.ants.length} ants`;
+  dom.chkSkyA.checked = !!state.subarrays.A.showInSky;
+  dom.chkSkyB.checked = !!state.subarrays.B.showInSky;
+  dom.chkCalTracks.checked = !!state.calibrators.showTracks;
+  document.getElementById('slDispScale').value = DISPLAY_SCALE_VALUES.indexOf(state.display.symbolScale);
+  document.getElementById('numDispScale').value = state.display.symbolScale;
+  dom.statSite.textContent = formatSite(state.site);
+  dom.statCounts.textContent = `${state.subarrays.A.ants.length} + ${state.subarrays.B.ants.length}`;
+  dom.uvTitleA.textContent = `${state.subarrays.A.ants.length} ants | ${state.subarrays.A.freq.toFixed(1)} GHz`;
+  dom.uvTitleB.textContent = `${state.subarrays.B.ants.length} ants | ${state.subarrays.B.freq.toFixed(1)} GHz`;
+  dom.skyTitle.textContent = `${state.site.lat.toFixed(2)} deg N | Az ${azDeg} deg | El ${elLabel} | Click to select | Cmd-drag E / N | Drag to rotate | Shift + drag to pan | Alt + drag or scroll to zoom`;
+}
+
+function updateInspector() {
+  const ref = selectedAntRef();
+  if (!ref) {
+    dom.inspector.classList.add('hidden');
+    dom.inspectorEmpty.classList.remove('hidden');
+    return;
+  }
+  const { sub, ant } = ref;
+  dom.inspector.classList.remove('hidden');
+  dom.inspectorEmpty.classList.add('hidden');
+  dom.selPad.textContent = ant.pad;
+  dom.selSub.textContent = sub.name;
+  dom.selDiam.textContent = `${ant.diam.toFixed(2)} m`;
+  dom.selE.value = ant.e.toFixed(3);
+  dom.selN.value = ant.n.toFixed(3);
+  dom.selU.value = ant.u.toFixed(3);
+}
+
+function makeMetricChip(label, value) {
+  return `<div class="metric-chip"><strong>${label}</strong><span>${value}</span></div>`;
+}
+
+function updateMetricSections() {
+  const ants = combinedAnts();
+  dom.arrayMetrics.innerHTML = [
+    makeMetricChip('Total', `${ants.length}`),
+    makeMetricChip('A span', `${estimateSpan(state.subarrays.A).toFixed(0)} m`),
+    makeMetricChip('B span', `${estimateSpan(state.subarrays.B).toFixed(0)} m`),
+  ].join('');
+  const previewSource = activeSourceState();
+  if (!state.result) {
+    dom.uvMetricsA.innerHTML = '';
+    dom.uvMetricsB.innerHTML = '';
+    const previewVec = sourceVectorMain(previewSource.ha, previewSource.dec);
+    const calVisible = computeVisibleCalibrators(previewSource).length;
+    dom.skyMetrics.innerHTML = [
+      makeMetricChip('Elevation', previewVec.alt > 0 ? `${(previewVec.alt * 180 / Math.PI).toFixed(1)} deg` : 'Below horizon'),
+      makeMetricChip('Azimuth', `${((((previewVec.az * 180 / Math.PI) % 360) + 360) % 360).toFixed(1)} deg`),
+      makeMetricChip('Calibrators', `${calVisible} | >= ${state.calibrators.minJy.toFixed(1)} Jy @ ${state.calibrators.freq.toFixed(1)} GHz`),
+    ].join('');
+    return;
+  }
+  const shadow = state.result.shadowStats;
+  const coupling = state.result.couplingStats;
+  dom.uvMetricsA.innerHTML = [
+    makeMetricChip('Baselines', `${state.result.uv.A.baselines}`),
+    makeMetricChip('Extent', `${state.result.uv.A.extentMeters.toFixed(0)} m`),
+    makeMetricChip('Beam FWHM', `${state.result.uv.A.beamFwhmDeg.toFixed(2)} deg`),
+  ].join('');
+  dom.uvMetricsB.innerHTML = [
+    makeMetricChip('Baselines', `${state.result.uv.B.baselines}`),
+    makeMetricChip('Extent', `${state.result.uv.B.extentMeters.toFixed(0)} m`),
+    makeMetricChip('Beam FWHM', `${state.result.uv.B.beamFwhmDeg.toFixed(2)} deg`),
+  ].join('');
+  const visibleLayers = [
+    state.subarrays.A.showInSky ? 'A' : null,
+    state.subarrays.B.showInSky ? 'B' : null,
+  ].filter(Boolean).join(' + ') || 'none';
+  const previewVec = sourceVectorMain(previewSource.ha, previewSource.dec);
+  const calVisible = computeVisibleCalibrators(previewSource).length;
+  const previewing = !!state.previewSource;
+  dom.skyMetrics.innerHTML = [
+    makeMetricChip('Elevation', previewVec.alt > 0 ? `${(previewVec.alt * 180 / Math.PI).toFixed(1)} deg` : 'Below horizon'),
+    makeMetricChip('Azimuth', `${((((previewVec.az * 180 / Math.PI) % 360) + 360) % 360).toFixed(1)} deg`),
+    makeMetricChip('Shadow', previewing ? 'preview' : `${shadow.current.affected}/${ants.length} (${(shadow.current.affected / Math.max(ants.length, 1) * 100).toFixed(1)}%) | ${shadow.current.pairs} pairs`),
+    makeMetricChip('Coupling', previewing ? 'preview' : `${coupling.current.affected}/${ants.length} (${(coupling.current.affected / Math.max(ants.length, 1) * 100).toFixed(1)}%) | ${coupling.current.pairs} pairs`),
+    makeMetricChip('Calibrators', `${calVisible} | >= ${state.calibrators.minJy.toFixed(1)} Jy @ ${state.calibrators.freq.toFixed(1)} GHz`),
+    makeMetricChip('Layers', visibleLayers),
+  ].join('');
+  dom.statEl.textContent = previewVec.alt > 0 ? `${(previewVec.alt * 180 / Math.PI).toFixed(1)} deg` : 'Below horizon';
+}
+
+function estimateSpan(sub) {
+  if (!sub.ants.length) return 0;
+  const e = sub.ants.map(ant => ant.e);
+  const n = sub.ants.map(ant => ant.n);
+  return Math.max(Math.max(...e) - Math.min(...e), Math.max(...n) - Math.min(...n));
+}
+
+function setSourceHA(v, mode = 'full') {
+  if (!Number.isFinite(v)) return;
+  state.source.ha = clamp(Math.round(v * 10) / 10, -6, 6);
+  if (mode === 'preview') {
+    state.previewSource = { ...state.source };
+    state.currentComputeSeq = ++state.computeSeq;
+  } else state.previewSource = null;
+  document.getElementById('slHA').value = state.source.ha;
+  document.getElementById('numHA').value = state.source.ha;
+  updateReadouts();
+  if (mode === 'preview') renderAll();
+  else scheduleCompute(mode);
+}
+
+function setSourceDec(v, mode = 'full') {
+  if (!Number.isFinite(v)) return;
+  state.source.dec = clamp(Math.round(v), -60, 80);
+  if (mode === 'preview') {
+    state.previewSource = { ...state.source };
+    state.currentComputeSeq = ++state.computeSeq;
+  } else state.previewSource = null;
+  document.getElementById('slDec').value = state.source.dec;
+  document.getElementById('numDec').value = state.source.dec;
+  updateReadouts();
+  if (mode === 'preview') renderAll();
+  else scheduleCompute(mode);
+}
+
+function setSourceDOY(v, mode = 'full') {
+  if (!Number.isFinite(v)) return;
+  state.source.doy = clamp(Math.round(v), 1, 365);
+  document.getElementById('slDOY').value = state.source.doy;
+  document.getElementById('numDOY').value = state.source.doy;
+  state.source.dec = clamp(Math.round(solarDecDeg(state.source.doy) * 10) / 10, -60, 80);
+  if (mode === 'preview') {
+    state.previewSource = { ...state.source };
+    state.currentComputeSeq = ++state.computeSeq;
+  } else state.previewSource = null;
+  document.getElementById('slDec').value = state.source.dec;
+  document.getElementById('numDec').value = state.source.dec;
+  updateReadouts();
+  if (mode === 'preview') renderAll();
+  else scheduleCompute(mode);
+}
+
+function setDuration(v, mode = 'full') {
+  if (!Number.isFinite(v)) return;
+  state.synth.durHours = clamp(Math.round(v * 2) / 2, 1, 12);
+  document.getElementById('slDur').value = state.synth.durHours;
+  document.getElementById('numDur').value = state.synth.durHours;
+  updateReadouts();
+  scheduleCompute(mode);
+}
+
+function setCalibratorMinJy(v) {
+  if (!Number.isFinite(v)) return;
+  state.calibrators.minJy = clamp(Math.round(v * 10) / 10, 0.2, 20);
+  document.getElementById('slCalJy').value = state.calibrators.minJy;
+  document.getElementById('numCalJy').value = state.calibrators.minJy;
+  updateReadouts();
+  updateMetricSections();
+  renderSkyDome();
+}
+
+function setCalibratorFreq(v) {
+  if (!Number.isFinite(v)) return;
+  state.calibrators.freq = clamp(Math.round(v * 10) / 10, 0.33, 42);
+  document.getElementById('slCalFreq').value = state.calibrators.freq;
+  document.getElementById('numCalFreq').value = state.calibrators.freq;
+  updateReadouts();
+  updateMetricSections();
+  renderSkyDome();
+}
+
+function setDisplaySymbolScale(v) {
+  if (!Number.isFinite(v)) return;
+  state.display.symbolScale = nearestDisplayScale(v);
+  updateReadouts();
+  renderAll();
+}
+
+function setSubParam(subKey, field, value, min, max, step = 0.1, mode = 'full') {
+  if (!Number.isFinite(value)) return;
+  const v = clamp(Math.round(value / step) * step, min, max);
+  state.subarrays[subKey][field] = v;
+  const prefix = field === 'pedestal' ? 'Ped' : field === 'freq' ? 'Freq' : 'Margin';
+  document.getElementById(`sl${prefix}${subKey}`).value = v;
+  document.getElementById(`num${prefix}${subKey}`).value = v;
+  updateReadouts();
+  scheduleCompute(mode);
+}
+
+function serializeSubarray(sub) {
+  return {
+    key: sub.key,
+    baseU: sub.baseU,
+    freq: sub.freq,
+    pedestal: sub.pedestal,
+    margin: sub.margin,
+    pads: sub.ants.map(ant => ant.pad),
+    e: sub.ants.map(ant => ant.e),
+    n: sub.ants.map(ant => ant.n),
+    u: sub.ants.map(ant => ant.u),
+    diam: sub.ants.map(ant => ant.diam),
+  };
+}
+
+function requestCompute(quality = 'full') {
+  const seq = ++state.computeSeq;
+  state.currentComputeSeq = seq;
+  state.previewSource = null;
+  state.computePending = true;
+  setStatus(`Computing (${quality})...`);
+  setSkyComputeOverlay(true, quality === 'fast' ? 'Updating diagnostics...' : 'Computing diagnostics...');
+  const payload = {
+    site: state.site,
+    source: state.source,
+    synth: state.synth,
+    quality,
+    subarrays: {
+      A: serializeSubarray(state.subarrays.A),
+      B: serializeSubarray(state.subarrays.B),
+    },
+  };
+  worker.postMessage({
+    type: 'compute',
+    seq,
+    payload,
+  });
+  clearTimeout(state.workerWatchdog);
+  state.workerWatchdog = setTimeout(() => {
+    if (state.appliedComputeSeq >= seq || state.currentComputeSeq !== seq) return;
+    try {
+      const result = localBackend.computeDiagnostics(payload);
+      applyComputeResult(seq, result, true);
+    } catch (err) {
+      setStatus(`Fallback compute error: ${err.message || err}`);
+      console.error('Fallback compute error', err);
+    }
+  }, 400);
+}
+
+function scheduleCompute(mode = 'full') {
+  clearTimeout(state.computeDebounce);
+  if (mode === 'preview') {
+    state.computePending = false;
+    setSkyComputeOverlay(false);
+    return;
+  }
+  if (mode === 'fast') {
+    requestCompute('fast');
+    state.computeDebounce = setTimeout(() => requestCompute('full'), 160);
+  } else {
+    requestCompute('full');
+  }
+}
+
+function parseCfgFile(subKey, file) {
+  if (!file) return;
+  const seq = ++state.pendingSeq;
+  file.text().then(text => {
+    worker.postMessage({ type: 'parseCfg', seq, key: subKey, text, fallbackSite: state.site });
+  });
+}
+
+function applyParsedCfg(subKey, parsed) {
+  const prev = state.subarrays[subKey];
+  state.site = parsed.site;
+  state.subarrays[subKey] = {
+    ...prev,
+    fileName: parsed.fileName,
+    baseU: parsed.baseU,
+    ants: parsed.ants.map(ant => ({ ...ant })),
+    origAnts: parsed.ants.map(ant => ({ ...ant })),
+  };
+  if (state.selected?.subKey === subKey) state.selected = null;
+  updateReadouts();
+  updateInspector();
+  scheduleCompute('full');
+}
+
+function resetSubarray(subKey) {
+  const sub = state.subarrays[subKey];
+  sub.ants = sub.origAnts.map(ant => ({ ...ant }));
+  sub.pedestal = 0;
+  document.getElementById(`slPed${subKey}`).value = 0;
+  document.getElementById(`numPed${subKey}`).value = 0;
+  if (state.selected?.subKey === subKey) updateInspector();
+  scheduleCompute('full');
+}
+
+function resetSelected() {
+  const ref = selectedAntRef();
+  if (!ref) return;
+  const { sub, ant } = ref;
+  const orig = sub.origAnts[state.selected.idx];
+  ant.e = orig.e;
+  ant.n = orig.n;
+  ant.u = orig.u;
+  updateInspector();
+  scheduleCompute('full');
+}
+
+function resetAll() {
+  ['A', 'B'].forEach(resetSubarray);
+}
+
+function downloadCfg(subKey) {
+  const sub = state.subarrays[subKey];
+  const header = [
+    '#observatory=FASR',
+    `#COFA=${state.site.lon.toFixed(5)}, ${state.site.lat.toFixed(5)}, ${state.site.alt.toFixed(1)}`,
+    '#coordsys=XYZ',
+    '# x y z diam pad',
+  ];
+  const lines = sub.ants.map(ant => {
+    const totalU = sub.baseU + ant.u + sub.pedestal;
+    const [x, y, z] = enuToECEF(ant.e, ant.n, totalU, state.site);
+    return `${x.toFixed(6)} ${y.toFixed(6)} ${z.toFixed(6)} ${ant.diam.toFixed(3)} ${ant.pad}`;
+  });
+  const blob = new Blob([`${header.join('\n')}\n${lines.join('\n')}\n`], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${subKey === 'A' ? 'fasr-a' : 'fasr-b'}_edited.cfg`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 500);
+}
+
+function bindScalarControl(sliderId, numberId, setter, options = {}) {
+  const slider = document.getElementById(sliderId);
+  const number = document.getElementById(numberId);
+  const previewMode = options.previewMode || 'fast';
+  slider.addEventListener('input', e => setter(parseFloat(e.target.value), previewMode));
+  number.addEventListener('input', e => setter(parseFloat(e.target.value), previewMode));
+  slider.addEventListener('change', e => setter(parseFloat(e.target.value), 'full'));
+  number.addEventListener('change', e => setter(parseFloat(e.target.value), 'full'));
+}
+
+bindScalarControl('slHA', 'numHA', setSourceHA, { previewMode: 'preview' });
+bindScalarControl('slDec', 'numDec', setSourceDec, { previewMode: 'preview' });
+bindScalarControl('slDOY', 'numDOY', setSourceDOY, { previewMode: 'preview' });
+bindScalarControl('slCalJy', 'numCalJy', setCalibratorMinJy, { previewMode: 'preview' });
+bindScalarControl('slCalFreq', 'numCalFreq', setCalibratorFreq, { previewMode: 'preview' });
+bindScalarControl('slDur', 'numDur', setDuration);
+bindScalarControl('slPedA', 'numPedA', (v, m) => setSubParam('A', 'pedestal', v, -10, 20, 0.1, m));
+bindScalarControl('slPedB', 'numPedB', (v, m) => setSubParam('B', 'pedestal', v, -10, 20, 0.1, m));
+bindScalarControl('slFreqA', 'numFreqA', (v, m) => setSubParam('A', 'freq', v, 0.2, 18, 0.1, m));
+bindScalarControl('slFreqB', 'numFreqB', (v, m) => setSubParam('B', 'freq', v, 0.2, 18, 0.1, m));
+bindScalarControl('slMarginA', 'numMarginA', (v, m) => setSubParam('A', 'margin', v, 0, 6, 0.1, m));
+bindScalarControl('slMarginB', 'numMarginB', (v, m) => setSubParam('B', 'margin', v, 0, 12, 0.1, m));
+document.getElementById('slDispScale').addEventListener('input', e => {
+  const idx = clamp(Math.round(parseFloat(e.target.value)), 0, DISPLAY_SCALE_VALUES.length - 1);
+  setDisplaySymbolScale(DISPLAY_SCALE_VALUES[idx]);
+});
+document.getElementById('slDispScale').addEventListener('change', e => {
+  const idx = clamp(Math.round(parseFloat(e.target.value)), 0, DISPLAY_SCALE_VALUES.length - 1);
+  setDisplaySymbolScale(DISPLAY_SCALE_VALUES[idx]);
+});
+document.getElementById('numDispScale').addEventListener('input', e => {
+  setDisplaySymbolScale(parseFloat(e.target.value));
+});
+document.getElementById('numDispScale').addEventListener('change', e => {
+  setDisplaySymbolScale(parseFloat(e.target.value));
+});
+dom.chkSkyA.addEventListener('change', e => {
+  state.subarrays.A.showInSky = e.target.checked;
+  renderAll();
+});
+dom.chkSkyB.addEventListener('change', e => {
+  state.subarrays.B.showInSky = e.target.checked;
+  renderAll();
+});
+dom.chkCalTracks.addEventListener('change', e => {
+  state.calibrators.showTracks = e.target.checked;
+  renderSkyDome();
+});
+
+document.getElementById('fileCfgA').addEventListener('change', e => parseCfgFile('A', e.target.files?.[0]));
+document.getElementById('fileCfgB').addEventListener('change', e => parseCfgFile('B', e.target.files?.[0]));
+document.getElementById('btnResetA').addEventListener('click', () => resetSubarray('A'));
+document.getElementById('btnResetB').addEventListener('click', () => resetSubarray('B'));
+document.getElementById('btnDownloadA').addEventListener('click', () => downloadCfg('A'));
+document.getElementById('btnDownloadB').addEventListener('click', () => downloadCfg('B'));
+document.getElementById('btnResetSelected').addEventListener('click', () => resetSelected());
+document.getElementById('btnClearSelection').addEventListener('click', () => { state.selected = null; updateInspector(); renderAll(); });
+document.getElementById('btnResetAll').addEventListener('click', () => resetAll());
+dom.earthRotBtn.addEventListener('click', () => {
+  state.synth.earthRotOn = !state.synth.earthRotOn;
+  dom.earthRotBtn.textContent = state.synth.earthRotOn ? 'Tracks On' : 'Snapshot';
+  dom.earthRotBtn.classList.toggle('secondary', !state.synth.earthRotOn);
+  scheduleCompute('full');
+});
+
+['selE', 'selN', 'selU'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    const ref = selectedAntRef();
+    if (!ref) return;
+    ref.ant.e = parseFloat(dom.selE.value);
+    ref.ant.n = parseFloat(dom.selN.value);
+    ref.ant.u = parseFloat(dom.selU.value);
+    scheduleCompute('full');
+  });
+});
+
+function drawBaseAxes(ctx, W, H, bounds, labels, options = {}) {
+  const m = { left: 48, right: 14, top: 14, bottom: 34 };
+  ctx.clearRect(0, 0, W, H);
+  const { xMin, xMax, yMin, yMax } = bounds;
+  let pw = W - m.left - m.right;
+  let ph = H - m.top - m.bottom;
+  let px0 = m.left;
+  let py0 = m.top;
+  if (options.square) {
+    const side = Math.max(1, Math.min(pw, ph));
+    px0 = m.left + (pw - side) / 2;
+    py0 = m.top + (ph - side) / 2;
+    pw = side;
+    ph = side;
+  }
+  const mapX = v => px0 + (v - xMin) / (xMax - xMin || 1) * pw;
+  const mapY = v => py0 + ph - (v - yMin) / (yMax - yMin || 1) * ph;
+
+  ctx.strokeStyle = COLORS.helper;
+  ctx.lineWidth = 1;
+  [0.25, 0.5, 0.75].forEach(t => {
+    const gx = px0 + pw * t;
+    ctx.beginPath(); ctx.moveTo(gx, py0); ctx.lineTo(gx, py0 + ph); ctx.stroke();
+    const gy = py0 + ph * t;
+    ctx.beginPath(); ctx.moveTo(px0, gy); ctx.lineTo(px0 + pw, gy); ctx.stroke();
+  });
+
+  const x0 = mapX(0), y0 = mapY(0);
+  ctx.strokeStyle = COLORS.axis;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(px0, y0); ctx.lineTo(px0 + pw, y0);
+  ctx.moveTo(x0, py0); ctx.lineTo(x0, py0 + ph);
+  ctx.stroke();
+
+  ctx.fillStyle = COLORS.muted;
+  ctx.font = UI_FONT_11;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  const span = Math.max(xMax - xMin, yMax - yMin);
+  const defaultStep = span > 5000 ? 1000 : span > 2500 ? 500 : span > 1200 ? 250 : span > 500 ? 100 : 20;
+  const xTicks = options.xTicks ?? (() => {
+    const vals = [];
+    let tick = Math.ceil(xMin / defaultStep) * defaultStep;
+    while (tick <= xMax) {
+      vals.push(tick);
+      tick += defaultStep;
+    }
+    return vals;
+  })();
+  const yTicks = options.yTicks ?? (() => {
+    const vals = [];
+    let tick = Math.ceil(yMin / defaultStep) * defaultStep;
+    while (tick <= yMax) {
+      vals.push(tick);
+      tick += defaultStep;
+    }
+    return vals;
+  })();
+  xTicks.forEach(tick => {
+    if (Math.abs(tick) > defaultStep * 0.01 || options.showZeroTick) {
+      const label = options.xTickFormat ? options.xTickFormat(tick) : (tick | 0).toString();
+      ctx.fillText(label, mapX(tick), py0 + ph + 4);
+    }
+  });
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  yTicks.forEach(tick => {
+    if (Math.abs(tick) > defaultStep * 0.01 || options.showZeroTick) {
+      const label = options.yTickFormat ? options.yTickFormat(tick) : (tick | 0).toString();
+      ctx.fillText(label, px0 - 4, mapY(tick));
+    }
+  });
+
+  ctx.fillStyle = COLORS.ink;
+  ctx.font = UI_FONT_11;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText(labels.x, px0 + pw / 2, py0 + ph + 16);
+  ctx.save();
+  ctx.translate(14, py0 + ph / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textBaseline = 'middle';
+  ctx.fillText(labels.y, 0, 0);
+  ctx.restore();
+
+  const unitScale = Math.min(pw / Math.max(xMax - xMin, 1e-6), ph / Math.max(yMax - yMin, 1e-6));
+  return { m, mapX, mapY, unitScale, px0, py0, pw, ph, bounds: { xMin, xMax, yMin, yMax } };
+}
+
+function drawArrayConfig() {
+  const { ctx, width: W, height: H } = setupCanvas(dom.canvasArrayConfig);
+  const ants = combinedAnts();
+  if (!ants.length) return;
+  const eVals = ants.map(ant => ant.e);
+  const nVals = ants.map(ant => ant.n);
+  const span = Math.max(Math.max(...eVals) - Math.min(...eVals), Math.max(...nVals) - Math.min(...nVals));
+  const pad = span * 0.08 + 20;
+  const bounds = {
+    xMin: Math.min(...eVals) - pad,
+    xMax: Math.max(...eVals) + pad,
+    yMin: Math.min(...nVals) - pad,
+    yMax: Math.max(...nVals) + pad,
+  };
+  const { mapX, mapY } = drawBaseAxes(ctx, W, H, bounds, { x: 'East (m)', y: 'North (m)' });
+  arrayHitState.transform = { bounds, mapX, mapY };
+
+  ants.forEach(ant => {
+    const x = mapX(ant.e), y = mapY(ant.n);
+    const r = clamp(4 + ant.diam * 0.65, 4.5, 9.5);
+    ctx.fillStyle = ant.subKey === 'A' ? COLORS.subA : COLORS.subB;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.90)';
+    ctx.lineWidth = 1.1;
+    ctx.stroke();
+    if (state.selected && state.selected.subKey === ant.subKey && state.selected.idx === ant.idx) {
+      ctx.strokeStyle = COLORS.danger;
+      ctx.lineWidth = 2.0;
+      ctx.beginPath(); ctx.arc(x, y, r + 4, 0, Math.PI * 2); ctx.stroke();
+    }
+  });
+}
+
+function drawOrthoPlane2D() {
+  if (!dom.canvasOrtho) return;
+  const { ctx, width: W, height: H } = setupCanvas(dom.canvasOrtho);
+  ctx.clearRect(0, 0, W, H);
+  if (!skyHitState.items.length) {
+    orthoHitState.items = [];
+    orthoHitState.bounds = null;
+    orthoHitState.view = null;
+    return;
+  }
+  let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+  skyHitState.items.forEach(item => {
+    item.projLocalPoints.forEach(p => {
+      xMin = Math.min(xMin, p.x);
+      xMax = Math.max(xMax, p.x);
+      yMin = Math.min(yMin, p.y);
+      yMax = Math.max(yMax, p.y);
+    });
+  });
+  if (!Number.isFinite(xMin)) return;
+  const halfSpan = Math.max((xMax - xMin) * 0.5, (yMax - yMin) * 0.5, 0.35);
+  const cx = (xMin + xMax) * 0.5;
+  const cy = (yMin + yMax) * 0.5;
+  const pad = Math.max(halfSpan * 0.16, 0.08);
+  const autoBounds = {
+    xMin: cx - halfSpan - pad,
+    xMax: cx + halfSpan + pad,
+    yMin: cy - halfSpan - pad,
+    yMax: cy + halfSpan + pad,
+  };
+  if (!orthoHitState.view || !orthoHitState.view.userControlled) {
+    orthoHitState.view = {
+      centerX: (autoBounds.xMin + autoBounds.xMax) * 0.5,
+      centerY: (autoBounds.yMin + autoBounds.yMax) * 0.5,
+      halfSpan: Math.max((autoBounds.xMax - autoBounds.xMin) * 0.5, (autoBounds.yMax - autoBounds.yMin) * 0.5),
+      userControlled: false,
+    };
+  }
+  const bounds = {
+    xMin: orthoHitState.view.centerX - orthoHitState.view.halfSpan,
+    xMax: orthoHitState.view.centerX + orthoHitState.view.halfSpan,
+    yMin: orthoHitState.view.centerY - orthoHitState.view.halfSpan,
+    yMax: orthoHitState.view.centerY + orthoHitState.view.halfSpan,
+  };
+  const { mapX, mapY, px0, py0, pw, ph } = drawBaseAxes(ctx, W, H, bounds, { x: 'u (dome tangent plane)', y: 'v (dome tangent plane)' }, { square: true });
+  orthoHitState.bounds = { bounds, mapX, mapY, px0, py0, pw, ph };
+
+  skyHitState.items.forEach(item => {
+    const pts = item.projLocalPoints;
+    ctx.beginPath();
+    ctx.moveTo(mapX(pts[0].x), mapY(pts[0].y));
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(mapX(pts[i].x), mapY(pts[i].y));
+    ctx.closePath();
+    ctx.fillStyle = item.ant.subKey === 'A' ? 'rgba(107,174,196,0.75)' : 'rgba(196,154,107,0.75)';
+    ctx.fill();
+    ctx.strokeStyle = item.ant.subKey === 'A' ? COLORS.subA : COLORS.subB;
+    ctx.lineWidth = 1.1;
+    ctx.stroke();
+  });
+
+  if (state.result) {
+    skyHitState.shadowPatches.forEach(patch => {
+      ctx.beginPath();
+      ctx.moveTo(mapX(patch[0].x), mapY(patch[0].y));
+      for (let i = 1; i < patch.length; i++) ctx.lineTo(mapX(patch[i].x), mapY(patch[i].y));
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(207,77,58,0.66)';
+      ctx.fill();
+      ctx.strokeStyle = COLORS.dangerStroke;
+      ctx.lineWidth = 1.35;
+      ctx.stroke();
+    });
+    skyHitState.couplingPatches.forEach(patch => {
+      ctx.beginPath();
+      ctx.moveTo(mapX(patch[0].x), mapY(patch[0].y));
+      for (let i = 1; i < patch.length; i++) ctx.lineTo(mapX(patch[i].x), mapY(patch[i].y));
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(207,77,58,0.84)';
+      ctx.fill();
+      ctx.strokeStyle = COLORS.dangerStroke;
+      ctx.lineWidth = 1.45;
+      ctx.stroke();
+    });
+  }
+
+  orthoHitState.items = skyHitState.items.map(item => ({
+    ant: item.ant,
+    polygon: item.projLocalPoints.map(p => ({ x: mapX(p.x), y: mapY(p.y) })),
+  }));
+
+  if (state.selected) {
+    const selected = orthoHitState.items.find(item => item.ant.global === selectedGlobalIndex());
+    if (selected) {
+      ctx.beginPath();
+      ctx.moveTo(selected.polygon[0].x, selected.polygon[0].y);
+      for (let i = 1; i < selected.polygon.length; i++) ctx.lineTo(selected.polygon[i].x, selected.polygon[i].y);
+      ctx.closePath();
+      ctx.strokeStyle = COLORS.danger;
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+    }
+  }
+}
+
+function traceLensPath(ctx, c1x, c1y, r1, c2x, c2y, r2) {
+  const dx = c2x - c1x;
+  const dy = c2y - c1y;
+  const d = Math.hypot(dx, dy);
+  if (d >= r1 + r2 || d <= 1e-6) {
+    if (d <= Math.abs(r1 - r2)) {
+      const [cx, cy, rr] = r1 < r2 ? [c1x, c1y, r1] : [c2x, c2y, r2];
+      ctx.beginPath();
+      ctx.arc(cx, cy, rr, 0, Math.PI * 2);
+      return true;
+    }
+    return false;
+  }
+  if (d <= Math.abs(r1 - r2)) {
+    const [cx, cy, rr] = r1 < r2 ? [c1x, c1y, r1] : [c2x, c2y, r2];
+    ctx.beginPath();
+    ctx.arc(cx, cy, rr, 0, Math.PI * 2);
+    return true;
+  }
+  const a = Math.acos(clamp((r1 * r1 + d * d - r2 * r2) / (2 * r1 * d), -1, 1));
+  const b = Math.acos(clamp((r2 * r2 + d * d - r1 * r1) / (2 * r2 * d), -1, 1));
+  const ang = Math.atan2(dy, dx);
+  ctx.beginPath();
+  ctx.arc(c1x, c1y, r1, ang - a, ang + a);
+  ctx.arc(c2x, c2y, r2, ang + Math.PI - b, ang + Math.PI + b);
+  ctx.closePath();
+  return true;
+}
+
+function fillLens(ctx, c1x, c1y, r1, c2x, c2y, r2, fillStyle, strokeStyle = null) {
+  const ok = traceLensPath(ctx, c1x, c1y, r1, c2x, c2y, r2);
+  if (!ok) return;
+  ctx.fillStyle = fillStyle;
+  ctx.fill();
+  if (strokeStyle) {
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = 1.15;
+    ctx.stroke();
+  }
+}
+
+function projectionBounds(result, key) {
+  const pts = result.projected;
+  const focus = new Set();
+  if (key === 'shadow' && result.shadowPairs.length) {
+    result.shadowPairs.forEach(pair => { focus.add(pair.a); focus.add(pair.b); });
+  }
+  if (key === 'coupling' && result.couplingPairs.length) {
+    result.couplingPairs.forEach(pair => { focus.add(pair.emitter); focus.add(pair.target); });
+  }
+  if (state.selected && result.selectedGlobal >= 0) focus.add(result.selectedGlobal);
+  let xs = [];
+  let ys = [];
+  if (focus.size) {
+    focus.forEach(idx => {
+      xs.push(pts[idx].u);
+      ys.push(pts[idx].v);
+      if (result.tracks?.[idx]?.length) {
+        result.tracks[idx].forEach(p => { xs.push(p.u); ys.push(p.v); });
+      }
+    });
+  } else {
+    pts.forEach(p => { xs.push(p.u); ys.push(p.v); });
+  }
+  if (!xs.length) xs = [-1, 1], ys = [-1, 1];
+  let xMin = Math.min(...xs), xMax = Math.max(...xs), yMin = Math.min(...ys), yMax = Math.max(...ys);
+  let pad = Math.max(xMax - xMin, yMax - yMin) * 0.18 + 20;
+  if (key === 'coupling') {
+    result.couplingPairs.forEach(pair => {
+      if (!focus.size || focus.has(pair.emitter) || focus.has(pair.target)) {
+        const e = result.projected[pair.emitter];
+        const t = result.projected[pair.target];
+        xMin = Math.min(xMin, e.u - pair.beamRadius, t.u - t.exclusion);
+        xMax = Math.max(xMax, e.u + pair.beamRadius, t.u + t.exclusion);
+        yMin = Math.min(yMin, e.v - pair.beamRadius, t.v - t.exclusion);
+        yMax = Math.max(yMax, e.v + pair.beamRadius, t.v + t.exclusion);
+      }
+    });
+  }
+  const cx = (xMin + xMax) / 2;
+  const cy = (yMin + yMax) / 2;
+  const halfSpan = Math.max((xMax - xMin) / 2, (yMax - yMin) / 2, 65);
+  xMin = cx - halfSpan;
+  xMax = cx + halfSpan;
+  yMin = cy - halfSpan;
+  yMax = cy + halfSpan;
+  return { xMin: xMin - pad, xMax: xMax + pad, yMin: yMin - pad, yMax: yMax + pad };
+}
+
+function drawProjection(kind) {
+  const canvas = kind === 'shadow' ? dom.canvasShadow : dom.canvasCoupling;
+  const { ctx, width: W, height: H } = setupCanvas(canvas);
+  if (!state.result) return;
+  const bounds = projectionBounds(state.result, kind);
+  const { mapX, mapY, unitScale } = drawBaseAxes(ctx, W, H, bounds, { x: 'Plane u (m)', y: 'Plane v (m)' });
+
+  if (state.result.tracks?.length) {
+    state.result.tracks.forEach((track, idx) => {
+      const subKey = idx < state.subarrays.A.ants.length ? 'A' : 'B';
+      ctx.strokeStyle = subKey === 'A' ? 'rgba(45,125,154,0.22)' : 'rgba(180,107,40,0.22)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      track.forEach((p, i) => {
+        if (i === 0) ctx.moveTo(mapX(p.u), mapY(p.v));
+        else ctx.lineTo(mapX(p.u), mapY(p.v));
+      });
+      ctx.stroke();
+    });
+  }
+
+  const projected = state.result.projected;
+  if (kind === 'coupling') {
+    state.result.couplingPairs.forEach(pair => {
+      const e = projected[pair.emitter];
+      const t = projected[pair.target];
+      ctx.strokeStyle = COLORS.beamStroke;
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.arc(mapX(e.u), mapY(e.v), pair.beamRadius * unitScale, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+  }
+
+  projected.forEach((p, idx) => {
+    const x = mapX(p.u), y = mapY(p.v);
+    const r = p.r * unitScale;
+    ctx.fillStyle = COLORS.disk;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = idx < state.subarrays.A.ants.length ? COLORS.subA : COLORS.subB;
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    if (kind === 'coupling') {
+      ctx.strokeStyle = COLORS.diskStroke;
+      ctx.lineWidth = 0.9;
+      ctx.beginPath(); ctx.arc(x, y, p.exclusion * unitScale, 0, Math.PI * 2); ctx.stroke();
+    }
+    if (state.selected && idx === state.result.selectedGlobal) {
+      ctx.strokeStyle = COLORS.danger;
+      ctx.lineWidth = 2.1;
+      ctx.beginPath(); ctx.arc(x, y, r + 4, 0, Math.PI * 2); ctx.stroke();
+    }
+  });
+
+  if (kind === 'shadow') {
+    state.result.shadowPairs.forEach(pair => {
+      const a = projected[pair.a];
+      const b = projected[pair.b];
+      fillLens(
+        ctx,
+        mapX(a.u),
+        mapY(a.v),
+        a.r * unitScale,
+        mapX(b.u),
+        mapY(b.v),
+        b.r * unitScale,
+        COLORS.dangerFill,
+        COLORS.dangerStroke
+      );
+    });
+  } else {
+    state.result.couplingPairs.forEach(pair => {
+      const e = projected[pair.emitter];
+      const t = projected[pair.target];
+      fillLens(
+        ctx,
+        mapX(e.u),
+        mapY(e.v),
+        pair.beamRadius * unitScale,
+        mapX(t.u),
+        mapY(t.v),
+        t.exclusion * unitScale,
+        COLORS.dangerFill,
+        COLORS.dangerStroke
+      );
+    });
+  }
+
+  projected.forEach((p, idx) => {
+    const x = mapX(p.u), y = mapY(p.v);
+    ctx.fillStyle = idx < state.subarrays.A.ants.length ? COLORS.subA : COLORS.subB;
+    ctx.beginPath(); ctx.arc(x, y, 2.8, 0, Math.PI * 2); ctx.fill();
+  });
+}
+
+function drawUvCard(key) {
+  if (!state.result) return;
+  const uvRes = state.result.uv[key];
+  const cUV = setupCanvas(key === 'A' ? dom.canvasUVA : dom.canvasUVB);
+  const cPSF = setupCanvas(key === 'A' ? dom.canvasPSFA : dom.canvasPSFB);
+  const cProf = setupCanvas(key === 'A' ? dom.canvasProfA : dom.canvasProfB);
+
+  drawUvPanel(cUV.ctx, cUV.width, cUV.height, uvRes);
+  drawPsfPanel(cPSF.ctx, cPSF.width, cPSF.height, uvRes);
+  drawProfilePanel(cProf.ctx, cProf.width, cProf.height, uvRes);
+}
+
+function drawUvPanel(ctx, W, H, uvRes) {
+  const extent = Math.max(uvRes.extentMeters, 1);
+  const bounds = { xMin: -extent, xMax: extent, yMin: -extent, yMax: extent };
+  const { mapX, mapY } = drawBaseAxes(ctx, W, H, bounds, { x: 'u (m)', y: 'v (m)' }, { square: true });
+  if (uvRes.mode === 'density' && uvRes.density?.length) {
+    const size = uvRes.densitySize;
+    const img = ctx.createImageData(size, size);
+    for (let i = 0; i < size * size; i++) {
+      const v = uvRes.density[i];
+      const base = i * 4;
+      img.data[base] = 34;
+      img.data[base + 1] = 91 + Math.round(120 * v);
+      img.data[base + 2] = 135 + Math.round(90 * v);
+      img.data[base + 3] = Math.round(255 * Math.min(1, v));
+    }
+    const off = document.createElement('canvas');
+    off.width = size;
+    off.height = size;
+    off.getContext('2d').putImageData(img, 0, 0);
+    ctx.globalAlpha = 0.78;
+    ctx.drawImage(off, 48, 14, W - 62, H - 48);
+    ctx.globalAlpha = 1;
+  } else if (uvRes.points?.length) {
+    ctx.fillStyle = 'rgba(45,125,154,0.72)';
+    uvRes.points.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(mapX(p.u), mapY(p.v), 2.0, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+  ctx.fillStyle = COLORS.current;
+  uvRes.currentPoints.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(mapX(p.u), mapY(p.v), 2.4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function drawPsfPanel(ctx, W, H, uvRes) {
+  const m = { left: 12, right: 12, top: 12, bottom: 26 };
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(247,248,250,0.95)';
+  ctx.fillRect(0, 0, W, H);
+  const size = uvRes.psfSize;
+  if (!size || !uvRes.psfImage?.length) {
+    ctx.fillStyle = COLORS.muted;
+    ctx.font = UI_FONT_12;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('PSF unavailable', W / 2, H / 2);
+    return;
+  }
+  const img = ctx.createImageData(size, size);
+  for (let i = 0; i < size * size; i++) {
+    const v = uvRes.psfImage[i];
+    const base = i * 4;
+    const [r, g, b] = psfColor(v);
+    img.data[base] = r;
+    img.data[base + 1] = g;
+    img.data[base + 2] = b;
+    img.data[base + 3] = 255;
+  }
+  const off = document.createElement('canvas');
+  off.width = size;
+  off.height = size;
+  off.getContext('2d').putImageData(img, 0, 0);
+  const drawW = Math.min(W - m.left - m.right, H - m.top - m.bottom);
+  const x0 = (W - drawW) / 2;
+  const y0 = 8;
+  ctx.drawImage(off, x0, y0, drawW, drawW);
+  ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x0 + drawW / 2, y0);
+  ctx.lineTo(x0 + drawW / 2, y0 + drawW);
+  ctx.moveTo(x0, y0 + drawW / 2);
+  ctx.lineTo(x0 + drawW, y0 + drawW / 2);
+  ctx.stroke();
+  ctx.fillStyle = COLORS.ink;
+  ctx.font = UI_FONT_11;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText('PSF log intensity', 12, H - 8);
+}
+
+function psfColor(v) {
+  const t = clamp(v, 0, 1);
+  const stops = [
+    [0.0, [16, 20, 34]],
+    [0.2, [46, 59, 96]],
+    [0.4, [56, 98, 128]],
+    [0.6, [115, 157, 165]],
+    [0.8, [216, 186, 119]],
+    [1.0, [255, 247, 219]],
+  ];
+  for (let i = 0; i < stops.length - 1; i++) {
+    const [t0, c0] = stops[i];
+    const [t1, c1] = stops[i + 1];
+    if (t >= t0 && t <= t1) {
+      const f = (t - t0) / (t1 - t0 || 1);
+      return c0.map((c, idx) => Math.round(c + (c1[idx] - c) * f));
+    }
+  }
+  return stops[stops.length - 1][1];
+}
+
+function drawProfilePanel(ctx, W, H, uvRes) {
+  const bounds = { xMin: -1, xMax: 1, yMin: -60, yMax: 0 };
+  const { mapX, mapY } = drawBaseAxes(
+    ctx,
+    W,
+    H,
+    bounds,
+    { x: 'Normalized image offset', y: 'Level (dB)' },
+    {
+      xTicks: [-1, -0.5, 0, 0.5, 1],
+      yTicks: [-60, -40, -20, 0],
+      xTickFormat: tick => Number.isInteger(tick) ? tick.toString() : tick.toFixed(1),
+      yTickFormat: tick => tick.toString(),
+      showZeroTick: true,
+    }
+  );
+  const drawLine = (vals, color) => {
+    if (!vals?.length) return;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    vals.forEach((v, i) => {
+      const x = -1 + 2 * i / Math.max(vals.length - 1, 1);
+      const y = clamp(v, -60, 0);
+      if (i === 0) ctx.moveTo(mapX(x), mapY(y));
+      else ctx.lineTo(mapX(x), mapY(y));
+    });
+    ctx.stroke();
+  };
+  drawLine(uvRes.profileU, COLORS.subA);
+  drawLine(uvRes.profileV, COLORS.subB);
+
+  const legend = [
+    { label: 'U cut', color: COLORS.subA },
+    { label: 'V cut', color: COLORS.subB },
+  ];
+  const boxW = 74;
+  const boxH = 18;
+  const startX = W - 12 - boxW;
+  let y = 14;
+  legend.forEach(item => {
+    ctx.fillStyle = 'rgba(255,255,255,0.74)';
+    ctx.strokeStyle = 'rgba(31,42,48,0.10)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(startX, y, boxW, boxH, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = item.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(startX + 8, y + boxH / 2);
+    ctx.lineTo(startX + 24, y + boxH / 2);
+    ctx.stroke();
+    ctx.fillStyle = COLORS.ink;
+    ctx.font = UI_FONT_11;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(item.label, startX + 30, y + boxH / 2);
+    y += boxH + 6;
+  });
+}
+
+const skyRenderer = makeRenderer(dom.canvasSky, 'Sky dome');
+skyRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+skyRenderer.setSize(dom.canvasSky.clientWidth || 500, dom.canvasSky.clientHeight || 600, false);
+skyRenderer.setClearColor(0x000000, 0);
+const skyScene = new THREE.Scene();
+const skyCamera = new THREE.PerspectiveCamera(42, (dom.canvasSky.clientWidth || 500) / (dom.canvasSky.clientHeight || 600), 0.000001, 120);
+const skyTarget = new THREE.Vector3(0, 0.3, 0);
+const skyZoomAnchor = new THREE.Vector3(0, 1.8, 0);
+const SKY_Z_AXIS = new THREE.Vector3(0, 0, 1);
+skyScene.add(new THREE.AmbientLight(0xffffff, 0.9));
+{ const dl = new THREE.DirectionalLight(0xffffff, 0.45); dl.position.set(2, 5, 3); skyScene.add(dl); }
+const skyGround = new THREE.Mesh(
+  new THREE.PlaneGeometry(8, 8),
+  new THREE.MeshBasicMaterial({ color: 0xd4c9b0, transparent: true, opacity: 0.34, side: THREE.DoubleSide, depthWrite: false })
+);
+skyGround.rotation.x = -Math.PI / 2;
+skyScene.add(skyGround);
+const skyGrid = new THREE.GridHelper(8, 16, 0x9a8a70, 0xb0a090);
+skyGrid.material.transparent = true;
+skyGrid.material.opacity = 0.24;
+skyScene.add(skyGrid);
+skyScene.add(new THREE.Mesh(
+  new THREE.SphereGeometry(2.5, 40, 20, 0, Math.PI * 2, 0, Math.PI / 2),
+  new THREE.MeshBasicMaterial({ color: 0x2d5f9a, transparent: true, opacity: 0.06, side: THREE.BackSide, depthWrite: false })
+));
+const horizon = new THREE.Mesh(
+  new THREE.TorusGeometry(2.5, 0.01, 8, 120),
+  new THREE.MeshBasicMaterial({ color: 0x1f2a30, transparent: true, opacity: 0.36 })
+);
+horizon.rotation.x = Math.PI / 2;
+skyScene.add(horizon);
+const skySrcMarker = new THREE.Mesh(
+  new THREE.TorusGeometry(0.07, 0.008, 10, 48),
+  new THREE.MeshBasicMaterial({ color: 0xc8553d, transparent: true, opacity: 0.96, depthWrite: false })
+);
+skyScene.add(skySrcMarker);
+const skyGroundGroup = new THREE.Group();
+const skyCalGroup = new THREE.Group();
+const skyCalTrackGroup = new THREE.Group();
+const skyProjGroup = new THREE.Group();
+const skyConnGroup = new THREE.Group();
+const skyPlaneGroup = new THREE.Group();
+const skyBeamGroup = new THREE.Group();
+const skyBeamPathGroup = new THREE.Group();
+const skyShadowGroup = new THREE.Group();
+const skyCouplingGroup = new THREE.Group();
+skyScene.add(skyGroundGroup);
+skyScene.add(skyCalGroup);
+skyScene.add(skyCalTrackGroup);
+skyScene.add(skyPlaneGroup);
+skyScene.add(skyConnGroup);
+skyScene.add(skyBeamPathGroup);
+const skyPlaneMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(1, 1),
+  new THREE.MeshBasicMaterial({ color: 0x90aab8, transparent: true, opacity: 0.14, side: THREE.DoubleSide, depthWrite: false })
+);
+const skyPlaneOutline = new THREE.LineLoop(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x6b7280, transparent: true, opacity: 0.68 }));
+skyPlaneGroup.add(skyPlaneMesh);
+skyPlaneGroup.add(skyPlaneOutline);
+skyPlaneGroup.add(skyProjGroup);
+skyPlaneGroup.add(skyShadowGroup);
+skyPlaneGroup.add(skyCouplingGroup);
+let skyArrowLine = null;
+let skyTrackLine = null;
+let skyProjTrackGroup = null;
+let skyLastSourceAnchor = null;
+let skyPolar = 0.92;
+let skyAzimuth = 0.44;
+let skyDrag = null;
+const skyRaycaster = new THREE.Raycaster();
+const skyPointer = new THREE.Vector2();
+
+function skyLabel(text, x, z, color = '#1f2a30') {
+  const cv = document.createElement('canvas');
+  cv.width = 80;
+  cv.height = 80;
+  const c = cv.getContext('2d');
+  c.fillStyle = color;
+  c.font = 'bold 40px sans-serif';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText(text, 40, 40);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, opacity: 0.72 }));
+  sprite.scale.set(0.32, 0.32, 1);
+  sprite.position.set(x, 0.2, z);
+  return sprite;
+}
+skyScene.add(skyLabel('N', 0, -2.68, '#c8553d'));
+skyScene.add(skyLabel('S', 0, 2.68));
+skyScene.add(skyLabel('E', 2.68, 0));
+skyScene.add(skyLabel('W', -2.68, 0));
+
+function setSkyCamera() {
+  const sharedOrbitDistance = skyCamera.position.distanceTo(skyTarget) || 4.2;
+  skyCamera.position.set(
+    skyTarget.x + sharedOrbitDistance * Math.sin(skyPolar) * Math.sin(skyAzimuth),
+    skyTarget.y + sharedOrbitDistance * Math.cos(skyPolar),
+    skyTarget.z + sharedOrbitDistance * Math.sin(skyPolar) * Math.cos(skyAzimuth)
+  );
+  skyCamera.lookAt(skyTarget);
+}
+skyCamera.position.set(0.8, 2.2, 4.1);
+skyCamera.lookAt(skyTarget);
+setSkyCamera();
+
+function zoomSkyCamera(zoomFactor) {
+  const camOffset = skyCamera.position.clone().sub(skyZoomAnchor);
+  const camDist = clamp(camOffset.length() * zoomFactor, 0.02, 10.0);
+  skyTarget.copy(skyZoomAnchor);
+  skyCamera.position.copy(skyZoomAnchor.clone().add(camOffset.normalize().multiplyScalar(camDist)));
+  skyCamera.lookAt(skyTarget);
+}
+
+function pickSkyAntenna(clientX, clientY) {
+  if (!skyHitState.items.length) return null;
+  const rect = dom.canvasSky.getBoundingClientRect();
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+  let best = null;
+  skyHitState.items.forEach(item => {
+    const p = item.p.clone().project(skyCamera);
+    if (p.z < -1 || p.z > 1) return;
+    const sx = (p.x * 0.5 + 0.5) * rect.width;
+    const sy = (-p.y * 0.5 + 0.5) * rect.height;
+    const dist = Math.hypot(sx - x, sy - y);
+    const hitRadius = Math.max(16, item.dishRadius * rect.width * 0.6);
+    if (dist <= hitRadius && (!best || dist < best.dist)) best = { ant: item.ant, p: item.p, dist, kind: 'ground' };
+  });
+  skyHitState.items.forEach(item => {
+    if (!item.projWorldPoints?.length) return;
+    const screenPoly = [];
+    let sxSum = 0;
+    let sySum = 0;
+    let visible = true;
+    item.projWorldPoints.forEach(world => {
+      const p = world.clone().project(skyCamera);
+      if (p.z < -1 || p.z > 1) visible = false;
+      const sx = (p.x * 0.5 + 0.5) * rect.width;
+      const sy = (-p.y * 0.5 + 0.5) * rect.height;
+      screenPoly.push({ x: sx, y: sy });
+      sxSum += sx;
+      sySum += sy;
+    });
+    if (!visible || !screenPoly.length) return;
+    if (!pointInPolygon2D({ x, y }, screenPoly)) return;
+    const cx = sxSum / screenPoly.length;
+    const cy = sySum / screenPoly.length;
+    const dist = Math.hypot(cx - x, cy - y);
+    if (!best || best.kind !== 'proj' || dist < best.dist) {
+      best = { ant: item.ant, p: item.p, dist, kind: 'proj' };
+    }
+  });
+  return best;
+}
+
+function pointInPolygon2D(point, polygon) {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i].x, yi = polygon[i].y;
+    const xj = polygon[j].x, yj = polygon[j].y;
+    const intersects = ((yi > point.y) !== (yj > point.y))
+      && (point.x < (xj - xi) * (point.y - yi) / ((yj - yi) || 1e-12) + xi);
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
+function pickSkyCalibrator(clientX, clientY) {
+  if (!skyCalHitState.items.length) return null;
+  const rect = dom.canvasSky.getBoundingClientRect();
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+  let best = null;
+  skyCalHitState.items.forEach(item => {
+    const p = item.pos.clone().project(skyCamera);
+    if (p.z < -1 || p.z > 1) return;
+    const sx = (p.x * 0.5 + 0.5) * rect.width;
+    const sy = (-p.y * 0.5 + 0.5) * rect.height;
+    const dist = Math.hypot(sx - x, sy - y);
+    const hitRadius = Math.max(10, item.markerPx);
+    if (dist <= hitRadius && (!best || dist < best.dist)) best = { ...item, dist };
+  });
+  return best;
+}
+
+function hideSkyTooltip() {
+  if (!dom.skyTooltip) return;
+  dom.skyTooltip.classList.add('hidden');
+}
+
+function showSkyTooltip(hit, clientX, clientY) {
+  if (!dom.skyTooltip) return;
+  const wrapRect = dom.canvasSky.parentElement.getBoundingClientRect();
+  dom.skyTooltip.innerHTML = `
+    <strong>${hit.name}</strong>
+    <div>Az ${hit.az.toFixed(1)} deg | El ${hit.el.toFixed(1)} deg</div>
+    <div>Flux ${formatFluxJy(hit.flux)} @ ${state.calibrators.freq.toFixed(1)} GHz</div>
+    <span class="mini">A/B precise calibrator</span>
+  `;
+  const pad = 10;
+  const maxX = Math.max(wrapRect.width - 180, pad);
+  const maxY = Math.max(wrapRect.height - 96, pad);
+  const x = clamp(clientX - wrapRect.left, pad, maxX);
+  const y = clamp(clientY - wrapRect.top, pad + 12, maxY);
+  dom.skyTooltip.style.left = `${x}px`;
+  dom.skyTooltip.style.top = `${y}px`;
+  dom.skyTooltip.classList.remove('hidden');
+}
+
+function skyPlaneIntersection(clientX, clientY, planeY) {
+  const rect = dom.canvasSky.getBoundingClientRect();
+  skyPointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+  skyPointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+  skyRaycaster.setFromCamera(skyPointer, skyCamera);
+  const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -planeY);
+  const hit = new THREE.Vector3();
+  return skyRaycaster.ray.intersectPlane(plane, hit) ? hit : null;
+}
+
+dom.canvasSky.addEventListener('pointerdown', e => {
+  const hit = pickSkyAntenna(e.clientX, e.clientY);
+  if (hit) setSelectionFromAnt(hit.ant);
+  if (e.metaKey && hit?.kind === 'ground') {
+    skyDrag = {
+      mode: 'move',
+      subKey: hit.ant.subKey,
+      idx: hit.ant.idx,
+      planeY: hit.p.y,
+      scale: skyHitState.scale,
+      x: e.clientX,
+      y: e.clientY,
+    };
+  } else {
+    skyDrag = { mode: 'orbit', x: e.clientX, y: e.clientY };
+  }
+  dom.canvasSky.setPointerCapture(e.pointerId);
+});
+dom.canvasSky.addEventListener('pointermove', e => {
+  const hit = pickSkyAntenna(e.clientX, e.clientY);
+  const calHit = pickSkyCalibrator(e.clientX, e.clientY);
+  if (!skyDrag) {
+    if (calHit && !hit) showSkyTooltip(calHit, e.clientX, e.clientY);
+    else hideSkyTooltip();
+    dom.canvasSky.style.cursor = e.metaKey
+      ? (hit?.kind === 'ground' ? 'move' : (hit ? 'pointer' : 'crosshair'))
+      : (hit ? 'pointer' : (calHit ? 'help' : 'grab'));
+    return;
+  }
+  hideSkyTooltip();
+  const dx = e.clientX - skyDrag.x;
+  const dy = e.clientY - skyDrag.y;
+  skyDrag.x = e.clientX;
+  skyDrag.y = e.clientY;
+  if (skyDrag.mode === 'move') {
+    dom.canvasSky.style.cursor = 'move';
+    const hitPoint = skyPlaneIntersection(e.clientX, e.clientY, skyDrag.planeY);
+    if (!hitPoint) return;
+    const antRef = state.subarrays[skyDrag.subKey].ants[skyDrag.idx];
+    antRef.e = hitPoint.x / skyDrag.scale;
+    antRef.n = -hitPoint.z / skyDrag.scale;
+    updateInspector();
+    scheduleCompute('fast');
+    return;
+  }
+  if (e.altKey) {
+    zoomSkyCamera(Math.exp(-dy * 0.008));
+  } else if (e.shiftKey) {
+    const camDir = skyCamera.getWorldDirection(new THREE.Vector3());
+    const right = new THREE.Vector3().crossVectors(camDir, skyCamera.up).normalize();
+    const up = skyCamera.up.clone();
+    const panSpeed = 0.0016 * skyCamera.position.distanceTo(skyTarget);
+    skyCamera.position.addScaledVector(right, -dx * panSpeed);
+    skyCamera.position.addScaledVector(up, dy * panSpeed);
+    skyTarget.addScaledVector(right, -dx * panSpeed);
+    skyTarget.addScaledVector(up, dy * panSpeed);
+    skyCamera.lookAt(skyTarget);
+  } else {
+    skyAzimuth -= dx * 0.007;
+    skyPolar = clamp(skyPolar - dy * 0.007, 0.08, Math.PI / 2 - 0.06);
+    setSkyCamera();
+  }
+  renderSkyDome();
+});
+dom.canvasSky.addEventListener('pointerup', () => {
+  if (skyDrag?.mode === 'move') requestCompute('full');
+  skyDrag = null;
+  hideSkyTooltip();
+  dom.canvasSky.style.cursor = 'grab';
+});
+dom.canvasSky.addEventListener('pointercancel', () => {
+  skyDrag = null;
+  hideSkyTooltip();
+  dom.canvasSky.style.cursor = 'grab';
+});
+dom.canvasSky.addEventListener('pointerleave', () => {
+  hideSkyTooltip();
+  if (!skyDrag) dom.canvasSky.style.cursor = 'grab';
+});
+dom.canvasSky.addEventListener('wheel', e => {
+  e.preventDefault();
+  hideSkyTooltip();
+  zoomSkyCamera(e.deltaY > 0 ? 1.12 : 0.89);
+  renderSkyDome();
+}, { passive: false });
+dom.canvasSky.style.cursor = 'grab';
+
+function sourceVectorMain(haHours, decDeg) {
+  const lat = state.site.lat * Math.PI / 180;
+  const ha = haHours * Math.PI / 12;
+  const dec = decDeg * Math.PI / 180;
+  const sinAlt = Math.sin(dec) * Math.sin(lat) + Math.cos(dec) * Math.cos(lat) * Math.cos(ha);
+  const alt = Math.asin(clamp(sinAlt, -1, 1));
+  const cosAlt = Math.cos(alt);
+  const sinAzN = cosAlt < 1e-9 ? 0 : (-Math.sin(ha) * Math.cos(dec) / cosAlt);
+  const cosAzN = cosAlt < 1e-9 ? 1 : ((Math.sin(dec) - sinAlt * Math.sin(lat)) / (cosAlt * Math.cos(lat)));
+  const az = Math.atan2(sinAzN, cosAzN);
+  return {
+    alt,
+    az,
+    vec: new THREE.Vector3(Math.cos(alt) * Math.sin(az), Math.sin(alt), -Math.cos(alt) * Math.cos(az)),
+  };
+}
+
+function projectPointToPlane(point, normal) {
+  return point.clone().addScaledVector(normal, -point.dot(normal));
+}
+
+function projectPointToTangentPlane(point, normal, radius) {
+  return point.clone().addScaledVector(normal, radius - point.dot(normal));
+}
+
+function planeBasis(normal) {
+  const worldUp = new THREE.Vector3(0, 1, 0);
+  const worldEast = new THREE.Vector3(1, 0, 0);
+  const axisV = worldUp.clone().addScaledVector(normal, -worldUp.dot(normal));
+  if (axisV.lengthSq() < 1e-8) {
+    axisV.copy(worldEast).addScaledVector(normal, -worldEast.dot(normal));
+  }
+  axisV.normalize();
+  const axisU = new THREE.Vector3().crossVectors(axisV, normal).normalize();
+  return { axisU, axisV };
+}
+
+function clearThreeGroup(group) {
+  while (group.children.length) {
+    const child = group.children[group.children.length - 1];
+    group.remove(child);
+    if (child.geometry) child.geometry.dispose();
+    if (child.material) child.material.dispose?.();
+  }
+}
+
+function buildPlaneCircleOutline(cx, cy, r, color, opacity = 0.66, z = 0.004) {
+  const pts = [];
+  const n = 72;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    pts.push(new THREE.Vector3(cx + r * Math.cos(a), cy + r * Math.sin(a), z));
+  }
+  return new THREE.LineLoop(
+    new THREE.BufferGeometry().setFromPoints(pts),
+    new THREE.LineBasicMaterial({ color, transparent: true, opacity })
+  );
+}
+
+function buildPlaneAnnulus(cx, cy, r, thickness, color, opacity = 0.78, z = 0.004) {
+  const outerR = Math.max(r + thickness * 0.5, 1e-6);
+  const innerR = Math.max(r - thickness * 0.5, 1e-6);
+  const shape = new THREE.Shape();
+  shape.absarc(cx, cy, outerR, 0, Math.PI * 2, false);
+  const hole = new THREE.Path();
+  hole.absarc(cx, cy, innerR, 0, Math.PI * 2, true);
+  shape.holes.push(hole);
+  const mesh = new THREE.Mesh(
+    new THREE.ShapeGeometry(shape),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity, side: THREE.DoubleSide, depthWrite: false })
+  );
+  mesh.position.z = z;
+  return mesh;
+}
+
+function buildPlaneLoopFromPoints(points, color, opacity = 0.66, z = 0) {
+  const pts = points.map(p => new THREE.Vector3(p.x, p.y, z));
+  const line = new THREE.LineLoop(
+    new THREE.BufferGeometry().setFromPoints(pts),
+    new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthTest: false })
+  );
+  line.renderOrder = 40;
+  return line;
+}
+
+function buildPlaneShapeFromPoints(points) {
+  const shape = new THREE.Shape();
+  if (!points.length) return shape;
+  shape.moveTo(points[0].x, points[0].y);
+  for (let i = 1; i < points.length; i++) shape.lineTo(points[i].x, points[i].y);
+  shape.closePath();
+  return shape;
+}
+
+function buildProjectedGroundFootprint(centerPoint, radius, normal, basis, tangentPoint, planeProjector, segments = 48) {
+  const localPoints = [];
+  let maxAbsU = 0;
+  let maxAbsV = 0;
+  for (let i = 0; i < segments; i++) {
+    const ang = (i / segments) * Math.PI * 2;
+    const rim = centerPoint.clone().add(new THREE.Vector3(radius * Math.cos(ang), 0, radius * Math.sin(ang)));
+    const proj = planeProjector(rim);
+    const rel = proj.sub(tangentPoint);
+    const u = rel.dot(basis.axisU);
+    const v = rel.dot(basis.axisV);
+    localPoints.push(new THREE.Vector2(u, v));
+    maxAbsU = Math.max(maxAbsU, Math.abs(u));
+    maxAbsV = Math.max(maxAbsV, Math.abs(v));
+  }
+  return { localPoints, maxAbsU, maxAbsV };
+}
+
+function signedArea2(points) {
+  let area = 0;
+  for (let i = 0; i < points.length; i++) {
+    const p = points[i];
+    const q = points[(i + 1) % points.length];
+    area += p.x * q.y - q.x * p.y;
+  }
+  return area * 0.5;
+}
+
+function ensureCCW(points) {
+  return signedArea2(points) >= 0 ? points.slice() : points.slice().reverse();
+}
+
+function buildCirclePolygon(cx, cy, r, segments = 56) {
+  const pts = [];
+  for (let i = 0; i < segments; i++) {
+    const a = (i / segments) * Math.PI * 2;
+    pts.push(new THREE.Vector2(cx + r * Math.cos(a), cy + r * Math.sin(a)));
+  }
+  return pts;
+}
+
+function lineIntersection2(a1, a2, b1, b2) {
+  const dax = a2.x - a1.x;
+  const day = a2.y - a1.y;
+  const dbx = b2.x - b1.x;
+  const dby = b2.y - b1.y;
+  const denom = dax * dby - day * dbx;
+  if (Math.abs(denom) < 1e-9) return a2.clone();
+  const t = ((b1.x - a1.x) * dby - (b1.y - a1.y) * dbx) / denom;
+  return new THREE.Vector2(a1.x + t * dax, a1.y + t * day);
+}
+
+function clipConvexPolygon(subjectPoints, clipPoints) {
+  let output = ensureCCW(subjectPoints);
+  const clip = ensureCCW(clipPoints);
+  if (output.length < 3 || clip.length < 3) return [];
+  for (let i = 0; i < clip.length; i++) {
+    const cp1 = clip[i];
+    const cp2 = clip[(i + 1) % clip.length];
+    const input = output.slice();
+    output = [];
+    if (!input.length) break;
+    const inside = p => ((cp2.x - cp1.x) * (p.y - cp1.y) - (cp2.y - cp1.y) * (p.x - cp1.x)) >= -1e-9;
+    let s = input[input.length - 1];
+    for (const e of input) {
+      if (inside(e)) {
+        if (!inside(s)) output.push(lineIntersection2(s, e, cp1, cp2));
+        output.push(e);
+      } else if (inside(s)) {
+        output.push(lineIntersection2(s, e, cp1, cp2));
+      }
+      s = e;
+    }
+  }
+  return output;
+}
+
+function polygonBounds(points) {
+  let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+  points.forEach(p => {
+    xMin = Math.min(xMin, p.x);
+    xMax = Math.max(xMax, p.x);
+    yMin = Math.min(yMin, p.y);
+    yMax = Math.max(yMax, p.y);
+  });
+  return { xMin, xMax, yMin, yMax };
+}
+
+function boundsOverlap(a, b) {
+  return !(a.xMax < b.xMin || b.xMax < a.xMin || a.yMax < b.yMin || b.yMax < a.yMin);
+}
+
+function computeDisplayShadowPatches(items) {
+  const enriched = items.map(item => ({
+    ...item,
+    _bounds: polygonBounds(item.projLocalPoints),
+  }));
+  const patches = [];
+  for (let i = 0; i < enriched.length; i++) {
+    for (let j = i + 1; j < enriched.length; j++) {
+      const a = enriched[i];
+      const b = enriched[j];
+      if (!boundsOverlap(a._bounds, b._bounds)) continue;
+      const patch = clipConvexPolygon(a.projLocalPoints, b.projLocalPoints);
+      if (patch.length >= 3) patches.push(patch);
+    }
+  }
+  return patches;
+}
+
+function buildPlaneLensShape(c1x, c1y, r1, c2x, c2y, r2) {
+  const dx = c2x - c1x;
+  const dy = c2y - c1y;
+  const d = Math.hypot(dx, dy);
+  if (d >= r1 + r2 || d <= 1e-8) {
+    if (d <= Math.abs(r1 - r2)) {
+      const [cx, cy, rr] = r1 < r2 ? [c1x, c1y, r1] : [c2x, c2y, r2];
+      const shape = new THREE.Shape();
+      shape.absarc(cx, cy, rr, 0, Math.PI * 2, false);
+      return shape;
+    }
+    return null;
+  }
+  if (d <= Math.abs(r1 - r2)) {
+    const [cx, cy, rr] = r1 < r2 ? [c1x, c1y, r1] : [c2x, c2y, r2];
+    const shape = new THREE.Shape();
+    shape.absarc(cx, cy, rr, 0, Math.PI * 2, false);
+    return shape;
+  }
+  const a = Math.acos(clamp((r1 * r1 + d * d - r2 * r2) / (2 * r1 * d), -1, 1));
+  const b = Math.acos(clamp((r2 * r2 + d * d - r1 * r1) / (2 * r2 * d), -1, 1));
+  const ang = Math.atan2(dy, dx);
+  const shape = new THREE.Shape();
+  shape.absarc(c1x, c1y, r1, ang - a, ang + a, false);
+  shape.absarc(c2x, c2y, r2, ang + Math.PI - b, ang + Math.PI + b, false);
+  shape.closePath();
+  return shape;
+}
+
+function renderSkyDome() {
+  clearThreeGroup(skyGroundGroup);
+  clearThreeGroup(skyCalGroup);
+  clearThreeGroup(skyCalTrackGroup);
+  clearThreeGroup(skyProjGroup);
+  clearThreeGroup(skyConnGroup);
+  clearThreeGroup(skyBeamGroup);
+  clearThreeGroup(skyBeamPathGroup);
+  clearThreeGroup(skyShadowGroup);
+  clearThreeGroup(skyCouplingGroup);
+  if (skyArrowLine) { skyScene.remove(skyArrowLine); skyArrowLine.geometry.dispose(); skyArrowLine = null; }
+  if (skyTrackLine) { skyScene.remove(skyTrackLine); skyTrackLine.traverse(obj => obj.geometry?.dispose?.()); skyTrackLine = null; }
+  if (skyProjTrackGroup) { skyScene.remove(skyProjTrackGroup); skyProjTrackGroup.traverse(obj => obj.geometry?.dispose?.()); skyProjTrackGroup = null; }
+  skyHitState.shadowPatches = [];
+  skyHitState.couplingPatches = [];
+
+  const ants = combinedAnts();
+  if (!ants.length) {
+    skyHitState.items = [];
+    skyRenderer.render(skyScene, skyCamera);
+    return;
+  }
+  const maxR = Math.max(...ants.map(ant => Math.hypot(ant.e, ant.n, ant.u)), 1);
+  const scale = 1.55 / maxR;
+  const symbolScale = state.display.symbolScale;
+  skyHitState.scale = scale;
+  const source = activeSourceState();
+  const previewOnly = !state.result || !!state.previewSource || orthoArrayHitState.drag?.mode === 'move';
+  const current = sourceVectorMain(source.ha, source.dec);
+  const sHat = current.vec;
+  const domeRadius = 2.5;
+  const srcPos = sHat.clone().multiplyScalar(domeRadius);
+  const tangentPoint = srcPos.clone();
+  const visibleCalibrators = computeVisibleCalibrators(source);
+  skyCalHitState.items = [];
+  if (!skyLastSourceAnchor || skyLastSourceAnchor.distanceToSquared(tangentPoint) > 1e-10) {
+    const offset = skyCamera.position.clone().sub(skyTarget);
+    const dist = Math.max(offset.length(), 0.02);
+    const dir = offset.lengthSq() > 1e-12 ? offset.normalize() : new THREE.Vector3(0.18, 0.48, 0.86).normalize();
+    skyTarget.copy(tangentPoint);
+    skyCamera.position.copy(tangentPoint.clone().add(dir.multiplyScalar(dist)));
+    skyCamera.lookAt(skyTarget);
+    skyLastSourceAnchor = tangentPoint.clone();
+  }
+  skyZoomAnchor.copy(tangentPoint);
+  skySrcMarker.visible = current.alt > 0;
+  skySrcMarker.position.copy(srcPos);
+  skySrcMarker.quaternion.setFromUnitVectors(SKY_Z_AXIS, sHat);
+  visibleCalibrators.forEach(hit => {
+    const pos = hit.sky.vec.clone().multiplyScalar(domeRadius);
+    const fluxScale = Math.sqrt(Math.max(hit.flux / Math.max(state.calibrators.minJy, 1e-6), 1));
+    const markerRadius = clamp(0.012 + fluxScale * 0.01, 0.012, 0.06);
+    const marker = new THREE.Mesh(
+      new THREE.SphereGeometry(markerRadius, 10, 10),
+      new THREE.MeshBasicMaterial({
+        color: COLORS.calibrator,
+        transparent: true,
+        opacity: 0.92,
+        depthWrite: false,
+      })
+    );
+    marker.position.copy(pos);
+    skyCalGroup.add(marker);
+    skyCalHitState.items.push({
+      pos,
+      markerPx: 10 + markerRadius * 120,
+      name: hit.cal.n,
+      flux: hit.flux,
+      az: ((hit.sky.az * 180 / Math.PI) % 360 + 360) % 360,
+      el: hit.sky.alt * 180 / Math.PI,
+    });
+  });
+  if (state.calibrators.showTracks) {
+    const dHA = state.synth.durHours;
+    visibleCalibrators.forEach(hit => {
+      const pts = [];
+      for (let i = 0; i <= 96; i++) {
+        const ha = source.ha - dHA / 2 + (i / 96) * dHA;
+        const step = sourceVectorMain(wrapHourAngle(ha - hit.cal.ra), hit.cal.dec);
+        if (step.alt <= 0) {
+          if (pts.length >= 2) {
+            skyCalTrackGroup.add(new THREE.Line(
+              new THREE.BufferGeometry().setFromPoints(pts.splice(0, pts.length)),
+              new THREE.LineBasicMaterial({ color: COLORS.calibrator, transparent: true, opacity: 0.65 })
+            ));
+          } else {
+            pts.length = 0;
+          }
+          continue;
+        }
+        pts.push(step.vec.clone().multiplyScalar(domeRadius));
+      }
+      if (pts.length >= 2) {
+        skyCalTrackGroup.add(new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints(pts),
+          new THREE.LineBasicMaterial({ color: COLORS.calibrator, transparent: true, opacity: 0.65 })
+        ));
+      }
+    });
+  }
+  const basis = planeBasis(sHat);
+  const tangentProjector = point => projectPointToTangentPlane(point, sHat, domeRadius);
+  let halfSpan = 1.3;
+  const projectedByGlobal = new Map();
+  const projected = ants
+    .filter(ant => state.subarrays[ant.subKey].showInSky)
+    .map(ant => {
+    const p = new THREE.Vector3(ant.e * scale, ant.u * scale, -ant.n * scale);
+    const proj = tangentProjector(p);
+    const projRel = proj.clone().sub(tangentPoint);
+    const u = projRel.dot(basis.axisU);
+    const v = projRel.dot(basis.axisV);
+    const dishRadius = Math.max(ant.radius * scale * symbolScale, 1e-4);
+    const footprint = buildProjectedGroundFootprint(p, dishRadius, sHat, basis, tangentPoint, tangentProjector);
+    halfSpan = Math.max(
+      halfSpan,
+      footprint.maxAbsU + 0.1,
+      footprint.maxAbsV + 0.1
+    );
+    const item = { p, proj, u, v, dishRadius, footprint, ant };
+    projectedByGlobal.set(ant.global, item);
+    return item;
+  });
+  if (!previewOnly) {
+    state.result.couplingPairs.forEach(pair => {
+      const emitter = projectedByGlobal.get(pair.emitter);
+      if (!emitter) return;
+      const beamRadius = Math.max(pair.beamRadius * scale * symbolScale, 1e-4);
+      halfSpan = Math.max(
+        halfSpan,
+        Math.abs(emitter.u) + beamRadius + 0.08,
+        Math.abs(emitter.v) + beamRadius + 0.08
+      );
+    });
+  }
+  skyHitState.items = projected.map(item => ({
+    ant: item.ant,
+    p: item.p.clone(),
+    dishRadius: item.dishRadius,
+    u: item.u,
+    v: item.v,
+    projWorldPoints: item.footprint.localPoints.map(lp =>
+      tangentPoint.clone()
+        .addScaledVector(basis.axisU, lp.x)
+        .addScaledVector(basis.axisV, lp.y)
+    ),
+    projLocalPoints: item.footprint.localPoints.map(lp => ({ x: lp.x, y: lp.y })),
+  }));
+  const planeMatrix = new THREE.Matrix4().makeBasis(basis.axisU, basis.axisV, sHat);
+  skyPlaneGroup.setRotationFromMatrix(planeMatrix);
+  skyPlaneGroup.position.copy(tangentPoint);
+  skyPlaneMesh.scale.set(halfSpan * 2, halfSpan * 2, 1);
+  skyPlaneOutline.geometry.dispose();
+  skyPlaneOutline.geometry = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3( halfSpan,  halfSpan, 0),
+    new THREE.Vector3(-halfSpan,  halfSpan, 0),
+    new THREE.Vector3(-halfSpan, -halfSpan, 0),
+    new THREE.Vector3( halfSpan, -halfSpan, 0),
+  ]);
+  const worldUnitsPerPixelAt = point => {
+    const h = Math.max(skyRenderer.domElement.clientHeight || skyRenderer.domElement.height || 1, 1);
+    const dist = Math.max(skyCamera.position.distanceTo(point), skyCamera.near * 4);
+    const fov = THREE.MathUtils.degToRad(skyCamera.fov);
+    return (2 * dist * Math.tan(fov / 2)) / h;
+  };
+
+  projected.forEach(item => {
+    // Small ground-level marker (dot at antenna position, small and subtle)
+    const groundMarkerR = Math.max(item.dishRadius * 0.3, 0.003);
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(groundMarkerR, 12),
+      new THREE.MeshBasicMaterial({ color: item.ant.subKey === 'A' ? 0x2d7d9a : 0xb46b28, transparent: true, opacity: 0.7, side: THREE.DoubleSide })
+    );
+    ground.position.copy(item.p);
+    ground.rotation.x = -Math.PI / 2;
+    skyGroundGroup.add(ground);
+    // Projected dish footprint on the orthogonal plane — colored by subarray (all on same plane)
+    const projShape = buildPlaneShapeFromPoints(item.footprint.localPoints);
+    const projDot = new THREE.Mesh(
+      new THREE.ShapeGeometry(projShape),
+      new THREE.MeshBasicMaterial({
+        color: item.ant.subKey === 'A' ? 0x6baec4 : 0xc49a6b,
+        transparent: true,
+        opacity: 0.75,
+        side: THREE.DoubleSide,
+        depthTest: false,
+        depthWrite: false,
+      })
+    );
+    projDot.renderOrder = 10;
+    skyProjGroup.add(projDot);
+    if (state.selected && state.selected.subKey === item.ant.subKey && state.selected.idx === item.ant.idx) {
+      skyProjGroup.add(buildPlaneLoopFromPoints(item.footprint.localPoints, 0xcf4d3a, 0.98, 0));
+    }
+    const conn = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([item.p, item.proj]),
+      new THREE.LineBasicMaterial({ color: 0x6b7280, transparent: true, opacity: 0.15 })
+    );
+    skyConnGroup.add(conn);
+    const isDragging = !!(skyDrag?.mode === 'move' && skyDrag.subKey === item.ant.subKey && skyDrag.idx === item.ant.idx);
+    if (isDragging) {
+      const worldPerPixel = worldUnitsPerPixelAt(item.p);
+      const ringPad = clamp(worldPerPixel * 16, 0.0012, 0.02);
+      const tube = clamp(worldPerPixel * 5.5, 0.0008, 0.008);
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(Math.max(item.dishRadius + ringPad, item.dishRadius * 1.18), tube, 8, 40),
+        new THREE.MeshBasicMaterial({ color: 0xcf4d3a, transparent: true, opacity: 0.95 })
+      );
+      ring.position.copy(item.p);
+      ring.rotation.x = Math.PI / 2;
+      skyGroundGroup.add(ring);
+    }
+  });
+
+  if (!previewOnly) {
+    state.result.shadowPairs.forEach(pair => {
+      const a = projectedByGlobal.get(pair.a);
+      const b = projectedByGlobal.get(pair.b);
+      if (!a || !b) return;
+      const patch = clipConvexPolygon(a.footprint.localPoints, b.footprint.localPoints);
+      if (patch.length < 3) return;
+      skyHitState.shadowPatches.push(patch.map(p => ({ x: p.x, y: p.y })));
+      const mesh = new THREE.Mesh(
+        new THREE.ShapeGeometry(buildPlaneShapeFromPoints(patch)),
+        new THREE.MeshBasicMaterial({
+          color: 0xcf4d3a,
+          transparent: true,
+          opacity: 0.60,
+          side: THREE.DoubleSide,
+          depthTest: false,
+          depthWrite: false
+        })
+      );
+      mesh.renderOrder = 20;
+      skyShadowGroup.add(mesh);
+    });
+
+    const emitterLines = new Set();
+    state.result.couplingPairs.forEach(pair => {
+      const emitter = projectedByGlobal.get(pair.emitter);
+      const target = projectedByGlobal.get(pair.target);
+      if (!emitter || !target) return;
+      const beamRadius = Math.max(pair.beamRadius * scale * symbolScale, 1e-4);
+      const beamPoly = buildCirclePolygon(emitter.u, emitter.v, beamRadius);
+      const patch = clipConvexPolygon(beamPoly, target.footprint.localPoints);
+      if (patch.length < 3) return;
+      skyHitState.couplingPatches.push(patch.map(p => ({ x: p.x, y: p.y })));
+      const mesh = new THREE.Mesh(
+        new THREE.ShapeGeometry(buildPlaneShapeFromPoints(patch)),
+        new THREE.MeshBasicMaterial({
+          color: 0xcf4d3a,
+          transparent: true,
+          opacity: 0.72,
+          side: THREE.DoubleSide,
+          depthTest: false,
+          depthWrite: false
+        })
+      );
+      mesh.renderOrder = 30;
+      skyCouplingGroup.add(mesh);
+      emitterLines.add(pair.emitter);
+    });
+    emitterLines.forEach(globalIdx => {
+      const emitter = projectedByGlobal.get(globalIdx);
+      if (!emitter) return;
+      skyBeamPathGroup.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([emitter.p, emitter.proj]),
+        new THREE.LineBasicMaterial({ color: 0x5a85a3, transparent: true, opacity: 0.42 })
+      ));
+    });
+  }
+
+  const arrowTip = sHat.clone().multiplyScalar(domeRadius * 0.74);
+  skyArrowLine = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0.02, 0), arrowTip]),
+    new THREE.LineBasicMaterial({ color: 0xc8553d, transparent: true, opacity: 0.82 })
+  );
+  skyScene.add(skyArrowLine);
+
+  if (state.synth.earthRotOn) {
+    const group = new THREE.Group();
+    const dHA = state.synth.durHours;
+    let segment = [];
+    for (let i = 0; i <= 240; i++) {
+      const ha = source.ha - dHA / 2 + (i / 240) * dHA;
+      const step = sourceVectorMain(ha, source.dec);
+      if (step.alt <= 0) {
+        if (segment.length >= 2) group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(segment), new THREE.LineBasicMaterial({ color: 0xc8553d, transparent: true, opacity: 0.84 })));
+        segment = [];
+        continue;
+      }
+      segment.push(step.vec.clone().multiplyScalar(2.5));
+    }
+    if (segment.length >= 2) group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(segment), new THREE.LineBasicMaterial({ color: 0xc8553d, transparent: true, opacity: 0.84 })));
+    skyTrackLine = group;
+    skyScene.add(group);
+    const projTracks = new THREE.Group();
+    projected.forEach(item => {
+      const pts = [];
+      for (let i = 0; i <= 120; i++) {
+        const ha = source.ha - dHA / 2 + (i / 120) * dHA;
+        const step = sourceVectorMain(ha, source.dec);
+        pts.push(projectPointToTangentPlane(item.p, step.vec, domeRadius));
+      }
+      projTracks.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x6b7280, transparent: true, opacity: 0.55 })));
+    });
+    skyProjTrackGroup = projTracks;
+    skyScene.add(projTracks);
+  }
+
+  skyRenderer.render(skyScene, skyCamera);
+}
+
+function linkedOrthoArrayBounds(ants) {
+  const visibleGlobals = [];
+  const viewBounds = orthoHitState.bounds?.bounds;
+  if (viewBounds && skyHitState.items.length) {
+    skyHitState.items.forEach(item => {
+      const pb = polygonBounds(item.projLocalPoints);
+      if (boundsOverlap(pb, viewBounds)) visibleGlobals.push(item.ant.global);
+    });
+  }
+  if (!visibleGlobals.length) {
+    ants.forEach(ant => visibleGlobals.push(ant.global));
+  }
+  const selectedGlobal = selectedGlobalIndex();
+  if (selectedGlobal >= 0 && !visibleGlobals.includes(selectedGlobal)) {
+    visibleGlobals.push(selectedGlobal);
+  }
+  const visibleSet = new Set(visibleGlobals);
+  orthoArrayHitState.linkedGlobals = visibleGlobals.slice();
+  const focusAnts = ants.filter(ant => visibleSet.has(ant.global));
+  const eVals = focusAnts.map(ant => ant.e);
+  const nVals = focusAnts.map(ant => ant.n);
+  const span = Math.max(
+    Math.max(...eVals) - Math.min(...eVals),
+    Math.max(...nVals) - Math.min(...nVals),
+    20
+  );
+  const pad = span * 0.18 + 6;
+  return {
+    xMin: Math.min(...eVals) - pad,
+    xMax: Math.max(...eVals) + pad,
+    yMin: Math.min(...nVals) - pad,
+    yMax: Math.max(...nVals) + pad,
+  };
+}
+
+function drawOrthoArrayMap() {
+  const { ctx, width: W, height: H } = setupCanvas(dom.canvasOrthoArray3D);
+  const ants = combinedAnts();
+  if (!ants.length) {
+    orthoArrayHitState.transform = null;
+    orthoArrayHitState.linkedGlobals = [];
+    return;
+  }
+  const bounds = linkedOrthoArrayBounds(ants);
+  const { mapX, mapY, unitScale, px0, py0, pw, ph } = drawBaseAxes(ctx, W, H, bounds, { x: 'East (m)', y: 'North (m)' }, { square: true });
+  orthoArrayHitState.transform = { bounds, mapX, mapY, unitScale, px0, py0, pw, ph };
+  const linkedSet = new Set(orthoArrayHitState.linkedGlobals);
+  const symbolScale = state.display.symbolScale;
+  ants.forEach(ant => {
+    const x = mapX(ant.e);
+    const y = mapY(ant.n);
+    const baseR = Math.max(ant.radius * symbolScale * unitScale, 1.6);
+    const isLinked = linkedSet.has(ant.global);
+    ctx.globalAlpha = isLinked ? 0.92 : 0.18;
+    ctx.fillStyle = ant.subKey === 'A' ? COLORS.subA : COLORS.subB;
+    ctx.beginPath();
+    ctx.arc(x, y, baseR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.92)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    if (state.selected && state.selected.subKey === ant.subKey && state.selected.idx === ant.idx) {
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = COLORS.danger;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, baseR + Math.max(4, baseR * 0.28), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  });
+  ctx.globalAlpha = 1;
+}
+
+function renderAll() {
+  updateReadouts();
+  updateInspector();
+  updateMetricSections();
+  drawArrayConfig();
+  if (state.result) {
+    drawUvCard('A');
+    drawUvCard('B');
+  } else {
+    [dom.canvasUVA, dom.canvasUVB, dom.canvasPSFA, dom.canvasPSFB, dom.canvasProfA, dom.canvasProfB].forEach(c => {
+      const { ctx, width, height } = setupCanvas(c);
+      ctx.clearRect(0, 0, width, height);
+    });
+  }
+  renderSkyDome();
+  drawOrthoPlane2D();
+  drawOrthoArrayMap();
+}
+
+function renderGeometryPreview() {
+  updateReadouts();
+  updateInspector();
+  drawArrayConfig();
+  renderSkyDome();
+  drawOrthoPlane2D();
+  drawOrthoArrayMap();
+}
+
+function cancelPendingCompute() {
+  clearTimeout(state.computeDebounce);
+  state.currentComputeSeq = ++state.computeSeq;
+  state.computePending = false;
+  setSkyComputeOverlay(false);
+}
+
+function pickAntennaFromCanvas(x, y) {
+  const ants = combinedAnts();
+  if (!arrayHitState.transform || !ants.length) return null;
+  let best = null;
+  ants.forEach(ant => {
+    const px = arrayHitState.transform.mapX(ant.e);
+    const py = arrayHitState.transform.mapY(ant.n);
+    const dist = Math.hypot(px - x, py - y);
+    if (dist < 14 && (!best || dist < best.dist)) best = { ant, dist };
+  });
+  return best?.ant || null;
+}
+
+function setSelectionFromAnt(ant) {
+  if (!ant) {
+    state.selected = null;
+  } else {
+    state.selected = { subKey: ant.subKey, idx: ant.idx };
+  }
+  updateInspector();
+  renderAll();
+}
+
+function canvasPoint(evt, canvas) {
+  const rect = canvas.getBoundingClientRect();
+  return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
+}
+
+function pickOrthoAntenna(x, y) {
+  if (!orthoHitState.items.length) return null;
+  let best = null;
+  orthoHitState.items.forEach(item => {
+    if (!pointInPolygon2D({ x, y }, item.polygon)) return;
+    let cx = 0;
+    let cy = 0;
+    item.polygon.forEach(p => {
+      cx += p.x;
+      cy += p.y;
+    });
+    cx /= item.polygon.length;
+    cy /= item.polygon.length;
+    const dist = Math.hypot(cx - x, cy - y);
+    if (!best || dist < best.dist) best = { ant: item.ant, dist };
+  });
+  return best?.ant || null;
+}
+
+function pickOrthoArrayMapAntenna(x, y) {
+  const ants = combinedAnts();
+  if (!orthoArrayHitState.transform || !ants.length) return null;
+  let best = null;
+  ants.forEach(ant => {
+    const px = orthoArrayHitState.transform.mapX(ant.e);
+    const py = orthoArrayHitState.transform.mapY(ant.n);
+    const dist = Math.hypot(px - x, py - y);
+    const hitR = Math.max(ant.radius * state.display.symbolScale * orthoArrayHitState.transform.unitScale, 8);
+    if (dist < hitR && (!best || dist < best.dist)) best = { ant, dist };
+  });
+  return best?.ant || null;
+}
+
+function zoomOrthoView(factor) {
+  if (!orthoHitState.view) return;
+  orthoHitState.view.halfSpan = clamp(orthoHitState.view.halfSpan * factor, ORTHO_MIN_HALFSPAN, 50);
+  orthoHitState.view.userControlled = true;
+  renderAll();
+}
+
+function panOrthoViewByPixels(dx, dy, pw, ph) {
+  if (!orthoHitState.view || !orthoHitState.bounds) return;
+  const { bounds } = orthoHitState.bounds;
+  orthoHitState.view.centerX -= dx * (bounds.xMax - bounds.xMin) / Math.max(pw, 1);
+  orthoHitState.view.centerY += dy * (bounds.yMax - bounds.yMin) / Math.max(ph, 1);
+  orthoHitState.view.userControlled = true;
+  renderAll();
+}
+
+dom.canvasArrayConfig.addEventListener('pointerdown', e => {
+  const pt = canvasPoint(e, dom.canvasArrayConfig);
+  const ant = pickAntennaFromCanvas(pt.x, pt.y);
+  if (ant) setSelectionFromAnt(ant);
+  if (e.metaKey && ant) {
+    state.dragging = { subKey: ant.subKey, idx: ant.idx };
+    dom.canvasArrayConfig.setPointerCapture(e.pointerId);
+  }
+});
+dom.canvasArrayConfig.addEventListener('pointermove', e => {
+  const pt = canvasPoint(e, dom.canvasArrayConfig);
+  const ant = pickAntennaFromCanvas(pt.x, pt.y);
+  dom.canvasArrayConfig.style.cursor = e.metaKey ? (ant ? 'move' : 'crosshair') : (ant ? 'pointer' : 'default');
+  if (!state.dragging || !arrayHitState.transform) return;
+  const { bounds, m } = { ...arrayHitState.transform, m: { left: 48, right: 14, top: 14, bottom: 34 } };
+  const rect = dom.canvasArrayConfig.getBoundingClientRect();
+  const W = rect.width;
+  const H = rect.height;
+  const pw = W - m.left - m.right;
+  const ph = H - m.top - m.bottom;
+  const eVal = bounds.xMin + ((pt.x - m.left) / pw) * (bounds.xMax - bounds.xMin);
+  const nVal = bounds.yMin + ((H - m.bottom - pt.y) / ph) * (bounds.yMax - bounds.yMin);
+  const antRef = state.subarrays[state.dragging.subKey].ants[state.dragging.idx];
+  antRef.e = eVal;
+  antRef.n = nVal;
+  updateInspector();
+  scheduleCompute('fast');
+});
+dom.canvasArrayConfig.addEventListener('pointerup', () => {
+  if (state.dragging) {
+    state.dragging = null;
+    requestCompute('full');
+  }
+});
+dom.canvasArrayConfig.addEventListener('pointercancel', () => { state.dragging = null; });
+
+if (dom.canvasOrtho) {
+  dom.canvasOrtho.addEventListener('pointerdown', e => {
+    const pt = canvasPoint(e, dom.canvasOrtho);
+    if (e.altKey) {
+      orthoHitState.drag = { mode: 'zoom', x: pt.x, y: pt.y };
+      dom.canvasOrtho.setPointerCapture(e.pointerId);
+      dom.canvasOrtho.style.cursor = 'ns-resize';
+      return;
+    }
+    const ant = pickOrthoAntenna(pt.x, pt.y);
+    orthoHitState.drag = { mode: 'maybe-pan', x: pt.x, y: pt.y, ant };
+    dom.canvasOrtho.setPointerCapture(e.pointerId);
+    dom.canvasOrtho.style.cursor = 'grab';
+  });
+  dom.canvasOrtho.addEventListener('pointermove', e => {
+    const pt = canvasPoint(e, dom.canvasOrtho);
+    if (orthoHitState.drag && orthoHitState.bounds && orthoHitState.view) {
+      const dx = pt.x - orthoHitState.drag.x;
+      const dy = pt.y - orthoHitState.drag.y;
+      if (orthoHitState.drag.mode === 'maybe-pan' && Math.hypot(dx, dy) > 3) {
+        orthoHitState.drag.mode = 'pan';
+        dom.canvasOrtho.style.cursor = 'grabbing';
+      }
+      orthoHitState.drag.x = pt.x;
+      orthoHitState.drag.y = pt.y;
+      if (orthoHitState.drag.mode === 'pan') {
+        const { pw, ph } = orthoHitState.bounds;
+        panOrthoViewByPixels(dx, dy, pw, ph);
+        return;
+      }
+      if (orthoHitState.drag.mode === 'zoom') {
+        orthoHitState.view.halfSpan = clamp(orthoHitState.view.halfSpan * Math.exp(dy * 0.01), ORTHO_MIN_HALFSPAN, 50);
+        orthoHitState.view.userControlled = true;
+        renderAll();
+        return;
+      }
+    }
+    const ant = pickOrthoAntenna(pt.x, pt.y);
+    dom.canvasOrtho.style.cursor = e.altKey ? 'ns-resize' : (ant ? 'pointer' : 'grab');
+  });
+  dom.canvasOrtho.addEventListener('pointerup', () => {
+    if (orthoHitState.drag?.mode === 'maybe-pan' && orthoHitState.drag.ant) {
+      setSelectionFromAnt(orthoHitState.drag.ant);
+    }
+    orthoHitState.drag = null;
+    dom.canvasOrtho.style.cursor = 'grab';
+  });
+  dom.canvasOrtho.addEventListener('pointercancel', () => {
+    orthoHitState.drag = null;
+    dom.canvasOrtho.style.cursor = 'grab';
+  });
+  dom.canvasOrtho.addEventListener('wheel', e => {
+    e.preventDefault();
+    zoomOrthoView(e.deltaY > 0 ? 1.12 : 0.89);
+  }, { passive: false });
+  dom.canvasOrtho.addEventListener('pointerleave', () => {
+    if (!orthoHitState.drag) dom.canvasOrtho.style.cursor = 'grab';
+  });
+  dom.canvasOrtho.style.cursor = 'grab';
+}
+
+if (dom.canvasOrthoArray3D) {
+  dom.canvasOrthoArray3D.addEventListener('pointerdown', e => {
+    const pt = canvasPoint(e, dom.canvasOrthoArray3D);
+    const ant = pickOrthoArrayMapAntenna(pt.x, pt.y);
+    if (e.metaKey && ant) {
+      setSelectionFromAnt(ant);
+      cancelPendingCompute();
+      orthoArrayHitState.drag = { mode: 'move', subKey: ant.subKey, idx: ant.idx };
+      dom.canvasOrthoArray3D.setPointerCapture(e.pointerId);
+      dom.canvasOrthoArray3D.style.cursor = 'move';
+      return;
+    }
+    orthoArrayHitState.drag = {
+      mode: e.altKey ? 'zoom' : 'maybe-pan',
+      x: pt.x,
+      y: pt.y,
+      ant,
+    };
+    dom.canvasOrthoArray3D.setPointerCapture(e.pointerId);
+    dom.canvasOrthoArray3D.style.cursor = e.altKey ? 'ns-resize' : 'grab';
+  });
+  dom.canvasOrthoArray3D.addEventListener('pointermove', e => {
+    const pt = canvasPoint(e, dom.canvasOrthoArray3D);
+    if (orthoArrayHitState.drag && orthoArrayHitState.drag.mode === 'move' && orthoArrayHitState.transform) {
+      const { bounds, px0, py0, pw, ph } = orthoArrayHitState.transform;
+      const eVal = bounds.xMin + ((pt.x - px0) / Math.max(pw, 1)) * (bounds.xMax - bounds.xMin);
+      const nVal = bounds.yMin + ((py0 + ph - pt.y) / Math.max(ph, 1)) * (bounds.yMax - bounds.yMin);
+      const antRef = state.subarrays[orthoArrayHitState.drag.subKey].ants[orthoArrayHitState.drag.idx];
+      antRef.e = eVal;
+      antRef.n = nVal;
+      renderGeometryPreview();
+      dom.canvasOrthoArray3D.style.cursor = 'move';
+      return;
+    }
+    if (orthoArrayHitState.drag) {
+      const dx = pt.x - orthoArrayHitState.drag.x;
+      const dy = pt.y - orthoArrayHitState.drag.y;
+      if (orthoArrayHitState.drag.mode === 'maybe-pan' && Math.hypot(dx, dy) > 3) {
+        orthoArrayHitState.drag.mode = 'pan';
+        dom.canvasOrthoArray3D.style.cursor = 'grabbing';
+      }
+      orthoArrayHitState.drag.x = pt.x;
+      orthoArrayHitState.drag.y = pt.y;
+      if (orthoArrayHitState.drag.mode === 'pan' && orthoArrayHitState.transform) {
+        const { pw, ph } = orthoArrayHitState.transform;
+        panOrthoViewByPixels(dx, dy, pw, ph);
+        return;
+      }
+      if (orthoArrayHitState.drag.mode === 'zoom') {
+        zoomOrthoView(Math.exp(dy * 0.01));
+        return;
+      }
+    }
+    const ant = pickOrthoArrayMapAntenna(pt.x, pt.y);
+    if (e.metaKey) {
+      dom.canvasOrthoArray3D.style.cursor = ant ? 'move' : 'crosshair';
+    } else if (e.altKey) {
+      dom.canvasOrthoArray3D.style.cursor = 'ns-resize';
+    } else {
+      dom.canvasOrthoArray3D.style.cursor = ant ? 'pointer' : 'grab';
+    }
+  });
+  dom.canvasOrthoArray3D.addEventListener('pointerup', () => {
+    if (orthoArrayHitState.drag?.mode === 'move') {
+      orthoArrayHitState.drag = null;
+      requestCompute('full');
+    } else {
+      if (orthoArrayHitState.drag?.mode === 'maybe-pan' && orthoArrayHitState.drag.ant) {
+        setSelectionFromAnt(orthoArrayHitState.drag.ant);
+      }
+      orthoArrayHitState.drag = null;
+    }
+    dom.canvasOrthoArray3D.style.cursor = 'grab';
+  });
+  dom.canvasOrthoArray3D.addEventListener('pointercancel', () => {
+    orthoArrayHitState.drag = null;
+    dom.canvasOrthoArray3D.style.cursor = 'grab';
+  });
+  dom.canvasOrthoArray3D.addEventListener('wheel', e => {
+    e.preventDefault();
+    zoomOrthoView(e.deltaY > 0 ? 1.12 : 0.89);
+  }, { passive: false });
+  dom.canvasOrthoArray3D.addEventListener('pointerleave', () => {
+    if (!orthoArrayHitState.drag) dom.canvasOrthoArray3D.style.cursor = 'grab';
+  });
+  dom.canvasOrthoArray3D.style.cursor = 'grab';
+}
+
+const workerSource = String.raw`
+self.onmessage = event => {
+  const data = event.data;
+  try {
+    if (data.type === 'parseCfg') {
+      const parsed = parseCfgText(data.text, data.key);
+      self.postMessage({ type: 'parsedCfg', seq: data.seq, key: data.key, parsed });
+    } else if (data.type === 'compute') {
+      const result = computeDiagnostics(data.payload);
+      self.postMessage({ type: 'computeResult', seq: data.seq, result });
+    }
+  } catch (err) {
+    self.postMessage({ type: 'workerError', seq: data.seq, message: err.message || String(err) });
+  }
+};
+
+function clamp(v, lo, hi) {
+  return Math.max(lo, Math.min(hi, v));
+}
+
+function geodeticToECEF(lonDeg, latDeg, alt) {
+  const lon = lonDeg * Math.PI / 180;
+  const lat = latDeg * Math.PI / 180;
+  const a = 6378137.0;
+  const f = 1 / 298.257223563;
+  const e2 = f * (2 - f);
+  const sinLat = Math.sin(lat);
+  const cosLat = Math.cos(lat);
+  const N = a / Math.sqrt(1 - e2 * sinLat * sinLat);
+  return [
+    (N + alt) * cosLat * Math.cos(lon),
+    (N + alt) * cosLat * Math.sin(lon),
+    (N * (1 - e2) + alt) * sinLat,
+  ];
+}
+
+function parseCfgText(text, key) {
+  const lines = text.split(/\r?\n/);
+  let lon = null, lat = null, alt = 0;
+  const rows = [];
+  for (const line of lines) {
+    if (line.startsWith('#COFA=')) {
+      const parts = line.slice(6).split(',').map(s => s.trim());
+      lon = parseFloat(parts[0]);
+      lat = parseFloat(parts[1]);
+      alt = parts[2] !== undefined ? parseFloat(parts[2]) : 0;
+    }
+    if (!line.startsWith('#') && line.trim()) {
+      const parts = line.trim().split(/\s+/);
+      if (parts.length < 5) continue;
+      rows.push(parts);
+    }
+  }
+  if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
+    throw new Error('COFA not found in cfg header.');
+  }
+  const center = geodeticToECEF(lon, lat, alt);
+  const lonR = lon * Math.PI / 180;
+  const latR = lat * Math.PI / 180;
+  const ants = [];
+  const uVals = [];
+  rows.forEach(parts => {
+    const x = parseFloat(parts[0]);
+    const y = parseFloat(parts[1]);
+    const z = parseFloat(parts[2]);
+    const diam = parseFloat(parts[3]);
+    const pad = parts[4];
+    const dX = x - center[0];
+    const dY = y - center[1];
+    const dZ = z - center[2];
+    const e = -Math.sin(lonR) * dX + Math.cos(lonR) * dY;
+    const n = -Math.sin(latR) * Math.cos(lonR) * dX - Math.sin(latR) * Math.sin(lonR) * dY + Math.cos(latR) * dZ;
+    const u = Math.cos(latR) * Math.cos(lonR) * dX + Math.cos(latR) * Math.sin(lonR) * dY + Math.sin(latR) * dZ;
+    ants.push({ pad, e, n, u, diam });
+    uVals.push(u);
+  });
+  const baseU = uVals.reduce((sum, v) => sum + v, 0) / Math.max(uVals.length, 1);
+  return {
+    fileName: key === 'A' ? 'loaded_A.cfg' : 'loaded_B.cfg',
+    site: { lon, lat, alt },
+    baseU,
+    ants: ants.map(ant => ({ pad: ant.pad, e: ant.e, n: ant.n, u: ant.u - baseU, diam: ant.diam })),
+  };
+}
+
+function sourceVector(haHours, decDeg, latDeg) {
+  const ha = haHours * Math.PI / 12;
+  const dec = decDeg * Math.PI / 180;
+  const lat = latDeg * Math.PI / 180;
+  const sinAlt = Math.sin(dec) * Math.sin(lat) + Math.cos(dec) * Math.cos(lat) * Math.cos(ha);
+  const alt = Math.asin(clamp(sinAlt, -1, 1));
+  const cosAlt = Math.cos(alt);
+  const sinAzN = cosAlt < 1e-9 ? 0 : (-Math.sin(ha) * Math.cos(dec) / cosAlt);
+  const cosAzN = cosAlt < 1e-9 ? 1 : ((Math.sin(dec) - sinAlt * Math.sin(lat)) / (cosAlt * Math.cos(lat)));
+  const az = Math.atan2(sinAzN, cosAzN);
+  return {
+    altDeg: alt * 180 / Math.PI,
+    azDeg: ((az * 180 / Math.PI) + 360) % 360,
+    sHat: [Math.cos(alt) * Math.sin(az), Math.sin(alt), -Math.cos(alt) * Math.cos(az)],
+  };
+}
+
+function dot(a, b) {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+function cross(a, b) {
+  return [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0],
+  ];
+}
+
+function norm(v) {
+  const m = Math.hypot(v[0], v[1], v[2]) || 1;
+  return [v[0] / m, v[1] / m, v[2] / m];
+}
+
+function getPlaneBasis(sHat) {
+  let axisV = [
+    -dot([0, 1, 0], sHat) * sHat[0],
+    1 - dot([0, 1, 0], sHat) * sHat[1],
+    -dot([0, 1, 0], sHat) * sHat[2],
+  ];
+  if ((axisV[0] * axisV[0] + axisV[1] * axisV[1] + axisV[2] * axisV[2]) < 1e-8) {
+    axisV = [
+      1 - dot([1, 0, 0], sHat) * sHat[0],
+      -dot([1, 0, 0], sHat) * sHat[1],
+      -dot([1, 0, 0], sHat) * sHat[2],
+    ];
+  }
+  axisV = norm(axisV);
+  const axisU = norm(cross(axisV, sHat));
+  return { axisU, axisV };
+}
+
+function enuToUVMeters(bE, bN, bU, haHours, decDeg, latDeg) {
+  const ha = haHours * Math.PI / 12;
+  const dec = decDeg * Math.PI / 180;
+  const phi = latDeg * Math.PI / 180;
+  const bX = -bN * Math.sin(phi) + bU * Math.cos(phi);
+  const bY = bE;
+  const bZ = bN * Math.cos(phi) + bU * Math.sin(phi);
+  const u = bX * Math.sin(ha) + bY * Math.cos(ha);
+  const v = -bX * Math.sin(dec) * Math.cos(ha) + bY * Math.sin(dec) * Math.sin(ha) + bZ * Math.cos(dec);
+  return [u, v];
+}
+
+function flattenAnts(payload) {
+  const ants = [];
+  ['A', 'B'].forEach(subKey => {
+    const sub = payload.subarrays[subKey];
+    for (let i = 0; i < sub.pads.length; i++) {
+      ants.push({
+        subKey,
+        idx: i,
+        pad: sub.pads[i],
+        e: sub.e[i],
+        n: sub.n[i],
+        u: sub.u[i] + sub.pedestal,
+        diam: sub.diam[i],
+        exclusion: sub.diam[i] / 2 + sub.margin,
+      });
+    }
+  });
+  return ants;
+}
+
+function computeProjected(ants, sHat) {
+  const basis = getPlaneBasis(sHat);
+  const projected = ants.map(ant => {
+    const p = [ant.e, ant.u, -ant.n];
+    const w = dot(p, sHat);
+    const proj = [p[0] - w * sHat[0], p[1] - w * sHat[1], p[2] - w * sHat[2]];
+    return {
+      u: dot(proj, basis.axisU),
+      v: dot(proj, basis.axisV),
+      w,
+      r: ant.diam / 2,
+      exclusion: ant.exclusion,
+    };
+  });
+  let span = 0;
+  projected.forEach(p => {
+    span = Math.max(span, Math.abs(p.u) + p.r, Math.abs(p.v) + p.r, p.exclusion);
+  });
+  const projectionScale = span > 0 ? Math.min(1.0, 120 / span) : 1.0;
+  return { projected, projectionScale };
+}
+
+function pairKind(a, b) {
+  return a.subKey === 'A' && b.subKey === 'A' ? 'AA' : a.subKey === 'B' && b.subKey === 'B' ? 'BB' : 'AB';
+}
+
+function countKinds(pairs, ants, ordered = false) {
+  const out = { pairs: pairs.length, AA: 0, BB: 0, AB: 0, affected: 0 };
+  const flagged = new Set();
+  pairs.forEach(pair => {
+    const a = ants[ordered ? pair.target : pair.a];
+    const b = ants[ordered ? pair.emitter : pair.b];
+    out[pairKind(a, b)] += 1;
+    flagged.add(ordered ? pair.target : pair.shadowed);
+  });
+  out.affected = flagged.size;
+  return out;
+}
+
+function lowerBoundProjectedU(sorted, projected, value) {
+  let lo = 0;
+  let hi = sorted.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (projected[sorted[mid]].u < value) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
+function shadowingSnapshot(ants, projected) {
+  const pairs = [];
+  for (let i = 0; i < ants.length; i++) {
+    for (let j = i + 1; j < ants.length; j++) {
+      const pi = projected[i];
+      const pj = projected[j];
+      const dx = pi.u - pj.u;
+      const dy = pi.v - pj.v;
+      const overlap = Math.hypot(dx, dy) < (pi.r + pj.r);
+      if (!overlap) continue;
+      const shadowed = pi.w < pj.w ? i : j;
+      const blocker = shadowed === i ? j : i;
+      pairs.push({ a: i, b: j, shadowed, blocker });
+    }
+  }
+  return { pairs, stats: countKinds(pairs, ants, false) };
+}
+
+function couplingSnapshot(ants, projected, sHat, payload) {
+  const pairs = [];
+  const lambdaBySub = {
+    A: 0.3 / payload.subarrays.A.freq,
+    B: 0.3 / payload.subarrays.B.freq,
+  };
+  const classMap = new Map();
+  ants.forEach((ant, idx) => {
+    const tanTheta = Math.tan(0.61 * lambdaBySub[ant.subKey] / ant.diam);
+    const key = ant.subKey + ':' + ant.diam.toFixed(6) + ':' + lambdaBySub[ant.subKey].toFixed(9);
+    let cls = classMap.get(key);
+    if (!cls) {
+      cls = { tanTheta, wMin: Infinity, indices: [] };
+      classMap.set(key, cls);
+    }
+    cls.wMin = Math.min(cls.wMin, projected[idx].w);
+    cls.indices.push(idx);
+  });
+  const classes = Array.from(classMap.values());
+  classes.forEach(cls => cls.indices.sort((a, b) => projected[a].u - projected[b].u));
+
+  for (let target = 0; target < ants.length; target++) {
+    const targetProj = projected[target];
+    for (const cls of classes) {
+      const rhoMax = (targetProj.w - cls.wMin) * cls.tanTheta + targetProj.r;
+      if (rhoMax <= 0) continue;
+      const lo = lowerBoundProjectedU(cls.indices, projected, targetProj.u - rhoMax);
+      const hi = lowerBoundProjectedU(cls.indices, projected, targetProj.u + rhoMax + 1e-9);
+      for (let k = lo; k < hi; k++) {
+        const emitter = cls.indices[k];
+        if (emitter === target) continue;
+        const emitterProj = projected[emitter];
+        const axisDistance = targetProj.w - emitterProj.w;
+        if (axisDistance <= 0) continue;
+        const dv = targetProj.v - emitterProj.v;
+        if (Math.abs(dv) > rhoMax) continue;
+        const beamRadius = axisDistance * cls.tanTheta;
+        if (beamRadius <= 0) continue;
+        const lateralDistance = Math.hypot(targetProj.u - emitterProj.u, dv);
+        if (lateralDistance < targetProj.r + beamRadius) {
+          pairs.push({
+            emitter,
+            target,
+            axisDistance,
+            beamRadius,
+            lateralDistance,
+          });
+        }
+      }
+    }
+  }
+  return { pairs, stats: countKinds(pairs, ants, true) };
+}
+
+function buildTracks(payload, ants) {
+  if (!payload.synth.earthRotOn) return { tracks: [], shadowMax: null, couplingMax: null };
+  const samples = payload.quality === 'fast' ? 48 : 96;
+  const tracks = ants.map(() => []);
+  let shadowMax = { pairs: 0, AA: 0, BB: 0, AB: 0, affected: 0 };
+  let couplingMax = { pairs: 0, AA: 0, BB: 0, AB: 0, affected: 0 };
+  for (let s = 0; s <= samples; s++) {
+    const ha = payload.source.ha - payload.synth.durHours / 2 + (s / samples) * payload.synth.durHours;
+    const stepSource = sourceVector(ha, payload.source.dec, payload.site.lat);
+    const projRes = computeProjected(ants, stepSource.sHat);
+    projRes.projected.forEach((p, idx) => tracks[idx].push({ u: p.u, v: p.v }));
+    const shadow = shadowingSnapshot(ants, projRes.projected).stats;
+    const coupling = couplingSnapshot(ants, projRes.projected, stepSource.sHat, payload).stats;
+    if (shadow.affected > shadowMax.affected) shadowMax = shadow;
+    if (coupling.affected > couplingMax.affected) couplingMax = coupling;
+  }
+  return { tracks, shadowMax, couplingMax };
+}
+
+function buildBaselines(sub) {
+  const out = [];
+  for (let i = 0; i < sub.pads.length; i++) {
+    for (let j = i + 1; j < sub.pads.length; j++) {
+      out.push([
+        sub.e[j] - sub.e[i],
+        sub.n[j] - sub.n[i],
+        sub.u[j] - sub.u[i],
+      ]);
+    }
+  }
+  return out;
+}
+
+function fft1d(re, im, inverse) {
+  const n = re.length;
+  let j = 0;
+  for (let i = 0; i < n; i++) {
+    if (i < j) {
+      [re[i], re[j]] = [re[j], re[i]];
+      [im[i], im[j]] = [im[j], im[i]];
+    }
+    let m = n >> 1;
+    while (j >= m && m >= 1) {
+      j -= m;
+      m >>= 1;
+    }
+    j += m;
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = (inverse ? 2 : -2) * Math.PI / len;
+    const wlenCos = Math.cos(ang);
+    const wlenSin = Math.sin(ang);
+    for (let i = 0; i < n; i += len) {
+      let wCos = 1;
+      let wSin = 0;
+      for (let k = 0; k < len / 2; k++) {
+        const uRe = re[i + k];
+        const uIm = im[i + k];
+        const vRe = re[i + k + len / 2] * wCos - im[i + k + len / 2] * wSin;
+        const vIm = re[i + k + len / 2] * wSin + im[i + k + len / 2] * wCos;
+        re[i + k] = uRe + vRe;
+        im[i + k] = uIm + vIm;
+        re[i + k + len / 2] = uRe - vRe;
+        im[i + k + len / 2] = uIm - vIm;
+        const nextCos = wCos * wlenCos - wSin * wlenSin;
+        const nextSin = wCos * wlenSin + wSin * wlenCos;
+        wCos = nextCos;
+        wSin = nextSin;
+      }
+    }
+  }
+  if (inverse) {
+    for (let i = 0; i < n; i++) {
+      re[i] /= n;
+      im[i] /= n;
+    }
+  }
+}
+
+function fft2d(re, im, size, inverse) {
+  const rowRe = new Float64Array(size);
+  const rowIm = new Float64Array(size);
+  for (let y = 0; y < size; y++) {
+    const off = y * size;
+    rowRe.set(re.subarray(off, off + size));
+    rowIm.set(im.subarray(off, off + size));
+    fft1d(rowRe, rowIm, inverse);
+    re.set(rowRe, off);
+    im.set(rowIm, off);
+  }
+  const colRe = new Float64Array(size);
+  const colIm = new Float64Array(size);
+  for (let x = 0; x < size; x++) {
+    for (let y = 0; y < size; y++) {
+      const idx = y * size + x;
+      colRe[y] = re[idx];
+      colIm[y] = im[idx];
+    }
+    fft1d(colRe, colIm, inverse);
+    for (let y = 0; y < size; y++) {
+      const idx = y * size + x;
+      re[idx] = colRe[y];
+      im[idx] = colIm[y];
+    }
+  }
+}
+
+function buildUVAndPSF(sub, payload) {
+  const baselines = buildBaselines(sub);
+  const currentPoints = [];
+  let extentMeters = 1;
+  const densitySize = payload.quality === 'fast' ? 220 : 280;
+  const density = new Float32Array(densitySize * densitySize);
+  const gridSize = payload.quality === 'fast' ? 256 : 256;
+  const uvRe = new Float64Array(gridSize * gridSize);
+  const uvIm = new Float64Array(gridSize * gridSize);
+  const lambda = 0.3 / sub.freq;
+  const nSteps = payload.synth.earthRotOn ? (payload.quality === 'fast' ? 40 : 80) : 0;
+  const allPoints = [];
+  baselines.forEach(b => {
+    const uv = enuToUVMeters(b[0], b[1], b[2], payload.source.ha, payload.source.dec, payload.site.lat);
+    currentPoints.push({ u: uv[0], v: uv[1] }, { u: -uv[0], v: -uv[1] });
+  });
+  const samples = payload.synth.earthRotOn ? nSteps + 1 : 1;
+  for (let s = 0; s < samples; s++) {
+    const ha = payload.synth.earthRotOn
+      ? payload.source.ha - payload.synth.durHours / 2 + (s / nSteps) * payload.synth.durHours
+      : payload.source.ha;
+    baselines.forEach(b => {
+      const uv = enuToUVMeters(b[0], b[1], b[2], ha, payload.source.dec, payload.site.lat);
+      allPoints.push(uv, [-uv[0], -uv[1]]);
+      extentMeters = Math.max(extentMeters, Math.abs(uv[0]), Math.abs(uv[1]));
+    });
+  }
+  extentMeters *= 1.08;
+  allPoints.forEach(uv => {
+    const nx = clamp((uv[0] / extentMeters + 1) * 0.5, 0, 0.999999);
+    const ny = clamp((uv[1] / extentMeters + 1) * 0.5, 0, 0.999999);
+    density[Math.floor((1 - ny) * densitySize) * densitySize + Math.floor(nx * densitySize)] += 1;
+    const uLam = uv[0] / lambda;
+    const vLam = uv[1] / lambda;
+    const uvMaxLam = extentMeters / lambda;
+    const gx = Math.floor((uLam / uvMaxLam + 1) * 0.5 * gridSize);
+    const gy = Math.floor((vLam / uvMaxLam + 1) * 0.5 * gridSize);
+    if (gx >= 0 && gx < gridSize && gy >= 0 && gy < gridSize) {
+      uvRe[gy * gridSize + gx] += 1;
+    }
+  });
+  let densMax = 0;
+  for (let i = 0; i < density.length; i++) densMax = Math.max(densMax, density[i]);
+  if (densMax > 0) for (let i = 0; i < density.length; i++) density[i] = Math.sqrt(density[i] / densMax);
+  fft2d(uvRe, uvIm, gridSize, true);
+  const psf = new Float32Array(gridSize * gridSize);
+  let maxVal = 0;
+  for (let y = 0; y < gridSize; y++) {
+    for (let x = 0; x < gridSize; x++) {
+      const sx = (x + gridSize / 2) % gridSize;
+      const sy = (y + gridSize / 2) % gridSize;
+      const idx = sy * gridSize + sx;
+      const mag = uvRe[idx] * uvRe[idx] + uvIm[idx] * uvIm[idx];
+      psf[y * gridSize + x] = mag;
+      maxVal = Math.max(maxVal, mag);
+    }
+  }
+  if (maxVal > 0) {
+    for (let i = 0; i < psf.length; i++) {
+      const norm = psf[i] / maxVal;
+      psf[i] = clamp((Math.log10(Math.max(norm, 1e-6)) + 6) / 6, 0, 1);
+    }
+  }
+  const profileU = [];
+  const profileV = [];
+  for (let i = 0; i < gridSize; i++) {
+    const uNorm = psf[Math.floor(gridSize / 2) * gridSize + i];
+    const vNorm = psf[i * gridSize + Math.floor(gridSize / 2)];
+    profileU.push(-60 + uNorm * 60);
+    profileV.push(-60 + vNorm * 60);
+  }
+  const beamFwhmDeg = 70 * lambda / Math.max(sub.diam[0] || 1, 1e-6);
+  return {
+    baselines: baselines.length,
+    extentMeters,
+    currentPoints,
+    mode: payload.synth.earthRotOn ? 'density' : 'points',
+    points: payload.synth.earthRotOn ? [] : currentPoints,
+    density,
+    densitySize,
+    psfImage: psf,
+    psfSize: gridSize,
+    profileU,
+    profileV,
+    beamFwhmDeg,
+  };
+}
+
+function computeDiagnostics(payload) {
+  const ants = flattenAnts(payload);
+  const src = sourceVector(payload.source.ha, payload.source.dec, payload.site.lat);
+  const projRes = computeProjected(ants, src.sHat);
+  const shadow = shadowingSnapshot(ants, projRes.projected);
+  const coupling = couplingSnapshot(ants, projRes.projected, src.sHat, payload);
+  const tracks = buildTracks(payload, ants);
+  const selectedGlobal = payload.selectedGlobal ?? -1;
+  return {
+    altDeg: src.altDeg,
+    azDeg: src.azDeg,
+    projected: projRes.projected,
+    projectionScale: projRes.projectionScale,
+    shadowPairs: shadow.pairs,
+    couplingPairs: coupling.pairs,
+    shadowStats: { current: shadow.stats, max: tracks.shadowMax || shadow.stats },
+    couplingStats: { current: coupling.stats, max: tracks.couplingMax || coupling.stats },
+    tracks: tracks.tracks,
+    uv: {
+      A: buildUVAndPSF(payload.subarrays.A, payload),
+      B: buildUVAndPSF(payload.subarrays.B, payload),
+    },
+    selectedGlobal,
+  };
+}
+`;
+
+const worker = new Worker(URL.createObjectURL(new Blob([workerSource], { type: 'text/javascript' })));
+const localBackend = new Function(`
+  const self = { postMessage() {} };
+  ${workerSource}
+  return { computeDiagnostics, parseCfgText };
+`)();
+
+function applyComputeResult(seq, result, fromFallback = false) {
+  if (seq < state.appliedComputeSeq || seq !== state.currentComputeSeq) return;
+  clearTimeout(state.workerWatchdog);
+  state.computePending = false;
+  setSkyComputeOverlay(false);
+  state.appliedComputeSeq = seq;
+  state.result = result;
+  if (state.selected) {
+    const offset = state.selected.subKey === 'A' ? 0 : state.subarrays.A.ants.length;
+    state.result.selectedGlobal = offset + state.selected.idx;
+  } else {
+    state.result.selectedGlobal = -1;
+  }
+  try {
+    setStatus(fromFallback ? 'Result received (fallback).' : 'Result received.');
+    renderAll();
+    setStatus(fromFallback ? 'Updated (fallback).' : 'Updated.');
+  } catch (err) {
+    setStatus(`Render error: ${err.message || err}`);
+    console.error('Render error', err);
+  }
+}
+
+worker.onerror = event => {
+  state.computePending = false;
+  setSkyComputeOverlay(false);
+  setStatus(`Worker crashed: ${event.message || 'unknown error'}`);
+  console.error('Worker error', event);
+};
+worker.onmessageerror = event => {
+  state.computePending = false;
+  setSkyComputeOverlay(false);
+  setStatus('Worker message error.');
+  console.error('Worker message error', event);
+};
+worker.onmessage = event => {
+  const data = event.data;
+  if (data.type === 'parsedCfg') {
+    if (data.seq < state.appliedSeq) return;
+    try {
+      const otherKey = data.key === 'A' ? 'B' : 'A';
+      const other = state.subarrays[otherKey];
+      if (other && Math.abs(data.parsed.site.lon - state.site.lon) > 1e-4 && other.ants.length) {
+        throw new Error('Loaded cfg COFA does not match the current site.');
+      }
+      applyParsedCfg(data.key, data.parsed);
+      setStatus(`Loaded ${data.key} cfg.`, true);
+    } catch (err) {
+      setStatus(err.message || String(err));
+    }
+    return;
+  }
+  if (data.type === 'workerError') {
+    if (data.seq !== undefined && data.seq !== state.currentComputeSeq) return;
+    state.computePending = false;
+    setSkyComputeOverlay(false);
+    setStatus(data.message || 'Worker error.');
+    console.error(data.message);
+    return;
+  }
+  if (data.type === 'computeResult') {
+    applyComputeResult(data.seq, data.result, false);
+  }
+};
+
+let resizeQueued = false;
+function applyLayoutResize() {
+  resizeQueued = false;
+  const skyW = dom.canvasSky.clientWidth || 500;
+  const skyH = dom.canvasSky.clientHeight || 600;
+  skyRenderer.setSize(skyW, skyH, false);
+  skyCamera.aspect = skyW / skyH;
+  skyCamera.updateProjectionMatrix();
+  renderAll();
+}
+
+const resizeObserver = new ResizeObserver(() => {
+  if (resizeQueued) return;
+  resizeQueued = true;
+  requestAnimationFrame(applyLayoutResize);
+});
+
+[
+  dom.canvasArrayConfig, dom.canvasShadow, dom.canvasCoupling, dom.canvasOrtho,
+  dom.canvasOrthoArray3D,
+  dom.canvasUVA, dom.canvasUVB, dom.canvasPSFA, dom.canvasPSFB,
+  dom.canvasProfA, dom.canvasProfB, dom.canvasSky,
+].filter(Boolean)
+ .map(el => el.closest('.plot-card') || el.parentElement || el)
+ .filter((el, idx, arr) => el && arr.indexOf(el) === idx)
+ .forEach(el => resizeObserver.observe(el));
+
+updateReadouts();
+updateInspector();
+requestCompute('full');
+</script>
+</body>
+</html>

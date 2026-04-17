@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Receiver Noise — PHYS 681</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --ui-font-text: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --ui-font-display: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --math-font: "STIX Two Text", "Cambria Math", "Latin Modern Math", Georgia, serif;
+  --text: #1e293b;
+  --muted: #64748b;
+  --accent: #3b82f6;
+  --loss: #d97706;
+  --lna: #0f766e;
+  --stage2: #2563eb;
+  --loss-soft: rgba(217,119,6,0.13);
+  --lna-soft: rgba(15,118,110,0.13);
+  --stage2-soft: rgba(37,99,235,0.11);
+  --panel-bg: #18293e;
+  --panel-text: #e2e8f0;
+  --panel-muted: #94a3b8;
+  --panel-border: rgba(148,163,184,0.18);
+  --right-bg: #eef2f7;
+  --card-bg: #ffffff;
+  --card-border: rgba(148,163,184,0.25);
+  --card-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.04);
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: var(--ui-font-text);
+  font-size: 14px;
+  color: var(--text);
+  background: var(--right-bg);
+  overflow: hidden;
+}
+
+/* ── App Shell ─────────────────────────────────────────────────────────────── */
+.app {
+  display: flex;
+  height: 100%;   /* relies on html, body { height: 100% } */
+  overflow: hidden;
+}
+
+/* ── Left Panel ─────────────────────────────────────────────────────────────── */
+.left-panel {
+  width: 380px;
+  min-width: 320px;
+  min-height: 0;  /* prevent flex overflow */
+  background: var(--panel-bg);
+  color: var(--panel-text);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-shrink: 0;
+  padding: 20px 22px 24px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148,163,184,0.3) transparent;
+}
+
+.left-panel::-webkit-scrollbar { width: 5px; }
+.left-panel::-webkit-scrollbar-track { background: transparent; }
+.left-panel::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.3); border-radius: 3px; }
+
+.eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--panel-muted);
+  margin-bottom: 8px;
+}
+
+.panel-title {
+  font-family: var(--ui-font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: #f1f5f9;
+  line-height: 1.15;
+  margin-bottom: 12px;
+}
+
+.formula-box {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  font-family: var(--math-font);
+  font-size: 14px;
+  color: #cbd5e1;
+  line-height: 1.6;
+}
+
+.formula-box .formula-label {
+  font-family: var(--ui-font-text);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--panel-muted);
+  margin-bottom: 6px;
+}
+
+/* ── Section headers ────────────────────────────────────────────────────────── */
+.section-head {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--panel-muted);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+/* ── Presets ────────────────────────────────────────────────────────────────── */
+.presets-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 16px;
+}
+
+.preset-btn {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--panel-border);
+  color: var(--panel-text);
+  font-family: var(--ui-font-text);
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 7px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+.preset-btn:hover {
+  background: rgba(255,255,255,0.11);
+  border-color: rgba(148,163,184,0.4);
+}
+.preset-btn.active {
+  background: rgba(59,130,246,0.18);
+  border-color: rgba(59,130,246,0.55);
+  color: #93c5fd;
+}
+
+/* ── Parameter sliders ──────────────────────────────────────────────────────── */
+.params-section { margin-bottom: 16px; }
+
+.param-row {
+  margin-bottom: 10px;
+}
+.param-row:last-child { margin-bottom: 0; }
+
+.param-label-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+.param-name {
+  font-family: var(--math-font);
+  font-size: 14px;
+  color: #f1f5f9;
+}
+.param-desc {
+  font-size: 11px;
+  color: var(--panel-muted);
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+input[type="range"] {
+  flex: 1;
+  height: 4px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(255,255,255,0.12);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  cursor: pointer;
+}
+input[type="range"].loss-color  { color: #f59e0b; }
+input[type="range"].lna-color   { color: #14b8a6; }
+input[type="range"].stage2-color { color: #60a5fa; }
+
+input[type="number"].param-num {
+  width: 64px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  color: var(--panel-text);
+  font-family: var(--math-font);
+  font-size: 13px;
+  padding: 4px 6px;
+  text-align: right;
+  outline: none;
+  -moz-appearance: textfield;
+}
+input[type="number"].param-num::-webkit-outer-spin-button,
+input[type="number"].param-num::-webkit-inner-spin-button { -webkit-appearance: none; }
+input[type="number"].param-num:focus {
+  border-color: rgba(148,163,184,0.6);
+  background: rgba(255,255,255,0.12);
+}
+
+/* ── Hero T_rx ──────────────────────────────────────────────────────────────── */
+.hero-trx-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--panel-muted);
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.hero-value {
+  font-family: var(--ui-font-display);
+  font-size: 38px;
+  font-weight: 700;
+  color: #f1f5f9;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.hero-caption {
+  font-size: 11.5px;
+  color: var(--panel-muted);
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+
+/* ── Term pills (left panel) ────────────────────────────────────────────────── */
+.term-pills-stack {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
+
+.term-pill {
+  border-radius: var(--radius-sm);
+  padding: 8px 8px 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.term-pill.loss-pill   { background: rgba(217,119,6,0.18); border: 1px solid rgba(217,119,6,0.4); }
+.term-pill.lna-pill    { background: rgba(15,118,110,0.18); border: 1px solid rgba(15,118,110,0.4); }
+.term-pill.stage2-pill { background: rgba(37,99,235,0.18); border: 1px solid rgba(37,99,235,0.4); }
+
+.term-pill-title {
+  font-family: var(--math-font);
+  font-size: 10.5px;
+  color: var(--panel-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.term-pill-value {
+  font-family: var(--ui-font-display);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.term-pill.loss-pill   .term-pill-value { color: #fbbf24; }
+.term-pill.lna-pill    .term-pill-value { color: #2dd4bf; }
+.term-pill.stage2-pill .term-pill-value { color: #93c5fd; }
+.term-pill-foot {
+  font-size: 10px;
+  color: var(--panel-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Right Panel ─────────────────────────────────────────────────────────────── */
+.right-panel {
+  flex: 1;
+  min-height: 0;  /* prevent flex overflow */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100,116,139,0.3) transparent;
+}
+.right-panel::-webkit-scrollbar { width: 6px; }
+.right-panel::-webkit-scrollbar-track { background: transparent; }
+.right-panel::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.3); border-radius: 3px; }
+
+/* ── Cards ──────────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  padding: 20px 22px;
+  /* no overflow:hidden — it clips the SVG diagram */
+}
+
+.card-title {
+  font-family: var(--ui-font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.card-desc {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+
+/* ── Chain diagram ──────────────────────────────────────────────────────────── */
+.diagram-wrap {
+  background: #f8fafc;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  overflow: hidden;
+  width: 100%;
+}
+
+#chainSvg {
+  display: block;
+  width: 100%;
+  aspect-ratio: 980 / 380;  /* explicit — don't rely on browser inferring from viewBox */
+  height: auto;
+}
+
+.chain-legend-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.legend-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Budget card ────────────────────────────────────────────────────────────── */
+.budget-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 700px) {
+  .budget-cols { grid-template-columns: 1fr; }
+  .left-panel { width: 300px; min-width: 280px; }
+}
+
+.budget-col-head {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.budget-total-pill {
+  font-family: var(--ui-font-display);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  display: inline;
+}
+
+.share-chip {
+  display: inline-block;
+  background: rgba(15,118,110,0.1);
+  color: var(--lna);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 2px 8px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.budget-message {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 8px 0 12px;
+}
+
+/* ── Scale bar ──────────────────────────────────────────────────────────────── */
+.scale-bar-wrap {
+  margin-bottom: 8px;
+}
+.scale-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+.scale-track {
+  position: relative;
+  height: 28px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.bar-segment {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  transition: left 0.3s ease, width 0.3s ease;
+}
+.loss-seg   { background: var(--loss); }
+.lna-seg    { background: var(--lna); }
+.stage2-seg { background: var(--stage2); }
+
+.term-labels-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.term-label-chip {
+  font-size: 11px;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-family: var(--math-font);
+}
+.loss-chip   { background: var(--loss-soft);   color: var(--loss); }
+.lna-chip    { background: var(--lna-soft);    color: var(--lna); }
+.stage2-chip { background: var(--stage2-soft); color: var(--stage2); }
+
+/* ── Insights grid ──────────────────────────────────────────────────────────── */
+.insights-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 600px) {
+  .insights-grid { grid-template-columns: 1fr; }
+}
+
+.insight-card {
+  background: #f8fafc;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 14px 15px;
+}
+.insight-icon {
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+.insight-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.insight-body {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────────────── */
+.footer-note {
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.6;
+  text-align: center;
+  padding: 8px 0 4px;
+}
+
+/* ── Hidden placeholder IDs ─────────────────────────────────────────────────── */
+.hidden-ids { display: none; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       LEFT PANEL — controls
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="left-panel">
+
+    <div class="eyebrow">PHYS 681 · Receiver Chain Noise</div>
+    <h1 class="panel-title">Receiver Noise</h1>
+
+    <div class="formula-box">
+      <div class="formula-label">Receiver temperature</div>
+      T<sub>rx</sub> = εT<sub>1</sub> + (1 + ε)T<sub>2</sub> + (1 + ε)T<sub>3</sub>/G<sub>2</sub> + …
+    </div>
+
+    <!-- Presets -->
+    <div class="section-head">Presets</div>
+    <div class="presets-row">
+      <button class="preset-btn" data-preset="ambient">Lecture — ambient (≈ 278 K)</button>
+      <button class="preset-btn" data-preset="cryo">Lecture — cryogenic (≈ 46 K)</button>
+      <button class="preset-btn" data-preset="weakgain">Weak first-stage gain</button>
+    </div>
+
+    <!-- Parameters -->
+    <div class="section-head">Parameters</div>
+    <div class="params-section">
+
+      <!-- ε -->
+      <div class="param-row">
+        <div class="param-label-row">
+          <span class="param-name" style="color:#fbbf24;">ε</span>
+          <span class="param-desc">Coupler loss (fractional)</span>
+        </div>
+        <div class="slider-row">
+          <input type="range"  id="epsilonRange"  class="loss-color" data-key="epsilon" data-role="range"
+                 min="0" max="0.5" step="0.01" value="0.1"/>
+          <input type="number" id="epsilonNumber" class="param-num"  data-key="epsilon" data-role="number"
+                 min="0" max="0.5" step="0.01" value="0.1"/>
+        </div>
+      </div>
+
+      <!-- T1 -->
+      <div class="param-row">
+        <div class="param-label-row">
+          <span class="param-name" style="color:#fbbf24;">T<sub>1</sub></span>
+          <span class="param-desc">Coupler temperature (K)</span>
+        </div>
+        <div class="slider-row">
+          <input type="range"  id="t1Range"  class="loss-color" data-key="T1" data-role="range"
+                 min="0" max="350" step="1" value="290"/>
+          <input type="number" id="t1Number" class="param-num"  data-key="T1" data-role="number"
+                 min="0" max="350" step="1" value="290"/>
+        </div>
+      </div>
+
+      <!-- T2 -->
+      <div class="param-row">
+        <div class="param-label-row">
+          <span class="param-name" style="color:#2dd4bf;">T<sub>2</sub></span>
+          <span class="param-desc">LNA noise temperature (K)</span>
+        </div>
+        <div class="slider-row">
+          <input type="range"  id="t2Range"  class="lna-color" data-key="T2" data-role="range"
+                 min="0" max="400" step="1" value="225"/>
+          <input type="number" id="t2Number" class="param-num"  data-key="T2" data-role="number"
+                 min="0" max="400" step="1" value="225"/>
+        </div>
+      </div>
+
+      <!-- G2 -->
+      <div class="param-row">
+        <div class="param-label-row">
+          <span class="param-name" style="color:#2dd4bf;">G<sub>2</sub></span>
+          <span class="param-desc">First-stage gain (linear)</span>
+        </div>
+        <div class="slider-row">
+          <input type="range"  id="g2Range"  class="lna-color" data-key="G2" data-role="range"
+                 min="1" max="2000" step="1" value="1000"/>
+          <input type="number" id="g2Number" class="param-num"  data-key="G2" data-role="number"
+                 min="1" max="2000" step="1" value="1000"/>
+        </div>
+      </div>
+
+      <!-- T3 -->
+      <div class="param-row">
+        <div class="param-label-row">
+          <span class="param-name" style="color:#93c5fd;">T<sub>3</sub></span>
+          <span class="param-desc">2nd-stage noise temp (K)</span>
+        </div>
+        <div class="slider-row">
+          <input type="range"  id="t3Range"  class="stage2-color" data-key="T3" data-role="range"
+                 min="0" max="2500" step="10" value="1500"/>
+          <input type="number" id="t3Number" class="param-num"  data-key="T3" data-role="number"
+                 min="0" max="2500" step="10" value="1500"/>
+        </div>
+      </div>
+
+    </div><!-- /params-section -->
+
+    <!-- Live T_rx -->
+    <div class="hero-trx-label">Live T<sub>rx</sub></div>
+    <div class="hero-value" id="heroTotalValue">—</div>
+    <div class="hero-caption" id="heroCaption"> </div>
+
+    <div class="term-pills-stack">
+      <div class="term-pill loss-pill">
+        <div class="term-pill-title">εT<sub>1</sub></div>
+        <div class="term-pill-value" id="lossValue">—</div>
+        <div class="term-pill-foot" id="lossFoot"> </div>
+      </div>
+      <div class="term-pill lna-pill">
+        <div class="term-pill-title">(1 + ε)T<sub>2</sub></div>
+        <div class="term-pill-value" id="lnaValue">—</div>
+        <div class="term-pill-foot" id="lnaFoot"> </div>
+      </div>
+      <div class="term-pill stage2-pill">
+        <div class="term-pill-title">(1 + ε)T<sub>3</sub>/G<sub>2</sub></div>
+        <div class="term-pill-value" id="stage2Value">—</div>
+        <div class="term-pill-foot" id="stage2Foot"> </div>
+      </div>
+    </div>
+
+  </div><!-- /left-panel -->
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       RIGHT PANEL — visualization
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="right-panel">
+
+    <!-- Card 1: Chain diagram -->
+    <div class="card">
+      <div class="card-title">Receiver Chain</div>
+      <div class="card-desc">
+        Signal path from feed to detector. Each component contributes noise referred back to the feed input
+        via the Friis formula. The contribution tag under each box shows its term in T<sub>rx</sub>.
+      </div>
+      <div class="diagram-wrap">
+        <svg id="chainSvg" viewBox="0 0 980 380" width="980" height="380"
+             xmlns="http://www.w3.org/2000/svg"
+             preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+      <div class="chain-legend-row">
+        <div class="legend-chip"><div class="legend-dot" style="background:var(--loss);"></div> Coupler loss</div>
+        <div class="legend-chip"><div class="legend-dot" style="background:var(--lna);"></div> First amplifier (LNA)</div>
+        <div class="legend-chip"><div class="legend-dot" style="background:var(--stage2);"></div> Second stage</div>
+      </div>
+    </div>
+
+    <!-- Card 2: Noise Budget -->
+    <div class="card">
+      <div class="card-title">Noise Budget</div>
+      <div class="card-desc">
+        Side-by-side comparison on a shared scale. Both bars span the same temperature axis so you
+        can directly compare the live configuration against the cryogenic reference.
+      </div>
+      <div class="budget-cols">
+
+        <!-- Live column -->
+        <div class="budget-col">
+          <div class="budget-col-head">Live — current parameters</div>
+          <div>
+            <span class="budget-total-pill" id="totalPillValue">—</span>
+            <span class="share-chip" id="shareChip">—</span>
+          </div>
+          <div class="budget-message" id="budgetMessage"> </div>
+          <div class="scale-bar-wrap">
+            <div class="scale-ticks" id="currentScale"></div>
+            <div class="scale-track">
+              <div class="bar-segment loss-seg"   id="currentLossSegment"   style="left:0;width:0"></div>
+              <div class="bar-segment lna-seg"    id="currentLnaSegment"    style="left:0;width:0"></div>
+              <div class="bar-segment stage2-seg" id="currentStage2Segment" style="left:0;width:0"></div>
+            </div>
+          </div>
+          <div class="term-labels-row" id="currentTermPills"></div>
+        </div>
+
+        <!-- Cryo column -->
+        <div class="budget-col">
+          <div class="budget-col-head">Cryogenic reference (fixed)</div>
+          <div>
+            <span class="budget-total-pill" id="cryoTotalValue">—</span>
+          </div>
+          <div class="budget-message">
+            Amps cooled to ~20 K. Coupler still at 290 K (ε = 0.1).
+            LNA term collapses.
+          </div>
+          <div class="scale-bar-wrap">
+            <div class="scale-ticks" id="comparisonScaleB"></div>
+            <div class="scale-track">
+              <div class="bar-segment loss-seg"   id="cryoLossSegment"   style="left:0;width:0"></div>
+              <div class="bar-segment lna-seg"    id="cryoLnaSegment"    style="left:0;width:0"></div>
+              <div class="bar-segment stage2-seg" id="cryoStage2Segment" style="left:0;width:0"></div>
+            </div>
+          </div>
+          <div class="term-labels-row" id="cryoTermPills"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Card 3: What to Notice -->
+    <div class="card">
+      <div class="card-title">What to Notice</div>
+      <div class="insights-grid">
+        <div class="insight-card">
+          <div class="insight-icon">🎯</div>
+          <div class="insight-title">First amplifier dominates</div>
+          <div class="insight-body" id="insightDominance"> </div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-icon">⚠️</div>
+          <div class="insight-title">Front-end loss is doubly painful</div>
+          <div class="insight-body" id="insightLoss"> </div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-icon">🔋</div>
+          <div class="insight-title">High G₂ shields later stages</div>
+          <div class="insight-body" id="insightGain"> </div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-icon">📉</div>
+          <div class="insight-title">Stage 4 and beyond</div>
+          <div class="insight-body" id="insightLater"> </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-note" id="controlsFooterLead"> </div>
+
+    <!-- Hidden elements for JS ID compatibility -->
+    <div class="hidden-ids">
+      <span id="largestContributionValue"></span>
+      <span id="multiplierValue"></span>
+      <span id="suppressionValue"></span>
+      <span id="laterSuppressionValue"></span>
+      <span id="ambientTotalValue"></span>
+      <span id="comparisonScaleA"></span>
+      <span id="ambientLossSegment"></span>
+      <span id="ambientLnaSegment"></span>
+      <span id="ambientStage2Segment"></span>
+      <span id="ambientTermPills"></span>
+    </div>
+
+  </div><!-- /right-panel -->
+</div><!-- /app -->
+
+<script>
+/* ════════════════════════════════════════════════════════════════════════════
+   STATE & PRESETS
+════════════════════════════════════════════════════════════════════════════ */
+const PRESETS = {
+  ambient:  { epsilon: 0.1, T1: 290, T2: 225,   G2: 1000, T3: 1500, G3: 100 },
+  cryo:     { epsilon: 0.1, T1: 290, T2: 15.45, G2: 1000, T3: 100,  G3: 100 },
+  weakgain: { epsilon: 0.1, T1: 290, T2: 225,   G2: 30,   T3: 1500, G3: 100 }
+};
+
+const REFERENCE_SCENARIOS = {
+  ambient: { terms: { loss: 29, lna: 247,  stage2: 1.65 } },
+  cryo:    { terms: { loss: 29, lna: 17,   stage2: 0.11 } }
+};
+
+let state = { ...PRESETS.ambient };
+
+/* ════════════════════════════════════════════════════════════════════════════
+   MATH MODEL
+════════════════════════════════════════════════════════════════════════════ */
+function computeModel(p) {
+  const loss    = p.epsilon * p.T1;
+  const lna     = (1 + p.epsilon) * p.T2;
+  const stage2  = (1 + p.epsilon) * p.T3 / p.G2;
+  const total   = loss + lna + stage2;
+  const multiplier          = 1 + p.epsilon;
+  const shareLna            = total > 0 ? lna    / total * 100 : 0;
+  const shareLoss           = total > 0 ? loss   / total * 100 : 0;
+  const shareStage2         = total > 0 ? stage2 / total * 100 : 0;
+  const downstreamSuppression = p.G2;
+  const laterSuppression      = p.G2 * p.G3;
+  let largest = "lna";
+  if (loss >= lna && loss >= stage2)   largest = "loss";
+  if (stage2 > lna && stage2 > loss)   largest = "stage2";
+  return {
+    loss, lna, stage2, total,
+    multiplier, shareLna, shareLoss, shareStage2,
+    downstreamSuppression, laterSuppression,
+    largest
+  };
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   FORMATTING HELPERS
+════════════════════════════════════════════════════════════════════════════ */
+function formatKelvin(v) {
+  if (v >= 100) return v.toFixed(1) + " K";
+  if (v >= 10)  return v.toFixed(2) + " K";
+  if (v >= 1)   return v.toFixed(2) + " K";
+  return v.toFixed(3) + " K";
+}
+
+function pct(v) { return v.toFixed(1) + "%"; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SCALE BAR HELPERS
+════════════════════════════════════════════════════════════════════════════ */
+function niceMax(val) {
+  const steps = [50, 100, 150, 200, 250, 300, 400, 500, 600, 800, 1000,
+                 1200, 1500, 2000, 2500, 3000, 5000];
+  for (const m of steps) { if (val <= m) return m; }
+  return Math.ceil(val / 100) * 100;
+}
+
+function getSharedScaleMax(liveTotal) {
+  const ambRef = REFERENCE_SCENARIOS.ambient.terms;
+  const ambTotal = ambRef.loss + ambRef.lna + ambRef.stage2;
+  return niceMax(Math.max(liveTotal, ambTotal, 300));
+}
+
+function renderScale(el, maxVal) {
+  if (!el) return;
+  let html = "";
+  for (let i = 0; i <= 5; i++) {
+    html += `<span>${Math.round(maxVal * i / 5)} K</span>`;
+  }
+  el.innerHTML = html;
+}
+
+function segmentPercentages(terms, scaleMax) {
+  return {
+    loss:   scaleMax > 0 ? terms.loss   / scaleMax * 100 : 0,
+    lna:    scaleMax > 0 ? terms.lna    / scaleMax * 100 : 0,
+    stage2: scaleMax > 0 ? terms.stage2 / scaleMax * 100 : 0
+  };
+}
+
+function updateSegment(el, startPct, widthPct) {
+  if (!el) return;
+  el.style.left  = startPct.toFixed(2) + "%";
+  el.style.width = Math.max(0, widthPct).toFixed(2) + "%";
+}
+
+function makeTermPills(terms) {
+  return `
+    <span class="term-label-chip loss-chip">\u03b5T\u2081 = ${formatKelvin(terms.loss)}</span>
+    <span class="term-label-chip lna-chip">(1+\u03b5)T\u2082 = ${formatKelvin(terms.lna)}</span>
+    <span class="term-label-chip stage2-chip">(1+\u03b5)T\u2083/G\u2082 = ${formatKelvin(terms.stage2)}</span>
+  `;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   CHAIN SVG RENDER
+════════════════════════════════════════════════════════════════════════════ */
+function renderChain(p, r) {
+  const svg = document.getElementById("chainSvg");
+  if (!svg) return;
+
+  const multStr   = r.multiplier.toFixed(2);
+  const multPct   = (p.epsilon * 100).toFixed(0);
+  const shareLna  = r.shareLna.toFixed(0);
+  const shareLoss = r.shareLoss.toFixed(0);
+
+  const lossHL   = r.largest === "loss";
+  const lnaHL    = r.largest === "lna";
+  const stage2HL = r.largest === "stage2";
+
+  const connFill  = lossHL   ? "rgba(255,247,237,0.97)" : "white";
+  const lnaFill   = lnaHL    ? "rgba(236,253,245,0.97)" : "white";
+  const stageFill = stage2HL ? "rgba(239,246,255,0.97)" : "white";
+  const connBorder  = lossHL   ? "#d97706" : "#e2e8f0";
+  const lnaBorder   = lnaHL    ? "#0f766e" : "#e2e8f0";
+  const stageBorder = stage2HL ? "#2563eb" : "#e2e8f0";
+  const connBW  = lossHL   ? 2 : 1.5;
+  const lnaBW   = lnaHL    ? 2 : 1.5;
+  const stageBW = stage2HL ? 2 : 1.5;
+
+  const largestX = lnaHL ? 497 : lossHL ? 243 : 734;
+
+  svg.innerHTML = `
+    <defs>
+      <filter id="bshadow" x="-8%" y="-8%" width="116%" height="116%">
+        <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(0,0,0,0.10)"/>
+      </filter>
+      <marker id="signalArrowHead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+        <path d="M0,0 L8,4 L0,8 z" fill="#0f766e"/>
+      </marker>
+    </defs>
+
+    <rect x="20" y="10" width="940" height="360" rx="26"
+          fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+
+    <text x="58" y="50" font-family="-apple-system,sans-serif" font-size="14"
+          font-weight="600" fill="#64748b" letter-spacing="0.04em">
+      Noise referred back to the feed input
+    </text>
+
+    <rect x="344" y="18" width="350" height="28" rx="14"
+          fill="rgba(217,119,6,0.12)" stroke="rgba(217,119,6,0.4)" stroke-width="1"/>
+    <text x="519" y="36" font-family="-apple-system,sans-serif" font-size="12.5"
+          font-weight="600" fill="#b45309" text-anchor="middle">
+      Loss multiplies every amp term by (1 + \u03b5) = ${multStr}
+    </text>
+
+    <line x1="112" y1="152" x2="840" y2="152" stroke="#94a3b8" stroke-width="2.5"/>
+    <line x1="840" y1="152" x2="928" y2="152" stroke="#94a3b8" stroke-width="2.5"
+          stroke-dasharray="9 7"/>
+
+    <!-- Signal-flow arrows -->
+    <line x1="120" y1="152" x2="152" y2="152" stroke="#0f766e" stroke-width="2.5"
+          stroke-linecap="round" marker-end="url(#signalArrowHead)"/>
+    <line x1="355" y1="152" x2="389" y2="152" stroke="#0f766e" stroke-width="2.5"
+          stroke-linecap="round" marker-end="url(#signalArrowHead)"/>
+    <line x1="603" y1="152" x2="642" y2="152" stroke="#0f766e" stroke-width="2.5"
+          stroke-linecap="round" marker-end="url(#signalArrowHead)"/>
+
+    <polyline points="112,120.8 60,152 112,183.2 112,120.8" fill="none" stroke="#3b82f6"
+              stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="50" y="198" font-family="-apple-system,sans-serif" font-size="18"
+          font-weight="700" fill="#1e293b" text-anchor="middle">Feed</text>
+
+    <text x="876" y="138" font-family="-apple-system,sans-serif" font-size="22"
+          fill="#94a3b8" text-anchor="middle">\u2026</text>
+
+    <!-- Coupler box -->
+    <rect x="161" y="76" width="186" height="146" rx="20"
+          fill="${connFill}" stroke="${connBorder}" stroke-width="${connBW}" filter="url(#bshadow)"/>
+    <text x="254" y="107" font-family="-apple-system,sans-serif" font-size="15"
+          font-weight="700" fill="#1e293b" text-anchor="middle">Coupler</text>
+    <text x="254" y="139" font-family="'STIX Two Text',Georgia,serif" font-size="22"
+          fill="#1e293b" text-anchor="middle">T\u2081 = ${p.T1.toFixed(0)} K</text>
+    <text x="254" y="171" font-family="'STIX Two Text',Georgia,serif" font-size="22"
+          fill="#d97706" text-anchor="middle">\u03b5 = ${p.epsilon.toFixed(2)}</text>
+    <text x="254" y="195" font-family="-apple-system,sans-serif" font-size="11.5"
+          fill="#94a3b8" text-anchor="middle">warm loss, no gain before it</text>
+
+    <!-- First amp box -->
+    <rect x="399" y="66" width="196" height="166" rx="22"
+          fill="${lnaFill}" stroke="${lnaBorder}" stroke-width="${lnaBW}" filter="url(#bshadow)"/>
+    <text x="497" y="101" font-family="-apple-system,sans-serif" font-size="15"
+          font-weight="700" fill="#1e293b" text-anchor="middle">First amplifier</text>
+    <text x="497" y="136" font-family="'STIX Two Text',Georgia,serif" font-size="22"
+          fill="#1e293b" text-anchor="middle">T\u2082 = ${p.T2.toFixed(1)} K</text>
+    <text x="497" y="170" font-family="'STIX Two Text',Georgia,serif" font-size="22"
+          fill="#0f766e" text-anchor="middle">G\u2082 = ${p.G2}</text>
+    <text x="497" y="196" font-family="-apple-system,sans-serif" font-size="11.5"
+          fill="#94a3b8" text-anchor="middle">critical low-noise stage</text>
+
+    <!-- Second stage box -->
+    <rect x="652" y="76" width="186" height="146" rx="20"
+          fill="${stageFill}" stroke="${stageBorder}" stroke-width="${stageBW}" filter="url(#bshadow)"/>
+    <text x="745" y="107" font-family="-apple-system,sans-serif" font-size="15"
+          font-weight="700" fill="#1e293b" text-anchor="middle">Second stage</text>
+    <text x="745" y="139" font-family="'STIX Two Text',Georgia,serif" font-size="22"
+          fill="#1e293b" text-anchor="middle">T\u2083 = ${p.T3.toFixed(0)} K</text>
+    <text x="745" y="171" font-family="'STIX Two Text',Georgia,serif" font-size="22"
+          fill="#2563eb" text-anchor="middle">G\u2083 = ${p.G3}</text>
+    <text x="745" y="195" font-family="-apple-system,sans-serif" font-size="11.5"
+          fill="#94a3b8" text-anchor="middle">\u00f7 gain in front of it</text>
+
+    <!-- Contribution tags -->
+    ${renderContribTag(161, 255, 165, 84, "#d97706",
+        "\u03b5T\u2081",
+        formatKelvin(r.loss),
+        multPct + "% of T\u2081")}
+    ${renderContribTag(399, 245, 196, 94, "#0f766e",
+        "(1 + \u03b5)T\u2082",
+        formatKelvin(r.lna),
+        shareLna + "% of total")}
+    ${renderContribTag(645, 255, 178, 84, "#2563eb",
+        "(1 + \u03b5)T\u2083/G\u2082",
+        formatKelvin(r.stage2),
+        p.T3.toFixed(0) + " K \u00f7 G\u2082")}
+
+    <!-- Largest term indicator -->
+    <text x="${largestX}" y="352"
+          font-family="-apple-system,sans-serif" font-size="13"
+          font-weight="700" fill="#475569" text-anchor="middle">\u25b2 largest term</text>
+
+    <!-- Stage-4 note -->
+    <text x="876" y="298" font-family="-apple-system,sans-serif" font-size="12"
+          fill="#94a3b8" text-anchor="middle">later stages enter as</text>
+    <text x="876" y="316" font-family="'STIX Two Text',Georgia,serif" font-size="12"
+          fill="#94a3b8" text-anchor="middle">(1+\u03b5)T\u2084/(G\u2082G\u2083)\u2026</text>
+  `;
+}
+
+function renderContribTag(x, y, w, h, color, title, value, note) {
+  const cx = x + w / 2;
+  return `
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10"
+          fill="white" stroke="${color}" stroke-width="1.5"/>
+    <text x="${cx}" y="${y + 18}" font-family="'STIX Two Text',Georgia,serif" font-size="12"
+          fill="${color}" text-anchor="middle">${title}</text>
+    <text x="${cx}" y="${y + 45}" font-family="-apple-system,sans-serif" font-size="18"
+          font-weight="700" fill="#1e293b" text-anchor="middle">${value}</text>
+    <text x="${cx}" y="${y + 68}" font-family="-apple-system,sans-serif" font-size="11"
+          fill="#94a3b8" text-anchor="middle">${note}</text>
+  `;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   BUDGET RENDER
+════════════════════════════════════════════════════════════════════════════ */
+function renderBudget(p, r) {
+  const scaleMax = getSharedScaleMax(r.total);
+
+  renderScale(document.getElementById("currentScale"), scaleMax);
+
+  const pcts = segmentPercentages({ loss: r.loss, lna: r.lna, stage2: r.stage2 }, scaleMax);
+  updateSegment(document.getElementById("currentLossSegment"),   0, pcts.loss);
+  updateSegment(document.getElementById("currentLnaSegment"),    pcts.loss, pcts.lna);
+  updateSegment(document.getElementById("currentStage2Segment"), pcts.loss + pcts.lna, pcts.stage2);
+
+  const el = document.getElementById("totalPillValue");
+  if (el) el.textContent = formatKelvin(r.total);
+
+  const sc = document.getElementById("shareChip");
+  if (sc) {
+    if (r.largest === "lna") {
+      sc.style.background = "rgba(15,118,110,0.12)";
+      sc.style.color = "var(--lna)";
+      sc.textContent = "LNA " + pct(r.shareLna);
+    } else if (r.largest === "loss") {
+      sc.style.background = "rgba(217,119,6,0.12)";
+      sc.style.color = "var(--loss)";
+      sc.textContent = "Loss " + pct(r.shareLoss);
+    } else {
+      sc.style.background = "rgba(37,99,235,0.10)";
+      sc.style.color = "var(--stage2)";
+      sc.textContent = "Stage2 " + pct(r.shareStage2);
+    }
+  }
+
+  const bm = document.getElementById("budgetMessage");
+  if (bm) {
+    if (r.largest === "lna") {
+      bm.textContent = `LNA contributes ${pct(r.shareLna)} \u2014 cooling T\u2082 has the biggest impact.`;
+    } else if (r.largest === "loss") {
+      bm.textContent = `Coupler loss dominates at ${pct(r.shareLoss)} \u2014 reduce \u03b5 or cool the cable.`;
+    } else {
+      bm.textContent = `2nd-stage noise is largest (${pct(r.shareStage2)}) \u2014 G\u2082 = ${p.G2} is too low.`;
+    }
+  }
+
+  const lf = document.getElementById("lossFoot");
+  if (lf) lf.textContent = `\u03b5\u00b7T\u2081 = ${p.epsilon.toFixed(2)} \u00d7 ${p.T1} K`;
+  const af = document.getElementById("lnaFoot");
+  if (af) af.textContent = `(1+\u03b5)\u00b7T\u2082 = ${r.multiplier.toFixed(2)} \u00d7 ${p.T2.toFixed(1)} K`;
+  const sf = document.getElementById("stage2Foot");
+  if (sf) sf.textContent = `(1+\u03b5)\u00b7T\u2083/G\u2082 = ${r.multiplier.toFixed(2)}\u00b7${p.T3}/${p.G2}`;
+
+  const cp = document.getElementById("currentTermPills");
+  if (cp) cp.innerHTML = makeTermPills({ loss: r.loss, lna: r.lna, stage2: r.stage2 });
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   COMPARISON RENDER (cryo reference)
+════════════════════════════════════════════════════════════════════════════ */
+function renderComparison(liveTotal) {
+  const cryoTerms = REFERENCE_SCENARIOS.cryo.terms;
+  const cryoTotal = cryoTerms.loss + cryoTerms.lna + cryoTerms.stage2;
+  const scaleMax  = getSharedScaleMax(liveTotal);
+
+  renderScale(document.getElementById("comparisonScaleB"), scaleMax);
+
+  const pcts = segmentPercentages(cryoTerms, scaleMax);
+  updateSegment(document.getElementById("cryoLossSegment"),   0, pcts.loss);
+  updateSegment(document.getElementById("cryoLnaSegment"),    pcts.loss, pcts.lna);
+  updateSegment(document.getElementById("cryoStage2Segment"), pcts.loss + pcts.lna, pcts.stage2);
+
+  const ctv = document.getElementById("cryoTotalValue");
+  if (ctv) ctv.textContent = formatKelvin(cryoTotal);
+
+  const ctp = document.getElementById("cryoTermPills");
+  if (ctp) ctp.innerHTML = makeTermPills(cryoTerms);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TEXT / INSIGHTS
+════════════════════════════════════════════════════════════════════════════ */
+function renderText(p, r) {
+  const htv = document.getElementById("heroTotalValue");
+  if (htv) htv.textContent = formatKelvin(r.total);
+
+  const hc = document.getElementById("heroCaption");
+  if (hc) {
+    if (r.largest === "lna") {
+      hc.textContent = `LNA term is ${pct(r.shareLna)} of T\u1d63\u1d61`;
+    } else if (r.largest === "loss") {
+      hc.textContent = `Coupler loss is ${pct(r.shareLoss)} of T\u1d63\u1d61`;
+    } else {
+      hc.textContent = `2nd-stage term is ${pct(r.shareStage2)} of T\u1d63\u1d61 \u2014 G\u2082 too low`;
+    }
+  }
+
+  const lv = document.getElementById("lossValue");
+  if (lv) lv.textContent = formatKelvin(r.loss);
+  const av = document.getElementById("lnaValue");
+  if (av) av.textContent = formatKelvin(r.lna);
+  const sv = document.getElementById("stage2Value");
+  if (sv) sv.textContent = formatKelvin(r.stage2);
+
+  // Insights
+  const id = document.getElementById("insightDominance");
+  if (id) id.innerHTML =
+    `The LNA term (1+\u03b5)T\u2082 = <strong>${formatKelvin(r.lna)}</strong> is ` +
+    (r.largest === "lna"
+      ? `the <strong>largest single term</strong> (${pct(r.shareLna)}). `
+      : `${pct(r.shareLna)} of T<sub>rx</sub>. `) +
+    `Reducing T\u2082 or cooling the LNA cryogenically has the greatest leverage.`;
+
+  const il = document.getElementById("insightLoss");
+  if (il) il.innerHTML =
+    `\u03b5 = ${p.epsilon.toFixed(2)} adds \u03b5T\u2081 = <strong>${formatKelvin(r.loss)}</strong> directly, ` +
+    `AND multiplies every amplifier term by (1+\u03b5) = <strong>${r.multiplier.toFixed(2)}</strong>. ` +
+    `Minimise loss <em>before</em> the LNA.`;
+
+  const ig = document.getElementById("insightGain");
+  if (ig) ig.innerHTML =
+    `G\u2082 = <strong>${p.G2}</strong> suppresses the 2nd-stage contribution by \u00d7${p.G2}. ` +
+    `The stage-2 term is only <strong>${formatKelvin(r.stage2)}</strong>` +
+    (r.stage2 < 2 ? " \u2014 negligible." : ".");
+
+  const iLater = document.getElementById("insightLater");
+  if (iLater) iLater.innerHTML =
+    `Any stage 4+ enters as (1+\u03b5)T\u2084/(G\u2082\u00b7G\u2083). ` +
+    `With G\u2082\u00d7G\u2083 = <strong>${r.laterSuppression.toLocaleString()}</strong>, ` +
+    `even a ${formatKelvin(p.T3)} stage-4 amp would add only ` +
+    `<strong>${formatKelvin((1 + p.epsilon) * p.T3 / r.laterSuppression)}</strong>.`;
+
+  const fl = document.getElementById("controlsFooterLead");
+  if (fl) fl.innerHTML =
+    `Adjust \u03b5, T\u2081, T\u2082, G\u2082, T\u2083 in the left panel to explore the chain. ` +
+    `Total T<sub>rx</sub> = <strong>${formatKelvin(r.total)}</strong>.`;
+
+  // Update hidden spans for ID completeness
+  const lcv = document.getElementById("largestContributionValue");
+  if (lcv) lcv.textContent = r.largest === "lna" ? formatKelvin(r.lna)
+                           : r.largest === "loss" ? formatKelvin(r.loss)
+                           : formatKelvin(r.stage2);
+  const mv = document.getElementById("multiplierValue");
+  if (mv) mv.textContent = r.multiplier.toFixed(2);
+  const supv = document.getElementById("suppressionValue");
+  if (supv) supv.textContent = p.G2;
+  const lsv = document.getElementById("laterSuppressionValue");
+  if (lsv) lsv.textContent = r.laterSuppression.toLocaleString();
+  const atv = document.getElementById("ambientTotalValue");
+  if (atv) {
+    const at = REFERENCE_SCENARIOS.ambient.terms;
+    atv.textContent = formatKelvin(at.loss + at.lna + at.stage2);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   CONTROL SYNC
+════════════════════════════════════════════════════════════════════════════ */
+function syncControls() {
+  document.querySelectorAll("[data-key]").forEach(el => {
+    const key = el.dataset.key;
+    if (key in state) el.value = state[key];
+  });
+}
+
+function maybeDetectPreset(s) {
+  for (const [name, p] of Object.entries(PRESETS)) {
+    if (Math.abs(s.epsilon - p.epsilon) < 0.001 &&
+        Math.abs(s.T1 - p.T1) < 0.1 &&
+        Math.abs(s.T2 - p.T2) < 0.1 &&
+        Math.abs(s.G2 - p.G2) < 0.1 &&
+        Math.abs(s.T3 - p.T3) < 1) {
+      return name;
+    }
+  }
+  return null;
+}
+
+function setActivePreset(name) {
+  document.querySelectorAll("[data-preset]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.preset === name);
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   MAIN RENDER
+════════════════════════════════════════════════════════════════════════════ */
+function render() {
+  const r = computeModel(state);
+  renderChain(state, r);
+  renderBudget(state, r);
+  renderComparison(r.total);
+  renderText(state, r);
+  syncControls();
+  setActivePreset(maybeDetectPreset(state));
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   EVENT LISTENERS
+════════════════════════════════════════════════════════════════════════════ */
+document.querySelectorAll("[data-key][data-role]").forEach(el => {
+  el.addEventListener("input", () => {
+    const key = el.dataset.key;
+    const val = parseFloat(el.value);
+    if (isNaN(val)) return;
+    state[key] = val;
+    // Sync paired control (range ↔ number)
+    document.querySelectorAll(`[data-key="${key}"]`).forEach(peer => {
+      if (peer !== el) peer.value = val;
+    });
+    render();
+  });
+});
+
+document.querySelectorAll("[data-preset]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const name = btn.dataset.preset;
+    if (PRESETS[name]) {
+      state = { ...PRESETS[name] };
+      render();
+    }
+  });
+});
+
+/* ════════════════════════════════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════════════════════════════════ */
+render();
+</script>
+</body>
+</html>

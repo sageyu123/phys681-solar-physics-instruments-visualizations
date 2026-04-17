@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EOVSA ADC Demux-by-4 Explainer</title>
+  <style>
+    :root {
+      --bg: #f5f1e8;
+      --panel: #fcfaf5;
+      --panel-border: rgba(66, 59, 48, 0.18);
+      --panel-shadow: 0 16px 40px rgba(43, 38, 33, 0.08);
+      --text: #1a1715;
+      --muted: #6d675f;
+      --grid: rgba(55, 49, 44, 0.12);
+      --ink-soft: rgba(32, 28, 24, 0.78);
+      --accent: #0f766e;
+      --accent-soft: rgba(15, 118, 110, 0.12);
+      --highlight: #175cd3;
+      --wave: #195fa9;
+      --window: #b05f20;
+      --chip: rgba(21, 34, 68, 0.06);
+      --control: #ffffff;
+      --focus: rgba(23, 92, 211, 0.3);
+      --c1: #1f4ed8;
+      --c2: #d97706;
+      --c3: #1d9d3d;
+      --c4: #dc2626;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), transparent 26%),
+        linear-gradient(180deg, #f7f3eb 0%, #f1ece2 100%);
+      color: var(--text);
+      font-family: "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    main {
+      width: min(1320px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    h1,
+    h2 {
+      font-family: "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      letter-spacing: -0.02em;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2.1rem, 3vw, 3.1rem);
+      line-height: 1.02;
+    }
+
+    .intro {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .lede {
+      max-width: 980px;
+      font-size: 1.04rem;
+      line-height: 1.55;
+      color: var(--ink-soft);
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--chip);
+      border: 1px solid rgba(28, 24, 20, 0.08);
+      font-size: 0.92rem;
+      color: var(--ink-soft);
+    }
+
+    .chip strong {
+      color: var(--text);
+      font-weight: 650;
+    }
+
+    .controls-card,
+    .figure-card,
+    .step-card,
+    .note-card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      box-shadow: var(--panel-shadow);
+    }
+
+    .controls-card {
+      padding: 18px 18px 14px;
+      margin-bottom: 14px;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: auto minmax(260px, 1fr) minmax(220px, 0.8fr);
+      gap: 12px 18px;
+      align-items: end;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid rgba(31, 23, 19, 0.15);
+      border-radius: 14px;
+      background: var(--control);
+      color: var(--text);
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 640;
+      cursor: pointer;
+      transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(23, 92, 211, 0.28);
+      box-shadow: 0 10px 18px rgba(23, 92, 211, 0.08);
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 4px var(--focus);
+    }
+
+    .control {
+      display: grid;
+      gap: 6px;
+    }
+
+    .control label {
+      font-size: 0.9rem;
+      font-weight: 640;
+      color: var(--ink-soft);
+    }
+
+    .control-pair {
+      display: grid;
+      grid-template-columns: 1fr 88px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--highlight);
+    }
+
+    .readout {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      border: 1px solid rgba(31, 23, 19, 0.15);
+      border-radius: 12px;
+      background: var(--control);
+      color: var(--text);
+      font: inherit;
+      font-weight: 620;
+      padding: 0 10px;
+    }
+
+    .step-card {
+      display: grid;
+      gap: 8px;
+      padding: 16px 18px;
+      margin-bottom: 18px;
+      background:
+        linear-gradient(135deg, rgba(23, 92, 211, 0.06), rgba(15, 118, 110, 0.04)),
+        var(--panel);
+    }
+
+    .step-kicker {
+      color: var(--highlight);
+      font-size: 0.84rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .step-title {
+      font-size: 1.18rem;
+      line-height: 1.2;
+    }
+
+    .step-copy {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.96rem;
+      line-height: 1.5;
+    }
+
+    .figures {
+      display: grid;
+      gap: 18px;
+    }
+
+    .figure-card {
+      padding: 16px 16px 14px;
+      overflow: hidden;
+    }
+
+    .figure-card.emphasis {
+      border-color: rgba(23, 92, 211, 0.24);
+      box-shadow: 0 18px 42px rgba(23, 92, 211, 0.09);
+    }
+
+    .figure-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px 16px;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+
+    .figure-head h2 {
+      font-size: 1.24rem;
+    }
+
+    .figure-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.96rem;
+      line-height: 1.45;
+      max-width: 840px;
+    }
+
+    .viz-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(248, 244, 236, 0.98));
+    }
+
+    .caption {
+      margin: 10px 4px 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.48;
+    }
+
+    .math {
+      font-family: "STIX Two Math", "Cambria Math", "STIXGeneral", serif;
+      white-space: nowrap;
+    }
+
+    .note-card {
+      padding: 14px 18px;
+      margin-top: 18px;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      line-height: 1.52;
+    }
+
+    .note-card strong {
+      color: var(--text);
+    }
+
+    @media (max-width: 980px) {
+      .controls-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      main {
+        width: min(100vw - 18px, 1320px);
+        padding-top: 18px;
+      }
+
+      .controls-card,
+      .figure-card,
+      .step-card,
+      .note-card {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .control-pair {
+        grid-template-columns: 1fr 76px;
+      }
+
+      .chip {
+        font-size: 0.88rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="intro">
+      <h1>EOVSA ADC Demux-by-4</h1>
+      <p class="lede">
+        This companion explainer isolates the ingress step before the PFB/FFT: one
+        <strong>800 MHz</strong> ADC stream arrives faster than the ROACH FPGA fabric can process
+        samples one-by-one, so the interface repacks the stream into
+        <strong>4 time samples per 200 MHz FPGA clock tick</strong>. The page shows the same 12
+        samples first as a serial stream, then as 4-sample words, then as the 4 parallel FPGA lanes.
+      </p>
+      <div class="status-row" id="statusChips"></div>
+    </section>
+
+    <section class="controls-card" aria-label="Visualization controls">
+      <div class="controls-grid">
+        <div class="button-group">
+          <button id="prevBtn" type="button" aria-label="Previous step">Prev</button>
+          <button id="playBtn" type="button" aria-label="Play or pause autoplay">Pause</button>
+          <button id="nextBtn" type="button" aria-label="Next step">Next</button>
+        </div>
+
+        <div class="control">
+          <label for="stepRange">Step</label>
+          <div class="control-pair">
+            <input id="stepRange" type="range" min="1" max="6" step="1" value="1">
+            <output id="stepReadout" class="readout" for="stepRange">1 / 6</output>
+          </div>
+        </div>
+
+        <div class="control">
+          <label for="speedRange">Speed (steps/s)</label>
+          <div class="control-pair">
+            <input id="speedRange" type="range" min="0.5" max="4" step="0.25" value="1">
+            <output id="speedReadout" class="readout" for="speedRange">1.00</output>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="step-card" aria-live="polite">
+      <div class="step-kicker" id="stepKicker">Step 1 of 6</div>
+      <h2 class="step-title" id="stepTitle"></h2>
+      <p class="step-copy" id="stepCopy"></p>
+    </section>
+
+    <section class="figures">
+      <article class="figure-card">
+        <div class="figure-head">
+          <div>
+            <h2>Serial ADC Stream</h2>
+            <p>One input stream sampled every 1.25 ns. The highlighted group is the word that will be repacked for the FPGA.</p>
+          </div>
+        </div>
+        <svg id="serialPlot" class="viz-svg" viewBox="0 0 1440 340" role="img" aria-label="Serial ADC sample stream visualization"></svg>
+        <p class="caption">
+          Serial interpretation:
+          <span class="math">800 MHz ADC -&gt; one sample every 1.25 ns</span>.
+          This panel stays in time order only.
+        </p>
+      </article>
+
+      <article class="figure-card">
+        <div class="figure-head">
+          <div>
+            <h2>Demux Grouping</h2>
+            <p>The same time stream is regrouped into 4-sample words so one FPGA clock edge can accept four samples at once.</p>
+          </div>
+        </div>
+        <svg id="demuxPlot" class="viz-svg" viewBox="0 0 1440 420" role="img" aria-label="Demux-by-4 grouping visualization"></svg>
+        <p class="caption">
+          Grouped interpretation:
+          <span class="math">word 0 = [s0 s1 s2 s3], word 1 = [s4 s5 s6 s7], word 2 = [s8 s9 s10 s11]</span>.
+        </p>
+      </article>
+
+      <article class="figure-card emphasis">
+        <div class="figure-head">
+          <div>
+            <h2>FPGA Tick View</h2>
+            <p>The payoff: each 200 MHz FPGA tick receives one 4-lane word from the ADC interface.</p>
+          </div>
+        </div>
+        <svg id="fpgaPlot" class="viz-svg" viewBox="0 0 1440 520" role="img" aria-label="FPGA lane and clock tick visualization"></svg>
+        <p class="caption">
+          FPGA-side interpretation:
+          <span class="math">200 MHz -&gt; one tick every 5 ns</span>, and
+          <span class="math">4 samples/tick &times; 200 million ticks/s = 800 million samples/s</span>.
+        </p>
+      </article>
+    </section>
+
+    <aside class="note-card">
+      <strong>Full ROACH context:</strong> one ROACH handles four input streams total
+      (<span class="math">Ant 1 X</span>, <span class="math">Ant 1 Y</span>, <span class="math">Ant 2 X</span>,
+      <span class="math">Ant 2 Y</span>). This page explains the demux of <strong>one</strong> stream
+      before the PFB/FFT, not the later board-to-board corner turn.
+    </aside>
+  </main>
+
+  <script>
+    const NS = "http://www.w3.org/2000/svg";
+    const rootStyles = getComputedStyle(document.documentElement);
+    const COLORS = {
+      line: rootStyles.getPropertyValue("--wave").trim(),
+      accent: rootStyles.getPropertyValue("--highlight").trim(),
+      accentSoft: rootStyles.getPropertyValue("--accent-soft").trim(),
+      muted: rootStyles.getPropertyValue("--muted").trim(),
+      grid: rootStyles.getPropertyValue("--grid").trim(),
+      text: rootStyles.getPropertyValue("--text").trim(),
+      inkSoft: rootStyles.getPropertyValue("--ink-soft").trim(),
+      lane: [
+        rootStyles.getPropertyValue("--c1").trim(),
+        rootStyles.getPropertyValue("--c2").trim(),
+        rootStyles.getPropertyValue("--c3").trim(),
+        rootStyles.getPropertyValue("--c4").trim()
+      ]
+    };
+
+    const CONST = {
+      sampleRateMHz: 800,
+      fpgaClockMHz: 200,
+      samplePeriodNs: 1.25,
+      tickPeriodNs: 5,
+      laneCount: 4,
+      sampleCount: 12,
+      samples: [
+        { label: "s0", value: 0.18 },
+        { label: "s1", value: 0.82 },
+        { label: "s2", value: 0.34 },
+        { label: "s3", value: -0.42 },
+        { label: "s4", value: -0.75 },
+        { label: "s5", value: -0.12 },
+        { label: "s6", value: 0.58 },
+        { label: "s7", value: 0.74 },
+        { label: "s8", value: 0.06 },
+        { label: "s9", value: -0.61 },
+        { label: "s10", value: -0.28 },
+        { label: "s11", value: 0.49 }
+      ],
+      steps: [
+        {
+          title: "Serial samples only",
+          copy: "Start with the literal ADC stream: one sample value after another, every 1.25 ns."
+        },
+        {
+          title: "Mark one sample interval",
+          copy: "The key time spacing is 1.25 ns between adjacent samples in the 800 MHz serial stream."
+        },
+        {
+          title: "Build the first 4-sample word",
+          copy: "The interface groups s0-s3 into one word so the FPGA can receive them together on a single clock edge."
+        },
+        {
+          title: "Repeat the grouping across time",
+          copy: "The pattern repeats: the next FPGA word is s4-s7, then s8-s11, with lane colors fixed by position inside the word."
+        },
+        {
+          title: "Introduce the 200 MHz FPGA clock",
+          copy: "Now switch perspective: the FPGA ticks every 5 ns, and each tick lines up with one 4-sample word."
+        },
+        {
+          title: "Show the throughput identity",
+          copy: "The serial and parallel descriptions are equivalent: 4 samples per 200 MHz tick carry the same throughput as one 800 MHz serial stream."
+        }
+      ]
+    };
+
+    const state = {
+      step: 1,
+      speed: 1,
+      playing: true,
+      elapsed: 0,
+      lastTs: 0
+    };
+
+    const controls = {
+      prevBtn: document.getElementById("prevBtn"),
+      playBtn: document.getElementById("playBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      stepRange: document.getElementById("stepRange"),
+      stepReadout: document.getElementById("stepReadout"),
+      speedRange: document.getElementById("speedRange"),
+      speedReadout: document.getElementById("speedReadout")
+    };
+
+    const statusChips = document.getElementById("statusChips");
+    const stepKicker = document.getElementById("stepKicker");
+    const stepTitle = document.getElementById("stepTitle");
+    const stepCopy = document.getElementById("stepCopy");
+    const serialPlot = document.getElementById("serialPlot");
+    const demuxPlot = document.getElementById("demuxPlot");
+    const fpgaPlot = document.getElementById("fpgaPlot");
+
+    function svgEl(type, attrs = {}, text = "") {
+      const el = document.createElementNS(NS, type);
+      Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, String(value)));
+      if (text) {
+        el.textContent = text;
+      }
+      return el;
+    }
+
+    function clearSvg(svg) {
+      while (svg.firstChild) {
+        svg.removeChild(svg.firstChild);
+      }
+    }
+
+    function sampleX(index, x0, spacing) {
+      return x0 + index * spacing;
+    }
+
+    function updateStatus() {
+      statusChips.innerHTML = "";
+      const chips = [
+        { label: "ADC sample rate", value: "800 MHz" },
+        { label: "FPGA clock", value: "200 MHz" },
+        { label: "Demux", value: "4 samples / tick" },
+        { label: "Equivalent throughput", value: "4 x 200 MHz = 800 MHz" }
+      ];
+      chips.forEach((item) => {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.innerHTML = `<strong>${item.label}</strong> ${item.value}`;
+        statusChips.appendChild(chip);
+      });
+    }
+
+    function updateStepCopy() {
+      const meta = CONST.steps[state.step - 1];
+      stepKicker.textContent = `Step ${state.step} of ${CONST.steps.length}`;
+      stepTitle.textContent = meta.title;
+      stepCopy.textContent = meta.copy;
+      controls.stepRange.value = String(state.step);
+      controls.stepReadout.textContent = `${state.step} / ${CONST.steps.length}`;
+      controls.speedReadout.textContent = state.speed.toFixed(2);
+      controls.playBtn.textContent = state.playing ? "Pause" : "Play";
+    }
+
+    function drawSerialPlot() {
+      clearSvg(serialPlot);
+
+      const width = 1440;
+      const x0 = 110;
+      const spacing = 100;
+      const axisY = 232;
+      const amp = 84;
+      const wordStartX = sampleX(0, x0, spacing) - 42;
+      const wordWidth = spacing * 3 + 84;
+
+      serialPlot.appendChild(svgEl("rect", {
+        x: 0,
+        y: 0,
+        width,
+        height: 340,
+        fill: "transparent"
+      }));
+
+      if (state.step >= 3) {
+        serialPlot.appendChild(svgEl("rect", {
+          x: wordStartX,
+          y: 70,
+          width: wordWidth,
+          height: 194,
+          rx: 24,
+          fill: "rgba(23, 92, 211, 0.09)",
+          stroke: "rgba(23, 92, 211, 0.24)",
+          "stroke-width": 2
+        }));
+      }
+
+      if (state.step >= 4) {
+        [4, 8].forEach((start) => {
+          serialPlot.appendChild(svgEl("rect", {
+            x: sampleX(start, x0, spacing) - 42,
+            y: 88,
+            width: wordWidth,
+            height: 158,
+            rx: 22,
+            fill: "rgba(15, 118, 110, 0.06)",
+            stroke: "rgba(15, 118, 110, 0.18)",
+            "stroke-width": 1.5
+          }));
+        });
+      }
+
+      for (let i = 0; i < CONST.sampleCount; i++) {
+        const x = sampleX(i, x0, spacing);
+        serialPlot.appendChild(svgEl("line", {
+          x1: x,
+          y1: 70,
+          x2: x,
+          y2: 274,
+          stroke: COLORS.grid,
+          "stroke-width": 1
+        }));
+      }
+
+      serialPlot.appendChild(svgEl("line", {
+        x1: x0 - 24,
+        y1: axisY,
+        x2: sampleX(CONST.sampleCount - 1, x0, spacing) + 26,
+        y2: axisY,
+        stroke: "rgba(44, 38, 32, 0.85)",
+        "stroke-width": 2.3
+      }));
+
+      const points = CONST.samples.map((sample, index) => {
+        const x = sampleX(index, x0, spacing);
+        const y = axisY - sample.value * amp;
+        return `${x},${y}`;
+      }).join(" ");
+
+      serialPlot.appendChild(svgEl("polyline", {
+        points,
+        fill: "none",
+        stroke: COLORS.line,
+        "stroke-width": 4,
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round"
+      }));
+
+      CONST.samples.forEach((sample, index) => {
+        const x = sampleX(index, x0, spacing);
+        const y = axisY - sample.value * amp;
+        const lane = index % CONST.laneCount;
+        const active = state.step >= 3 && index < 4;
+        const repeated = state.step >= 4 && index >= 4;
+
+        serialPlot.appendChild(svgEl("line", {
+          x1: x,
+          y1: axisY,
+          x2: x,
+          y2: y,
+          stroke: active || repeated ? COLORS.lane[lane] : "rgba(44, 38, 32, 0.24)",
+          "stroke-width": active ? 4 : 3,
+          opacity: active ? 1 : (repeated ? 0.82 : 0.56)
+        }));
+
+        serialPlot.appendChild(svgEl("circle", {
+          cx: x,
+          cy: y,
+          r: active ? 11 : 9,
+          fill: active || repeated ? COLORS.lane[lane] : "#ffffff",
+          stroke: active || repeated ? COLORS.lane[lane] : "rgba(44, 38, 32, 0.35)",
+          "stroke-width": active ? 3 : 2,
+          opacity: active ? 1 : (repeated ? 0.86 : 0.68)
+        }));
+
+        serialPlot.appendChild(svgEl("text", {
+          x,
+          y: 304,
+          "text-anchor": "middle",
+          "font-size": 16,
+          "font-weight": 650,
+          fill: COLORS.text
+        }, sample.label));
+
+        serialPlot.appendChild(svgEl("text", {
+          x,
+          y: 326,
+          "text-anchor": "middle",
+          "font-size": 13,
+          fill: COLORS.muted
+        }, `${(index * CONST.samplePeriodNs).toFixed(2)} ns`));
+      });
+
+      serialPlot.appendChild(svgEl("text", {
+        x: 86,
+        y: 42,
+        "font-size": 22,
+        "font-weight": 700,
+        fill: COLORS.text
+      }, "One sample value every 1.25 ns"));
+
+      serialPlot.appendChild(svgEl("text", {
+        x: 86,
+        y: 66,
+        "font-size": 15,
+        fill: COLORS.inkSoft
+      }, "Serial order only: s0, s1, s2, s3, ..."));
+
+      if (state.step >= 2) {
+        const x1 = sampleX(0, x0, spacing);
+        const x2 = sampleX(1, x0, spacing);
+        const y = 104;
+        serialPlot.appendChild(svgEl("line", {
+          x1,
+          y1: y,
+          x2,
+          y2: y,
+          stroke: COLORS.window,
+          "stroke-width": 3
+        }));
+        serialPlot.appendChild(svgEl("line", {
+          x1,
+          y1: y - 10,
+          x2: x1,
+          y2: y + 10,
+          stroke: COLORS.window,
+          "stroke-width": 3
+        }));
+        serialPlot.appendChild(svgEl("line", {
+          x1: x2,
+          y1: y - 10,
+          x2: x2,
+          y2: y + 10,
+          stroke: COLORS.window,
+          "stroke-width": 3
+        }));
+        serialPlot.appendChild(svgEl("text", {
+          x: (x1 + x2) / 2,
+          y: y - 14,
+          "text-anchor": "middle",
+          "font-size": 16,
+          "font-weight": 700,
+          fill: COLORS.window
+        }, "1.25 ns"));
+      }
+
+      if (state.step >= 3) {
+        serialPlot.appendChild(svgEl("text", {
+          x: wordStartX + wordWidth - 22,
+          y: 96,
+          "text-anchor": "end",
+          "font-size": 16,
+          "font-weight": 700,
+          fill: COLORS.accent
+        }, "active 4-sample word"));
+      }
+
+      if (state.step >= 4) {
+        [0, 4, 8].forEach((start, wordIndex) => {
+          serialPlot.appendChild(svgEl("text", {
+            x: sampleX(start, x0, spacing) + spacing * 1.5,
+            y: 252,
+            "text-anchor": "middle",
+            "font-size": 14,
+            "font-weight": 650,
+            fill: wordIndex === 0 ? COLORS.accent : COLORS.muted
+          }, `word ${wordIndex}`));
+        });
+      }
+    }
+
+    function drawDemuxPlot() {
+      clearSvg(demuxPlot);
+
+      const x0 = 116;
+      const spacing = 82;
+      const serialY = 98;
+
+      demuxPlot.appendChild(svgEl("text", {
+        x: 88,
+        y: 44,
+        "font-size": 22,
+        "font-weight": 700,
+        fill: COLORS.text
+      }, "Regroup consecutive samples into one parallel word"));
+
+      demuxPlot.appendChild(svgEl("text", {
+        x: 88,
+        y: 68,
+        "font-size": 15,
+        fill: COLORS.inkSoft
+      }, "Same data, new packaging for the FPGA input interface."));
+
+      CONST.samples.forEach((sample, index) => {
+        const x = x0 + index * spacing;
+        const lane = index % CONST.laneCount;
+        demuxPlot.appendChild(svgEl("rect", {
+          x: x - 28,
+          y: serialY,
+          width: 56,
+          height: 34,
+          rx: 12,
+          fill: state.step >= 3 && index < 4 ? "rgba(23, 92, 211, 0.1)" : "#ffffff",
+          stroke: state.step >= 4 ? COLORS.lane[lane] : "rgba(44, 38, 32, 0.18)",
+          "stroke-width": state.step >= 4 ? 2 : 1.5
+        }));
+        demuxPlot.appendChild(svgEl("text", {
+          x,
+          y: serialY + 22,
+          "text-anchor": "middle",
+          "font-size": 16,
+          "font-weight": 650,
+          fill: COLORS.text
+        }, sample.label));
+      });
+
+      demuxPlot.appendChild(svgEl("text", {
+        x: 88,
+        y: serialY - 18,
+        "font-size": 14,
+        fill: COLORS.muted
+      }, "serial stream"));
+
+      if (state.step >= 3) {
+        const boxX = 240;
+        const boxY = 212;
+        const sampleBoxW = 96;
+        const sampleGap = 18;
+        const boxW = sampleBoxW * 4 + sampleGap * 3 + 32;
+        const boxH = 116;
+
+        demuxPlot.appendChild(svgEl("rect", {
+          x: boxX,
+          y: boxY,
+          width: boxW,
+          height: boxH,
+          rx: 24,
+          fill: "rgba(23, 92, 211, 0.08)",
+          stroke: "rgba(23, 92, 211, 0.22)",
+          "stroke-width": 2
+        }));
+
+        demuxPlot.appendChild(svgEl("text", {
+          x: boxX + 22,
+          y: boxY - 16,
+          "font-size": 17,
+          "font-weight": 700,
+          fill: COLORS.accent
+        }, "word 0"));
+
+        for (let lane = 0; lane < 4; lane++) {
+          const x = boxX + 16 + lane * (sampleBoxW + sampleGap);
+          demuxPlot.appendChild(svgEl("rect", {
+            x,
+            y: boxY + 24,
+            width: sampleBoxW,
+            height: 58,
+            rx: 16,
+            fill: COLORS.lane[lane],
+            opacity: 0.16,
+            stroke: COLORS.lane[lane],
+            "stroke-width": 2
+          }));
+          demuxPlot.appendChild(svgEl("text", {
+            x: x + sampleBoxW / 2,
+            y: boxY + 58,
+            "text-anchor": "middle",
+            "font-size": 24,
+            "font-weight": 700,
+            fill: COLORS.text
+          }, `s${lane}`));
+          demuxPlot.appendChild(svgEl("text", {
+            x: x + sampleBoxW / 2,
+            y: boxY + 100,
+            "text-anchor": "middle",
+            "font-size": 13,
+            "font-weight": 650,
+            fill: COLORS.muted
+          }, `lane ${lane}`));
+        }
+
+        for (let lane = 0; lane < 4; lane++) {
+          const sourceX = x0 + lane * spacing;
+          const targetX = boxX + 16 + lane * (sampleBoxW + sampleGap) + sampleBoxW / 2;
+          demuxPlot.appendChild(svgEl("line", {
+            x1: sourceX,
+            y1: serialY + 34,
+            x2: targetX,
+            y2: boxY + 12,
+            stroke: COLORS.lane[lane],
+            "stroke-width": 2.5,
+            "stroke-linecap": "round"
+          }));
+        }
+      }
+
+      if (state.step >= 4) {
+        const baseX = 90;
+        const rowY = 360;
+        const wordW = 378;
+        const wordH = 40;
+        const wordGap = 54;
+
+        for (let word = 0; word < 3; word++) {
+          const x = baseX + word * (wordW + wordGap);
+          demuxPlot.appendChild(svgEl("text", {
+            x,
+            y: rowY - 14,
+            "font-size": 16,
+            "font-weight": 700,
+            fill: word === 0 ? COLORS.accent : COLORS.text
+          }, `word ${word}`));
+
+          for (let lane = 0; lane < 4; lane++) {
+            const segmentX = x + lane * 94;
+            const sampleIndex = word * 4 + lane;
+            demuxPlot.appendChild(svgEl("rect", {
+              x: segmentX,
+              y: rowY,
+              width: 84,
+              height: wordH,
+              rx: 14,
+              fill: COLORS.lane[lane],
+              opacity: 0.14,
+              stroke: COLORS.lane[lane],
+              "stroke-width": 2
+            }));
+            demuxPlot.appendChild(svgEl("text", {
+              x: segmentX + 42,
+              y: rowY + 25,
+              "text-anchor": "middle",
+              "font-size": 18,
+              "font-weight": 700,
+              fill: COLORS.text
+            }, `s${sampleIndex}`));
+          }
+        }
+      } else {
+        demuxPlot.appendChild(svgEl("text", {
+          x: 88,
+          y: 292,
+          "font-size": 18,
+          fill: COLORS.muted
+        }, "Grouping appears at step 3."));
+      }
+    }
+
+    function drawFpgaPlot() {
+      clearSvg(fpgaPlot);
+
+      const laneYs = [190, 270, 350, 430];
+      const laneLabelsX = 138;
+      const tickXs = [420, 790, 1160];
+
+      fpgaPlot.appendChild(svgEl("text", {
+        x: 88,
+        y: 46,
+        "font-size": 22,
+        "font-weight": 700,
+        fill: COLORS.text
+      }, "FPGA receives one 4-lane word per 200 MHz clock tick"));
+
+      fpgaPlot.appendChild(svgEl("text", {
+        x: 88,
+        y: 72,
+        "font-size": 15,
+        fill: COLORS.inkSoft
+      }, "The 4-way parallel bus turns the fast serial stream into a slower, wider FPGA input."));
+
+      laneYs.forEach((y, lane) => {
+        fpgaPlot.appendChild(svgEl("line", {
+          x1: 226,
+          y1: y,
+          x2: 1276,
+          y2: y,
+          stroke: lane === 0 ? "rgba(44, 38, 32, 0.16)" : COLORS.grid,
+          "stroke-width": 2
+        }));
+        fpgaPlot.appendChild(svgEl("text", {
+          x: laneLabelsX,
+          y: y + 6,
+          "font-size": 18,
+          "font-weight": 700,
+          fill: COLORS.lane[lane]
+        }, `lane ${lane}`));
+      });
+
+      if (state.step >= 5) {
+        tickXs.forEach((x, tickIndex) => {
+          fpgaPlot.appendChild(svgEl("line", {
+            x1: x,
+            y1: 152,
+            x2: x,
+            y2: 462,
+            stroke: tickIndex === 0 ? COLORS.accent : "rgba(44, 38, 32, 0.22)",
+            "stroke-width": tickIndex === 0 ? 3 : 2,
+            "stroke-dasharray": tickIndex === 0 ? "none" : "10 8"
+          }));
+
+          fpgaPlot.appendChild(svgEl("text", {
+            x,
+            y: 486,
+            "text-anchor": "middle",
+            "font-size": 14,
+            fill: COLORS.muted
+          }, `${(tickIndex * CONST.tickPeriodNs).toFixed(0)} ns`));
+        });
+
+        for (let tick = 0; tick < (state.step >= 6 ? 3 : 1); tick++) {
+          const x = tickXs[tick];
+          for (let lane = 0; lane < 4; lane++) {
+            const sampleIndex = tick * 4 + lane;
+            fpgaPlot.appendChild(svgEl("rect", {
+              x: x - 34,
+              y: laneYs[lane] - 22,
+              width: 68,
+              height: 44,
+              rx: 14,
+              fill: COLORS.lane[lane],
+              opacity: 0.16,
+              stroke: COLORS.lane[lane],
+              "stroke-width": 2.2
+            }));
+            fpgaPlot.appendChild(svgEl("text", {
+              x,
+              y: laneYs[lane] + 7,
+              "text-anchor": "middle",
+              "font-size": 19,
+              "font-weight": 700,
+              fill: COLORS.text
+            }, `s${sampleIndex}`));
+          }
+        }
+
+        const x1 = tickXs[0];
+        const x2 = tickXs[1];
+        const y = 486;
+        fpgaPlot.appendChild(svgEl("line", {
+          x1,
+          y1: y,
+          x2,
+          y2: y,
+          stroke: COLORS.window,
+          "stroke-width": 3
+        }));
+        fpgaPlot.appendChild(svgEl("line", {
+          x1,
+          y1: y - 10,
+          x2: x1,
+          y2: y + 10,
+          stroke: COLORS.window,
+          "stroke-width": 3
+        }));
+        fpgaPlot.appendChild(svgEl("line", {
+          x1: x2,
+          y1: y - 10,
+          x2: x2,
+          y2: y + 10,
+          stroke: COLORS.window,
+          "stroke-width": 3
+        }));
+        fpgaPlot.appendChild(svgEl("text", {
+          x: (x1 + x2) / 2,
+          y: y - 16,
+          "text-anchor": "middle",
+          "font-size": 17,
+          "font-weight": 700,
+          fill: COLORS.window
+        }, "5 ns"));
+      } else {
+        fpgaPlot.appendChild(svgEl("text", {
+          x: 88,
+          y: 246,
+          "font-size": 19,
+          fill: COLORS.muted
+        }, "FPGA clock ticks appear at step 5."));
+      }
+
+      if (state.step >= 6) {
+        fpgaPlot.appendChild(svgEl("rect", {
+          x: 838,
+          y: 82,
+          width: 450,
+          height: 74,
+          rx: 22,
+          fill: "rgba(23, 92, 211, 0.08)",
+          stroke: "rgba(23, 92, 211, 0.24)",
+          "stroke-width": 2
+        }));
+        fpgaPlot.appendChild(svgEl("text", {
+          x: 1062,
+          y: 112,
+          "text-anchor": "middle",
+          "font-size": 20,
+          "font-weight": 700,
+          fill: COLORS.accent
+        }, "4 samples/tick x 200 million ticks/s"));
+        fpgaPlot.appendChild(svgEl("text", {
+          x: 1062,
+          y: 136,
+          "text-anchor": "middle",
+          "font-size": 24,
+          "font-weight": 800,
+          fill: COLORS.text
+        }, "= 800 million samples/s"));
+      }
+    }
+
+    function render() {
+      updateStepCopy();
+      drawSerialPlot();
+      drawDemuxPlot();
+      drawFpgaPlot();
+    }
+
+    function setStep(nextStep) {
+      const total = CONST.steps.length;
+      const wrapped = ((nextStep - 1) % total + total) % total + 1;
+      state.step = wrapped;
+      render();
+    }
+
+    function setSpeed(value) {
+      state.speed = Math.min(4, Math.max(0.5, value));
+      updateStepCopy();
+    }
+
+    function advance(delta) {
+      setStep(state.step + delta);
+    }
+
+    function animate(ts) {
+      if (!state.lastTs) {
+        state.lastTs = ts;
+      }
+      const dt = (ts - state.lastTs) / 1000;
+      state.lastTs = ts;
+
+      if (state.playing) {
+        state.elapsed += dt;
+        const threshold = 1 / state.speed;
+        if (state.elapsed >= threshold) {
+          state.elapsed = 0;
+          advance(1);
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    controls.prevBtn.addEventListener("click", () => {
+      state.elapsed = 0;
+      advance(-1);
+    });
+
+    controls.nextBtn.addEventListener("click", () => {
+      state.elapsed = 0;
+      advance(1);
+    });
+
+    controls.playBtn.addEventListener("click", () => {
+      state.playing = !state.playing;
+      state.elapsed = 0;
+      updateStepCopy();
+    });
+
+    controls.stepRange.addEventListener("input", (event) => {
+      state.elapsed = 0;
+      setStep(Number(event.target.value));
+    });
+
+    controls.speedRange.addEventListener("input", (event) => {
+      setSpeed(Number(event.target.value));
+      state.elapsed = 0;
+    });
+
+    window.addEventListener("resize", render);
+
+    updateStatus();
+    render();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

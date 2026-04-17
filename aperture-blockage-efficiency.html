@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aperture Blockage Efficiency Explorer</title>
+  <style>
+    :root {
+      --bg: #efe9de;
+      --bg-strong: #e3d9c8;
+      --panel: rgba(255, 252, 246, 0.9);
+      --panel-strong: rgba(255, 255, 255, 0.95);
+      --ink: #1f2933;
+      --muted: #5d6b78;
+      --line: rgba(31, 41, 51, 0.12);
+      --shadow: 0 22px 46px rgba(53, 38, 15, 0.12);
+      --shadow-soft: 0 14px 32px rgba(53, 38, 15, 0.08);
+      --radius: 18px;
+      --radius-sm: 14px;
+      --gap: 14px;
+      --ui-font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --ui-font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --math-font: "Cambria Math", "STIXGeneral", "Times New Roman", serif;
+      --accent: #91522f;
+      --aperture: #d4a373;
+      --center: #e76f51;
+      --ns: #2a9d8f;
+      --ew: #457b9d;
+      --sum: #c4622d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--ui-font-text);
+      color: var(--ink);
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.78), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(145, 82, 47, 0.16), transparent 20%),
+        linear-gradient(135deg, var(--bg) 0%, #f6f1e8 42%, var(--bg-strong) 100%);
+    }
+
+    .page {
+      width: min(1180px, calc(100vw - 20px));
+      margin: 12px auto 18px;
+      display: grid;
+      gap: var(--gap);
+    }
+
+    .hero,
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(31, 41, 51, 0.08);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      backdrop-filter: blur(12px);
+    }
+
+    .hero {
+      padding: 16px 20px 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .eyebrow {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .hero-main {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(250px, 0.82fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-family: var(--ui-font-display);
+      font-size: clamp(1.6rem, 3.1vw, 2.25rem);
+      letter-spacing: -0.045em;
+      line-height: 0.96;
+      max-width: none;
+    }
+
+    .lede {
+      margin-top: 6px;
+      color: var(--muted);
+      line-height: 1.4;
+      max-width: 74ch;
+      font-size: 0.86rem;
+    }
+
+    .formula-card {
+      background: rgba(255, 255, 255, 0.76);
+      border: 1px solid rgba(42, 157, 143, 0.16);
+      border-radius: 16px;
+      box-shadow: var(--shadow-soft);
+      padding: 12px 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .formula-title {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+    }
+
+    .formula {
+      font-family: var(--math-font);
+      font-size: clamp(0.95rem, 1.45vw, 1.18rem);
+      color: var(--accent);
+      line-height: 1.28;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1.02fr) minmax(320px, 0.88fr);
+      gap: var(--gap);
+      align-items: start;
+    }
+
+    .panel {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      flex-wrap: wrap;
+    }
+
+    .panel-head h2 {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--muted);
+      margin-bottom: 0;
+    }
+
+    .panel-head p {
+      color: var(--muted);
+      line-height: 1.48;
+      max-width: 60ch;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: white;
+      background: var(--accent);
+      box-shadow: 0 10px 22px rgba(145, 82, 47, 0.16);
+      transition: transform 0.12s ease, filter 0.12s ease;
+    }
+
+    button:hover {
+      filter: brightness(0.94);
+      transform: translateY(-1px);
+    }
+
+    button.secondary {
+      background: rgba(31, 41, 51, 0.08);
+      color: var(--ink);
+      box-shadow: none;
+    }
+
+    .gesture-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid rgba(31, 41, 51, 0.08);
+      box-shadow: var(--shadow-soft);
+      color: var(--ink);
+      font-size: 0.74rem;
+      font-weight: 600;
+    }
+
+    .canvas-card {
+      background: var(--panel-strong);
+      border: 1px solid rgba(31, 41, 51, 0.08);
+      border-radius: calc(var(--radius-sm) + 2px);
+      box-shadow: var(--shadow-soft);
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .canvas-card h3 {
+      font-family: var(--ui-font-display);
+      font-size: 0.96rem;
+      letter-spacing: -0.02em;
+    }
+
+    .canvas-card p {
+      color: var(--muted);
+      line-height: 1.35;
+      font-size: 0.8rem;
+    }
+
+    canvas {
+      width: 100%;
+      display: block;
+      border-radius: 18px;
+    }
+
+    #antennaCanvas {
+      height: 260px;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 34%),
+        radial-gradient(circle at 84% 24%, rgba(240, 245, 251, 0.92), rgba(240, 245, 251, 0) 28%),
+        linear-gradient(180deg, #fbfaf6 0%, #eef3f7 55%, #dce6ef 100%);
+      border: 1px solid rgba(31, 41, 51, 0.1);
+      cursor: grab;
+    }
+
+    #antennaCanvas.is-dragging {
+      cursor: grabbing;
+    }
+
+    #sumCanvas {
+      width: min(100%, 220px);
+      height: auto;
+      aspect-ratio: 1 / 1;
+      justify-self: center;
+      background: #0a0a0f;
+      border: 1px solid rgba(31, 41, 51, 0.08);
+    }
+
+    #beamSliceCanvas {
+      height: 155px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 241, 234, 0.96));
+      border: 1px solid rgba(31, 41, 51, 0.08);
+    }
+
+    .component-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .component-chip {
+      border: 1px solid rgba(31, 41, 51, 0.1);
+      background: rgba(255, 255, 255, 0.82);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font: inherit;
+      font-size: 0.78rem;
+      color: var(--ink);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      box-shadow: var(--shadow-soft);
+      transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+    }
+
+    .component-chip:hover {
+      transform: translateY(-1px);
+    }
+
+    .component-chip.is-active {
+      background: rgba(255, 255, 255, 0.98);
+      border-color: currentColor;
+    }
+
+    .swatch {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85);
+    }
+
+    .shadow-head,
+    .metric-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .metric-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .metric {
+      background: rgba(255, 255, 255, 0.76);
+      border: 1px solid rgba(31, 41, 51, 0.08);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+    }
+
+    .metric strong {
+      font-family: var(--math-font);
+      font-size: 1rem;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+
+    .metric small {
+      color: var(--muted);
+      line-height: 1.3;
+      font-size: 0.74rem;
+    }
+
+    .equation {
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.84);
+      border: 1px solid rgba(31, 41, 51, 0.08);
+      box-shadow: var(--shadow-soft);
+      padding: 10px 12px;
+      font-family: var(--math-font);
+      font-size: 0.92rem;
+      color: var(--ink);
+      line-height: 1.35;
+    }
+
+    .right-top {
+      display: grid;
+      grid-template-columns: minmax(210px, 236px) minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+    }
+
+    .right-top .canvas-card {
+      align-content: start;
+    }
+
+    .right-top .canvas-card > div:first-child {
+      min-height: 52px;
+      display: grid;
+      align-content: start;
+      gap: 2px;
+    }
+
+    .term-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      align-items: start;
+    }
+
+    .term-card {
+      display: grid;
+      grid-template-rows: 26px minmax(0, 1fr) 42px;
+      gap: 7px;
+      padding: 9px;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(31, 41, 51, 0.08);
+      border-radius: 14px;
+      box-shadow: var(--shadow-soft);
+      transition: opacity 0.12s ease, transform 0.12s ease, border-color 0.12s ease;
+    }
+
+    .term-card.is-inactive {
+      opacity: 0.55;
+    }
+
+    .term-card canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1 / 1;
+      background: #0a0a0f;
+      border: 1px solid rgba(31, 41, 51, 0.08);
+      align-self: start;
+    }
+
+    .term-title {
+      display: block;
+      height: 26px;
+      overflow: hidden;
+    }
+
+    .term-title strong {
+      font-family: var(--ui-font-display);
+      font-size: 0.72rem;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+
+    .term-foot {
+      display: grid;
+      grid-template-rows: auto auto;
+      gap: 2px;
+      font-size: 0.66rem;
+      color: var(--muted);
+      min-height: 42px;
+      align-content: start;
+    }
+
+    .term-foot strong {
+      display: block;
+      color: var(--ink);
+      font-family: var(--math-font);
+      font-size: 0.78rem;
+    }
+
+    .legend-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .legend-row span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-line {
+      width: 18px;
+      height: 0;
+      border-top: 3px solid currentColor;
+      border-radius: 999px;
+    }
+
+    @media (max-width: 1120px) {
+      .workspace,
+      .hero-main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .right-top,
+      .term-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .term-title strong {
+        white-space: normal;
+      }
+
+      .term-card {
+        grid-template-rows: minmax(26px, auto) minmax(0, 1fr) minmax(42px, auto);
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        width: min(100vw - 18px, 100%);
+        margin: 10px auto 18px;
+      }
+
+      .hero,
+      .panel {
+        padding: 14px;
+      }
+
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .right-top,
+      .term-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .right-top .canvas-card > div:first-child {
+        min-height: auto;
+      }
+
+      #antennaCanvas {
+        height: 220px;
+      }
+
+      #sumCanvas {
+        width: min(100%, 200px);
+      }
+
+      #beamSliceCanvas {
+        height: 150px;
+      }
+
+      .hero-main {
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <div class="eyebrow">Radio Astronomy Lecture 4</div>
+      <div class="hero-main">
+        <div>
+          <h1>Aperture Blockage Efficiency</h1>
+          <p class="lede">
+            Select which structures block the aperture and see how each subtracted Fourier term changes the beam.
+          </p>
+        </div>
+        <div class="formula-card">
+          <div class="formula-title">Teaching Focus</div>
+          <div class="formula">
+            &eta;<sub>bl</sub> = (1 - A<sub>blocked</sub>/A<sub>aperture</sub>)<sup>2</sup>
+          </div>
+          <div class="formula">
+            V<sub>total</sub>(l,m) = V<sub>aperture</sub>(l,m) - &Sigma; V<sub>blocked,j</sub>(l,m)
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <main class="workspace">
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Blocked Geometry</h2>
+          </div>
+          <div class="button-row">
+            <button id="resetViewBtn" type="button">Reset view</button>
+            <button id="selectAllBtn" type="button" class="secondary">Select all</button>
+            <button id="clearSelectionBtn" type="button" class="secondary">Clear</button>
+          </div>
+        </div>
+
+        <div class="gesture-bar">
+          <span class="chip">Drag to rotate</span>
+          <span class="chip">Shift + drag to pan</span>
+          <span class="chip">Alt/Option + drag or scroll to zoom</span>
+          <span class="chip">Cmd/Ctrl-click toggles a component</span>
+        </div>
+
+        <div class="canvas-card">
+          <div>
+            <h3>3D antenna + normal-incidence shadow</h3>
+          </div>
+          <canvas id="antennaCanvas" aria-label="3D antenna with projected blockage"></canvas>
+          <div class="component-strip" id="componentStrip"></div>
+          <div class="metric-grid">
+            <div class="metric">
+              <span>Blocked fraction</span>
+              <strong id="blockedFractionReadout">0.000</strong>
+              <small>A<sub>blocked</sub> / A<sub>aperture</sub></small>
+            </div>
+            <div class="metric">
+              <span>Blockage efficiency</span>
+              <strong id="efficiencyReadout">1.000</strong>
+              <small>&eta;<sub>bl</sub> from the selected shadow</small>
+            </div>
+            <div class="metric">
+              <span>On-axis power</span>
+              <strong id="onAxisReadout">1.000</strong>
+              <small>|V<sub>total</sub>(0,0)|<sup>2</sup> relative to clear aperture</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Fourier Composition</h2>
+          </div>
+        </div>
+
+        <div class="equation" id="equationReadout">
+          V<sub>total</sub>(l,m) = V<sub>aperture</sub>(l,m)
+        </div>
+
+        <div class="right-top">
+          <div class="canvas-card">
+            <div>
+              <h3>Summed FT</h3>
+              <p>Log |V|<sup>2</sup>.</p>
+            </div>
+            <canvas id="sumCanvas" aria-label="Summed voltage FT"></canvas>
+          </div>
+
+          <div class="canvas-card">
+            <div>
+              <h3>Beam cut</h3>
+              <p>dB through beam center.</p>
+            </div>
+            <canvas id="beamSliceCanvas" aria-label="Beam power slice"></canvas>
+            <div class="legend-row">
+              <span style="color: rgba(31, 41, 51, 0.58);"><i class="legend-line"></i>Clear aperture</span>
+              <span style="color: var(--sum);"><i class="legend-line"></i>Selected sum</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="term-grid">
+          <article class="term-card" data-term="aperture">
+            <div class="term-title">
+              <strong>+ Clear aperture</strong>
+            </div>
+            <canvas id="termCanvas-aperture" aria-label="Clear aperture FT"></canvas>
+            <div class="term-foot">
+              <span>Center coefficient</span>
+              <strong id="termFoot-aperture">1.000</strong>
+            </div>
+          </article>
+
+          <article class="term-card" data-term="center">
+            <div class="term-title">
+              <strong>- Central obstruction</strong>
+            </div>
+            <canvas id="termCanvas-center" aria-label="Central obstruction FT"></canvas>
+            <div class="term-foot">
+              <span>Center coefficient</span>
+              <strong id="termFoot-center">0.000</strong>
+            </div>
+          </article>
+
+          <article class="term-card" data-term="ns">
+            <div class="term-title">
+              <strong>- N-S strut pair</strong>
+            </div>
+            <canvas id="termCanvas-ns" aria-label="North south strut pair FT"></canvas>
+            <div class="term-foot">
+              <span>Center coefficient</span>
+              <strong id="termFoot-ns">0.000</strong>
+            </div>
+          </article>
+
+          <article class="term-card" data-term="ew">
+            <div class="term-title">
+              <strong>- E-W strut pair</strong>
+            </div>
+            <canvas id="termCanvas-ew" aria-label="East west strut pair FT"></canvas>
+            <div class="term-foot">
+              <span>Center coefficient</span>
+              <strong id="termFoot-ew">0.000</strong>
+            </div>
+          </article>
+
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const GRID_SIZE = 256;
+      const MASK_APERTURE_RADIUS = 0.24;
+      const TERM_ORDER = ["aperture", "center", "ns", "ew"];
+      const CANVAS_UI_FONT = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+      const componentDefs = [
+        { id: "center", label: "Central obstruction", short: "Center", color: getCss("--center") },
+        { id: "ns", label: "N-S strut pair", short: "N-S pair", color: getCss("--ns") },
+        { id: "ew", label: "E-W strut pair", short: "E-W pair", color: getCss("--ew") }
+      ];
+
+      const state = {
+        selection: new Set(componentDefs.map((component) => component.id)),
+        hoverId: null,
+        pointer: {
+          active: false,
+          mode: "rotate",
+          startX: 0,
+          startY: 0,
+          lastX: 0,
+          lastY: 0,
+          moved: false
+        },
+        view: {
+          yaw: -0.72,
+          pitch: 0.56,
+          panX: 0,
+          panY: 0,
+          zoom: 1
+        },
+        metrics: {
+          blockedFraction: 0,
+          efficiency: 1,
+          onAxisPower: 1
+        },
+        spectra: {
+          aperture: null,
+          center: null,
+          ns: null,
+          ew: null,
+          total: null
+        },
+        termDc: {},
+        hitShapes: [],
+        renderPending: false
+      };
+
+      const elements = {
+        antennaCanvas: document.getElementById("antennaCanvas"),
+        sumCanvas: document.getElementById("sumCanvas"),
+        beamSliceCanvas: document.getElementById("beamSliceCanvas"),
+        componentStrip: document.getElementById("componentStrip"),
+        equationReadout: document.getElementById("equationReadout"),
+        blockedFractionReadout: document.getElementById("blockedFractionReadout"),
+        efficiencyReadout: document.getElementById("efficiencyReadout"),
+        onAxisReadout: document.getElementById("onAxisReadout"),
+        resetViewBtn: document.getElementById("resetViewBtn"),
+        selectAllBtn: document.getElementById("selectAllBtn"),
+        clearSelectionBtn: document.getElementById("clearSelectionBtn")
+      };
+
+      const termElements = TERM_ORDER.reduce((acc, termId) => {
+        acc[termId] = {
+          card: document.querySelector(`.term-card[data-term="${termId}"]`),
+          canvas: document.getElementById(`termCanvas-${termId}`),
+          foot: document.getElementById(`termFoot-${termId}`)
+        };
+        return acc;
+      }, {});
+
+      const masks = buildMasks();
+      const spectra = {
+        aperture: computeSpectrum(masks.aperture),
+        center: computeSpectrum(masks.center),
+        ns: computeSpectrum(masks.ns),
+        ew: computeSpectrum(masks.ew)
+      };
+      state.spectra.aperture = spectra.aperture;
+      state.spectra.center = spectra.center;
+      state.spectra.ns = spectra.ns;
+      state.spectra.ew = spectra.ew;
+
+      createComponentChips();
+      bindControls();
+      updateSelectionDependentState();
+
+      const resizeObserver = new ResizeObserver(() => scheduleRender());
+      [
+        elements.antennaCanvas,
+        elements.sumCanvas,
+        elements.beamSliceCanvas,
+        ...TERM_ORDER.map((termId) => termElements[termId].canvas)
+      ].forEach((canvas) => resizeObserver.observe(canvas));
+
+      scheduleRender();
+
+      function getCss(name) {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      }
+
+      function buildMasks() {
+        const aperture = new Float64Array(GRID_SIZE * GRID_SIZE);
+        const center = new Float64Array(GRID_SIZE * GRID_SIZE);
+        const ns = new Float64Array(GRID_SIZE * GRID_SIZE);
+        const ew = new Float64Array(GRID_SIZE * GRID_SIZE);
+        // Keep the physical aperture smaller than the FFT box so the beam is
+        // oversampled and the clear-aperture term resolves into an Airy pattern.
+        const apertureRadius = MASK_APERTURE_RADIUS;
+        const centerRadius = apertureRadius * 0.18;
+        const strutHalfWidth = apertureRadius * 0.032;
+        let apertureCount = 0;
+        let centerCount = 0;
+        let nsCount = 0;
+        let ewCount = 0;
+
+        for (let iy = 0; iy < GRID_SIZE; iy += 1) {
+          const y = ((iy + 0.5) / GRID_SIZE) * 2 - 1;
+          for (let ix = 0; ix < GRID_SIZE; ix += 1) {
+            const x = ((ix + 0.5) / GRID_SIZE) * 2 - 1;
+            const r = Math.hypot(x, y);
+            const index = iy * GRID_SIZE + ix;
+            if (r <= apertureRadius) {
+              aperture[index] = 1;
+              apertureCount += 1;
+            }
+            if (r <= centerRadius) {
+              center[index] = 1;
+              centerCount += 1;
+            } else if (r <= apertureRadius && Math.abs(x) <= strutHalfWidth) {
+              ns[index] = 1;
+              nsCount += 1;
+            } else if (r <= apertureRadius && Math.abs(y) <= strutHalfWidth) {
+              ew[index] = 1;
+              ewCount += 1;
+            }
+          }
+        }
+
+        componentDefs.find((component) => component.id === "center").areaFraction = centerCount / apertureCount;
+        componentDefs.find((component) => component.id === "ns").areaFraction = nsCount / apertureCount;
+        componentDefs.find((component) => component.id === "ew").areaFraction = ewCount / apertureCount;
+
+        return { aperture, center, ns, ew, apertureCount };
+      }
+
+      function computeSpectrum(mask) {
+        const re = new Float64Array(mask.length);
+        const im = new Float64Array(mask.length);
+        const rowRe = new Float64Array(GRID_SIZE);
+        const rowIm = new Float64Array(GRID_SIZE);
+        const colRe = new Float64Array(GRID_SIZE);
+        const colIm = new Float64Array(GRID_SIZE);
+
+        for (let y = 0; y < GRID_SIZE; y += 1) {
+          for (let x = 0; x < GRID_SIZE; x += 1) {
+            const index = y * GRID_SIZE + x;
+            re[index] = ((x + y) & 1 ? -1 : 1) * mask[index];
+          }
+        }
+
+        for (let y = 0; y < GRID_SIZE; y += 1) {
+          const offset = y * GRID_SIZE;
+          for (let x = 0; x < GRID_SIZE; x += 1) {
+            rowRe[x] = re[offset + x];
+            rowIm[x] = 0;
+          }
+          fft1D(rowRe, rowIm);
+          for (let x = 0; x < GRID_SIZE; x += 1) {
+            re[offset + x] = rowRe[x];
+            im[offset + x] = rowIm[x];
+          }
+        }
+
+        for (let x = 0; x < GRID_SIZE; x += 1) {
+          for (let y = 0; y < GRID_SIZE; y += 1) {
+            const index = y * GRID_SIZE + x;
+            colRe[y] = re[index];
+            colIm[y] = im[index];
+          }
+          fft1D(colRe, colIm);
+          for (let y = 0; y < GRID_SIZE; y += 1) {
+            const index = y * GRID_SIZE + x;
+            re[index] = colRe[y];
+            im[index] = colIm[y];
+          }
+        }
+
+        return { re, im };
+      }
+
+      function fft1D(re, im) {
+        const n = re.length;
+        let j = 0;
+        for (let i = 0; i < n; i += 1) {
+          if (i < j) {
+            [re[i], re[j]] = [re[j], re[i]];
+            [im[i], im[j]] = [im[j], im[i]];
+          }
+          let bit = n >> 1;
+          while (bit > 0 && j >= bit) {
+            j -= bit;
+            bit >>= 1;
+          }
+          j += bit;
+        }
+
+        for (let len = 2; len <= n; len <<= 1) {
+          const angle = (-2 * Math.PI) / len;
+          const wLenCos = Math.cos(angle);
+          const wLenSin = Math.sin(angle);
+          for (let start = 0; start < n; start += len) {
+            let wCos = 1;
+            let wSin = 0;
+            for (let i = 0; i < len / 2; i += 1) {
+              const evenIndex = start + i;
+              const oddIndex = evenIndex + len / 2;
+              const oddRe = re[oddIndex] * wCos - im[oddIndex] * wSin;
+              const oddIm = re[oddIndex] * wSin + im[oddIndex] * wCos;
+              re[oddIndex] = re[evenIndex] - oddRe;
+              im[oddIndex] = im[evenIndex] - oddIm;
+              re[evenIndex] += oddRe;
+              im[evenIndex] += oddIm;
+              const nextCos = wCos * wLenCos - wSin * wLenSin;
+              const nextSin = wCos * wLenSin + wSin * wLenCos;
+              wCos = nextCos;
+              wSin = nextSin;
+            }
+          }
+        }
+      }
+
+      function createComponentChips() {
+        componentDefs.forEach((component) => {
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = "component-chip";
+          chip.dataset.component = component.id;
+          chip.style.color = component.color;
+          chip.innerHTML = `<span class="swatch"></span><span>${component.label}</span>`;
+          chip.addEventListener("click", (event) => {
+            toggleSelection(component.id, !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey);
+          });
+          elements.componentStrip.appendChild(chip);
+        });
+      }
+
+      function bindControls() {
+        elements.resetViewBtn.addEventListener("click", () => {
+          state.view.yaw = -0.72;
+          state.view.pitch = 0.56;
+          state.view.panX = 0;
+          state.view.panY = 0;
+          state.view.zoom = 1;
+          scheduleRender();
+        });
+
+        elements.selectAllBtn.addEventListener("click", () => {
+          componentDefs.forEach((component) => state.selection.add(component.id));
+          updateSelectionDependentState();
+        });
+
+        elements.clearSelectionBtn.addEventListener("click", () => {
+          state.selection.clear();
+          updateSelectionDependentState();
+        });
+
+        elements.antennaCanvas.addEventListener("pointerdown", handlePointerDown);
+        elements.antennaCanvas.addEventListener("pointermove", handlePointerMove);
+        elements.antennaCanvas.addEventListener("pointerup", handlePointerUp);
+        elements.antennaCanvas.addEventListener("pointerleave", handlePointerLeave);
+        elements.antennaCanvas.addEventListener("wheel", handleWheel, { passive: false });
+      }
+
+      function handlePointerDown(event) {
+        const canvas = elements.antennaCanvas;
+        canvas.setPointerCapture(event.pointerId);
+        state.pointer.active = true;
+        state.pointer.startX = event.clientX;
+        state.pointer.startY = event.clientY;
+        state.pointer.lastX = event.clientX;
+        state.pointer.lastY = event.clientY;
+        state.pointer.moved = false;
+        state.pointer.mode = event.shiftKey ? "pan" : event.altKey ? "zoom" : "rotate";
+        canvas.classList.add("is-dragging");
+      }
+
+      function handlePointerMove(event) {
+        if (!state.pointer.active) {
+          updateHover(event);
+          return;
+        }
+
+        const dx = event.clientX - state.pointer.lastX;
+        const dy = event.clientY - state.pointer.lastY;
+        if (Math.abs(event.clientX - state.pointer.startX) + Math.abs(event.clientY - state.pointer.startY) > 3) {
+          state.pointer.moved = true;
+        }
+
+        if (state.pointer.mode === "rotate") {
+          state.view.yaw += dx * 0.008;
+          state.view.pitch = clamp(state.view.pitch + dy * 0.006, -1.2, 1.2);
+        } else if (state.pointer.mode === "pan") {
+          state.view.panX += dx;
+          state.view.panY += dy;
+        } else {
+          state.view.zoom = clamp(state.view.zoom * Math.exp(-dy * 0.01), 0.55, 2.5);
+        }
+
+        state.pointer.lastX = event.clientX;
+        state.pointer.lastY = event.clientY;
+        scheduleRender();
+      }
+
+      function handlePointerUp(event) {
+        const canvas = elements.antennaCanvas;
+        if (canvas.hasPointerCapture(event.pointerId)) {
+          canvas.releasePointerCapture(event.pointerId);
+        }
+        canvas.classList.remove("is-dragging");
+        const wasClick = !state.pointer.moved && state.pointer.mode === "rotate";
+        state.pointer.active = false;
+        if (wasClick) {
+          const hit = pickComponent(event);
+          if (hit) {
+            toggleSelection(hit, !(event.metaKey || event.ctrlKey));
+          } else if (!(event.metaKey || event.ctrlKey)) {
+            state.selection.clear();
+            updateSelectionDependentState();
+          }
+        } else {
+          scheduleRender();
+        }
+      }
+
+      function handlePointerLeave() {
+        if (!state.pointer.active) {
+          state.hoverId = null;
+          scheduleRender();
+        }
+      }
+
+      function handleWheel(event) {
+        event.preventDefault();
+        state.view.zoom = clamp(state.view.zoom * Math.exp(-event.deltaY * 0.0012), 0.55, 2.5);
+        scheduleRender();
+      }
+
+      function updateHover(event) {
+        const hit = pickComponent(event);
+        if (hit !== state.hoverId) {
+          state.hoverId = hit;
+          scheduleRender();
+        }
+      }
+
+      function pickComponent(event) {
+        const rect = elements.antennaCanvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        let bestId = null;
+        let bestScore = Infinity;
+        for (const hitShape of state.hitShapes) {
+          if (hitShape.kind === "circle") {
+            const distance = Math.hypot(x - hitShape.x, y - hitShape.y);
+            const score = distance - hitShape.r;
+            if (score <= 8 && score < bestScore) {
+              bestScore = score;
+              bestId = hitShape.id;
+            }
+          } else {
+            for (const segment of hitShape.segments) {
+              const distance = distanceToSegment(x, y, segment.a.x, segment.a.y, segment.b.x, segment.b.y);
+              if (distance <= 10 && distance < bestScore) {
+                bestScore = distance;
+                bestId = hitShape.id;
+              }
+            }
+          }
+        }
+        return bestId;
+      }
+
+      function toggleSelection(componentId, exclusive) {
+        if (exclusive) {
+          if (state.selection.size === 1 && state.selection.has(componentId)) {
+            state.selection.clear();
+          } else {
+            state.selection = new Set([componentId]);
+          }
+        } else if (state.selection.has(componentId)) {
+          state.selection.delete(componentId);
+        } else {
+          state.selection.add(componentId);
+        }
+        updateSelectionDependentState();
+      }
+
+      function updateSelectionDependentState() {
+        state.spectra.total = combineSelectedSpectra();
+        const apertureCenter = state.spectra.aperture.re[centerIndex()];
+        state.termDc.aperture = 1;
+        state.termDc.center = -state.spectra.center.re[centerIndex()] / apertureCenter;
+        state.termDc.ns = -state.spectra.ns.re[centerIndex()] / apertureCenter;
+        state.termDc.ew = -state.spectra.ew.re[centerIndex()] / apertureCenter;
+
+        const blockedFraction = componentDefs.reduce((sum, component) => {
+          return sum + (state.selection.has(component.id) ? component.areaFraction : 0);
+        }, 0);
+        state.metrics.blockedFraction = blockedFraction;
+        state.metrics.efficiency = Math.max(0, (1 - blockedFraction) ** 2);
+
+        const totalCenterRe = state.spectra.total.re[centerIndex()];
+        const totalCenterIm = state.spectra.total.im[centerIndex()];
+        const apertureCenterIm = state.spectra.aperture.im[centerIndex()];
+        const aperturePower = apertureCenter * apertureCenter + apertureCenterIm * apertureCenterIm;
+        const totalPower = totalCenterRe * totalCenterRe + totalCenterIm * totalCenterIm;
+        state.metrics.onAxisPower = totalPower / aperturePower;
+
+        updateReadouts();
+        scheduleRender();
+      }
+
+      function combineSelectedSpectra() {
+        const totalRe = new Float64Array(state.spectra.aperture.re);
+        const totalIm = new Float64Array(state.spectra.aperture.im);
+        componentDefs.forEach((component) => {
+          if (!state.selection.has(component.id)) {
+            return;
+          }
+          const spectrum = state.spectra[component.id];
+          for (let index = 0; index < totalRe.length; index += 1) {
+            totalRe[index] -= spectrum.re[index];
+            totalIm[index] -= spectrum.im[index];
+          }
+        });
+        return { re: totalRe, im: totalIm };
+      }
+
+      function updateReadouts() {
+        elements.blockedFractionReadout.innerHTML = formatNumber(state.metrics.blockedFraction, 3);
+        elements.efficiencyReadout.innerHTML = formatNumber(state.metrics.efficiency, 3);
+        elements.onAxisReadout.innerHTML = formatNumber(state.metrics.onAxisPower, 3);
+
+        const selectedTerms = componentDefs
+          .filter((component) => state.selection.has(component.id))
+          .map((component) => `- V<sub>${component.short}</sub>(l,m)`);
+        elements.equationReadout.innerHTML = selectedTerms.length
+          ? `V<sub>total</sub>(l,m) = V<sub>aperture</sub>(l,m) ${selectedTerms.join(" ")}`
+          : `V<sub>total</sub>(l,m) = V<sub>aperture</sub>(l,m)`;
+
+        componentDefs.forEach((component) => {
+          const chip = elements.componentStrip.querySelector(`[data-component="${component.id}"]`);
+          chip.classList.toggle("is-active", state.selection.has(component.id));
+        });
+
+        componentDefs.forEach((component) => {
+          const term = termElements[component.id];
+          const included = state.selection.has(component.id);
+          term.card.classList.toggle("is-inactive", !included);
+        });
+
+        termElements.aperture.foot.textContent = signedFormat(state.termDc.aperture);
+        termElements.center.foot.textContent = signedFormat(state.termDc.center);
+        termElements.ns.foot.textContent = signedFormat(state.termDc.ns);
+        termElements.ew.foot.textContent = signedFormat(state.termDc.ew);
+      }
+
+      function scheduleRender() {
+        if (state.renderPending) {
+          return;
+        }
+        state.renderPending = true;
+        requestAnimationFrame(() => {
+          state.renderPending = false;
+          render();
+        });
+      }
+
+      function render() {
+        drawAntenna();
+        drawSumHeatmap();
+        drawBeamSlice();
+        drawTermHeatmaps();
+      }
+
+      function drawAntenna() {
+        const ctx = syncCanvas(elements.antennaCanvas);
+        const width = elements.antennaCanvas.clientWidth;
+        const height = elements.antennaCanvas.clientHeight;
+        ctx.clearRect(0, 0, width, height);
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, height);
+        gradient.addColorStop(0, "rgba(251, 250, 246, 0.98)");
+        gradient.addColorStop(0.52, "rgba(238, 243, 247, 0.98)");
+        gradient.addColorStop(1, "rgba(220, 230, 239, 0.98)");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+
+        drawAntennaBackdrop(ctx, width, height);
+
+        const rimRadius = 150;
+        const dishDepth = 54;
+        const centerZ = 74;
+        const centerRadius = 24;
+        const project = createProjector(width, height, rimRadius, dishDepth, centerZ, centerRadius);
+        state.hitShapes = [];
+
+        const rimPoints = createRing(rimRadius, 68, (x, y) => ({ x, y, z: 0 }));
+        const ringRadii = [0.18, 0.36, 0.56, 0.76, 1];
+        const spokes = 12;
+
+        ringRadii.forEach((fraction, index) => {
+          const ring = createRing(rimRadius * fraction, 52, (x, y) => ({
+            x,
+            y,
+            z: paraboloidZ(Math.hypot(x, y), rimRadius, dishDepth)
+          }));
+          drawPolyline(ctx, ring.map(project), {
+            color: index === ringRadii.length - 1 ? "rgba(150, 113, 57, 0.92)" : "rgba(101, 129, 164, 0.24)",
+            width: index === ringRadii.length - 1 ? 2.4 : 1.05,
+            closed: true
+          });
+        });
+
+        for (let i = 0; i < spokes; i += 1) {
+          const theta = (i / spokes) * Math.PI * 2;
+          const points = [];
+          for (let fraction = 0; fraction <= 1.001; fraction += 0.08) {
+            const radius = rimRadius * fraction;
+            const x = radius * Math.cos(theta);
+            const y = radius * Math.sin(theta);
+            points.push(project({ x, y, z: paraboloidZ(radius, rimRadius, dishDepth) }));
+          }
+          drawPolyline(ctx, points, {
+            color: "rgba(95, 124, 160, 0.16)",
+            width: 0.95
+          });
+        }
+
+        drawBlockageOnDishSurface(ctx, project, rimRadius, dishDepth);
+
+        drawPolyline(ctx, rimPoints.map(project), {
+          color: "rgba(150, 112, 56, 0.96)",
+          width: 2.9,
+          closed: true
+        });
+
+        const centerAssemblyPoints = createRing(centerRadius, 40, (x, y) => ({ x, y, z: centerZ }));
+        const centerProjected = centerAssemblyPoints.map(project);
+        const centerSelected = state.selection.has("center");
+        const centerHovered = state.hoverId === "center";
+        const centerColor = colorWithAlpha(getCss("--center"), centerSelected ? 0.66 : 0.24);
+
+        ctx.beginPath();
+        centerProjected.forEach((point, index) => {
+          if (index === 0) {
+            ctx.moveTo(point.x, point.y);
+          } else {
+            ctx.lineTo(point.x, point.y);
+          }
+        });
+        ctx.closePath();
+        ctx.fillStyle = centerColor;
+        ctx.strokeStyle = colorWithAlpha(getCss("--center"), centerSelected || centerHovered ? 0.92 : 0.48);
+        ctx.lineWidth = centerSelected || centerHovered ? 2.8 : 1.5;
+        ctx.fill();
+        ctx.stroke();
+
+        const centerPoint = project({ x: 0, y: 0, z: centerZ });
+        const projectedCenterRadius = averageDistance(centerProjected, centerPoint);
+        state.hitShapes.push({
+          id: "center",
+          kind: "circle",
+          x: centerPoint.x,
+          y: centerPoint.y,
+          r: projectedCenterRadius
+        });
+
+        drawFeedHorn(ctx, project, centerZ, centerRadius, centerSelected || centerHovered);
+        drawStrutPair(ctx, project, "ns", [
+          { x: 0, y: rimRadius, z: 0 },
+          { x: 0, y: -rimRadius, z: 0 }
+        ], centerZ, centerRadius);
+        drawStrutPair(ctx, project, "ew", [
+          { x: rimRadius, y: 0, z: 0 },
+          { x: -rimRadius, y: 0, z: 0 }
+        ], centerZ, centerRadius);
+
+        drawAxisTriad(ctx, width - 72, height - 72);
+      }
+
+      function drawAntennaBackdrop(ctx, width, height) {
+        const washA = ctx.createRadialGradient(width * 0.18, height * 0.18, 0, width * 0.18, height * 0.18, width * 0.34);
+        washA.addColorStop(0, "rgba(255,255,255,0.42)");
+        washA.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = washA;
+        ctx.fillRect(0, 0, width, height);
+
+        const washB = ctx.createRadialGradient(width * 0.78, height * 0.72, 0, width * 0.78, height * 0.72, width * 0.28);
+        washB.addColorStop(0, "rgba(202,221,242,0.18)");
+        washB.addColorStop(1, "rgba(202,221,242,0)");
+        ctx.fillStyle = washB;
+        ctx.fillRect(0, 0, width, height);
+      }
+
+      function drawFeedHorn(ctx, project, centerZ, centerRadius, highlight) {
+        const topZ = centerZ + 30;
+        const base = createRing(centerRadius * 0.42, 28, (x, y) => ({ x, y, z: centerZ + 2 }));
+        const top = createRing(centerRadius * 0.18, 28, (x, y) => ({ x, y, z: topZ }));
+        const baseProjected = base.map(project);
+        const topProjected = top.map(project);
+        drawPolyline(ctx, baseProjected, {
+          color: highlight ? "rgba(255, 208, 120, 0.84)" : "rgba(210, 191, 138, 0.46)",
+          width: highlight ? 2.1 : 1.2,
+          closed: true
+        });
+        drawPolyline(ctx, topProjected, {
+          color: highlight ? "rgba(255, 208, 120, 0.78)" : "rgba(210, 191, 138, 0.42)",
+          width: highlight ? 1.8 : 1.05,
+          closed: true
+        });
+        for (let index = 0; index < baseProjected.length; index += 7) {
+          drawPolyline(ctx, [baseProjected[index], topProjected[index]], {
+            color: highlight ? "rgba(255, 208, 120, 0.76)" : "rgba(210, 191, 138, 0.32)",
+            width: highlight ? 1.7 : 0.9
+          });
+        }
+      }
+
+      function drawStrutPair(ctx, project, id, rimAnchors, centerZ, centerRadius) {
+        const selected = state.selection.has(id);
+        const hovered = state.hoverId === id;
+        const color = componentDefs.find((component) => component.id === id).color;
+        const segments = [];
+        rimAnchors.forEach((anchor) => {
+          const direction = Math.atan2(anchor.y, anchor.x);
+          const innerAnchor = {
+            x: centerRadius * Math.cos(direction),
+            y: centerRadius * Math.sin(direction),
+            z: centerZ
+          };
+          const projectedInner = project(innerAnchor);
+          const projectedOuter = project({
+            x: anchor.x,
+            y: anchor.y,
+            z: paraboloidZ(Math.hypot(anchor.x, anchor.y), 150, 54)
+          });
+          segments.push({ a: projectedInner, b: projectedOuter });
+          drawPolyline(ctx, [projectedInner, projectedOuter], {
+            color: colorWithAlpha(color, selected ? 0.92 : hovered ? 0.74 : 0.34),
+            width: selected || hovered ? 5.2 : 3.2,
+            lineCap: "round"
+          });
+        });
+        state.hitShapes.push({ id, kind: "segments", segments });
+      }
+
+      function drawBlockageOnDishSurface(ctx, project, radius, depth) {
+        ctx.save();
+        componentDefs.forEach((component) => {
+          if (!state.selection.has(component.id)) {
+            return;
+          }
+          const projectedPaths = createShadowSurfacePaths(component.id, radius, depth).map((path) => path.map(project));
+          projectedPaths.forEach((path) => {
+            traceProjectedPolygon(ctx, path);
+            ctx.fillStyle = colorWithAlpha(component.color, 0.24);
+            ctx.strokeStyle = colorWithAlpha(component.color, 0.82);
+            ctx.lineWidth = 1.5;
+            ctx.fill();
+            ctx.stroke();
+          });
+        });
+        ctx.restore();
+      }
+
+      function createShadowSurfacePaths(id, radius, depth) {
+        const centerRadius = radius * 0.18;
+        const halfWidth = radius * 0.032;
+        if (id === "center") {
+          return [createRing(centerRadius, 56, (x, y) => ({
+            x,
+            y,
+            z: paraboloidZ(Math.hypot(x, y), radius, depth) + 0.8
+          }))];
+        }
+        if (id === "ns") {
+          return [
+            createSurfaceRectPoints(-halfWidth, -radius, halfWidth, -centerRadius, radius, depth),
+            createSurfaceRectPoints(-halfWidth, centerRadius, halfWidth, radius, radius, depth)
+          ];
+        }
+        return [
+          createSurfaceRectPoints(-radius, -halfWidth, -centerRadius, halfWidth, radius, depth),
+          createSurfaceRectPoints(centerRadius, -halfWidth, radius, halfWidth, radius, depth)
+        ];
+      }
+
+      function createSurfaceRectPoints(x1, y1, x2, y2, rimRadius, depth) {
+        const points = [];
+        const addPoint = (x, y) => {
+          points.push({
+            x,
+            y,
+            z: paraboloidZ(Math.hypot(x, y), rimRadius, depth) + 0.8
+          });
+        };
+        const steps = 18;
+        for (let step = 0; step <= steps; step += 1) {
+          const t = step / steps;
+          addPoint(x1 + (x2 - x1) * t, y1);
+        }
+        for (let step = 1; step <= steps; step += 1) {
+          const t = step / steps;
+          addPoint(x2, y1 + (y2 - y1) * t);
+        }
+        for (let step = 1; step <= steps; step += 1) {
+          const t = step / steps;
+          addPoint(x2 + (x1 - x2) * t, y2);
+        }
+        for (let step = 1; step < steps; step += 1) {
+          const t = step / steps;
+          addPoint(x1, y2 + (y1 - y2) * t);
+        }
+        return points;
+      }
+
+      function traceProjectedPolygon(ctx, points) {
+        ctx.beginPath();
+        points.forEach((point, index) => {
+          if (index === 0) {
+            ctx.moveTo(point.x, point.y);
+          } else {
+            ctx.lineTo(point.x, point.y);
+          }
+        });
+        ctx.closePath();
+      }
+
+      function drawSumHeatmap() {
+        const ctx = syncCanvas(elements.sumCanvas);
+        const width = elements.sumCanvas.clientWidth;
+        const height = elements.sumCanvas.clientHeight;
+        ctx.clearRect(0, 0, width, height);
+        drawSpectrumToCanvas(ctx, width, height, state.spectra.total, {
+          margin: 10,
+          crosshair: true,
+          axisLabels: true
+        });
+      }
+
+      function drawBeamSlice() {
+        const ctx = syncCanvas(elements.beamSliceCanvas);
+        const width = elements.beamSliceCanvas.clientWidth;
+        const height = elements.beamSliceCanvas.clientHeight;
+        ctx.clearRect(0, 0, width, height);
+
+        const padding = { left: 50, right: 18, top: 18, bottom: 34 };
+        const plotWidth = width - padding.left - padding.right;
+        const plotHeight = height - padding.top - padding.bottom;
+        const baselinePower = extractRowPower(state.spectra.aperture);
+        const totalPower = extractRowPower(state.spectra.total);
+        const minDb = -36;
+
+        ctx.fillStyle = "rgba(255,255,255,0.95)";
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.strokeStyle = "rgba(31, 41, 51, 0.1)";
+        ctx.lineWidth = 1;
+        ctx.font = `500 11px ${CANVAS_UI_FONT}`;
+        ctx.fillStyle = "rgba(31, 41, 51, 0.56)";
+        for (let db = 0; db >= minDb; db -= 10) {
+          const y = padding.top + ((0 - db) / (0 - minDb)) * plotHeight;
+          ctx.beginPath();
+          ctx.moveTo(padding.left, y);
+          ctx.lineTo(width - padding.right, y);
+          ctx.stroke();
+          ctx.fillText(`${db} dB`, 10, y + 4);
+        }
+
+        ctx.strokeStyle = "rgba(31, 41, 51, 0.14)";
+        ctx.beginPath();
+        ctx.moveTo(padding.left, padding.top + plotHeight);
+        ctx.lineTo(width - padding.right, padding.top + plotHeight);
+        ctx.moveTo(padding.left + plotWidth / 2, padding.top);
+        ctx.lineTo(padding.left + plotWidth / 2, padding.top + plotHeight);
+        ctx.stroke();
+
+        drawCurve(ctx, baselinePower, {
+          color: "rgba(31, 41, 51, 0.58)",
+          dashed: true,
+          width: 1.6,
+          padding,
+          plotWidth,
+          plotHeight,
+          minDb
+        });
+
+        drawCurve(ctx, totalPower, {
+          color: getCss("--sum"),
+          dashed: false,
+          width: 1.9,
+          padding,
+          plotWidth,
+          plotHeight,
+          minDb
+        });
+
+        ctx.fillStyle = "rgba(31, 41, 51, 0.56)";
+        ctx.fillText("- relative sky angle +", padding.left + plotWidth / 2 - 54, height - 10);
+      }
+
+      function drawCurve(ctx, power, options) {
+        const peak = power.reduce((max, value) => Math.max(max, value), 1e-12);
+        const convertY = (value) => {
+          const db = Math.max(options.minDb, 10 * Math.log10(Math.max(value / peak, 1e-6)));
+          return options.padding.top + ((0 - db) / (0 - options.minDb)) * options.plotHeight;
+        };
+        ctx.save();
+        ctx.strokeStyle = options.color;
+        ctx.lineWidth = options.width;
+        if (options.dashed) {
+          ctx.setLineDash([7, 5]);
+        }
+        ctx.beginPath();
+        power.forEach((value, index) => {
+          const x = options.padding.left + (index / (power.length - 1)) * options.plotWidth;
+          const y = convertY(value);
+          if (index === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        });
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawTermHeatmaps() {
+        drawTermCanvas("aperture", state.spectra.aperture, true);
+        drawTermCanvas("center", state.spectra.center, state.selection.has("center"));
+        drawTermCanvas("ns", state.spectra.ns, state.selection.has("ns"));
+        drawTermCanvas("ew", state.spectra.ew, state.selection.has("ew"));
+      }
+
+      function drawTermCanvas(termId, spectrum, active) {
+        const element = termElements[termId];
+        const ctx = syncCanvas(element.canvas);
+        const width = element.canvas.clientWidth;
+        const height = element.canvas.clientHeight;
+        ctx.clearRect(0, 0, width, height);
+        drawSpectrumToCanvas(ctx, width, height, spectrum, {
+          margin: 8,
+          crosshair: true,
+          dim: !active && termId !== "aperture" && termId !== "total"
+        });
+      }
+
+      function drawSpectrumToCanvas(ctx, width, height, spectrum, options = {}) {
+        const margin = options.margin ?? 16;
+        const plotSize = Math.min(width, height) - margin * 2;
+        const left = (width - plotSize) * 0.5;
+        const top = (height - plotSize) * 0.5;
+        const scratch = document.createElement("canvas");
+        scratch.width = GRID_SIZE;
+        scratch.height = GRID_SIZE;
+        const scratchCtx = scratch.getContext("2d");
+        const image = scratchCtx.createImageData(GRID_SIZE, GRID_SIZE);
+
+        let maxPower = 0;
+        for (let index = 0; index < spectrum.re.length; index += 1) {
+          const power = spectrum.re[index] * spectrum.re[index] + spectrum.im[index] * spectrum.im[index];
+          maxPower = Math.max(maxPower, power);
+        }
+        maxPower = Math.max(maxPower, 1e-12);
+
+        for (let index = 0; index < spectrum.re.length; index += 1) {
+          const power = spectrum.re[index] * spectrum.re[index] + spectrum.im[index] * spectrum.im[index];
+          const logRatio = Math.log10(Math.max(power / maxPower, 1e-12));
+          const scaled = clamp((logRatio + 4) / 4, 0, 1);
+          const [r, g, b] = logPowerColor(scaled);
+          const pixelIndex = index * 4;
+          image.data[pixelIndex] = r;
+          image.data[pixelIndex + 1] = g;
+          image.data[pixelIndex + 2] = b;
+          image.data[pixelIndex + 3] = options.dim ? 155 : 255;
+        }
+
+        scratchCtx.putImageData(image, 0, 0);
+        ctx.drawImage(scratch, left, top, plotSize, plotSize);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.22)";
+        ctx.lineWidth = 1.2;
+        ctx.strokeRect(left, top, plotSize, plotSize);
+
+        if (options.crosshair) {
+          ctx.save();
+          ctx.strokeStyle = "rgba(255,255,255,0.7)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(left + plotSize * 0.5, top);
+          ctx.lineTo(left + plotSize * 0.5, top + plotSize);
+          ctx.moveTo(left, top + plotSize * 0.5);
+          ctx.lineTo(left + plotSize, top + plotSize * 0.5);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        if (options.axisLabels) {
+          ctx.fillStyle = "rgba(255, 255, 255, 0.78)";
+          ctx.font = `500 12px ${CANVAS_UI_FONT}`;
+          ctx.fillText("l", left + plotSize - 10, top + plotSize * 0.5 - 6);
+          ctx.fillText("m", left + plotSize * 0.5 + 8, top + 12);
+        }
+      }
+
+      function drawAxisTriad(ctx, x, y) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.lineCap = "round";
+        [
+          { dx: 28, dy: 0, color: "#e76f51", label: "x" },
+          { dx: -10, dy: -28, color: "#2a9d8f", label: "y" },
+          { dx: -18, dy: 20, color: "#457b9d", label: "z" }
+        ].forEach((axis) => {
+          ctx.strokeStyle = axis.color;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(axis.dx, axis.dy);
+          ctx.stroke();
+          ctx.fillStyle = axis.color;
+          ctx.font = `700 12px ${CANVAS_UI_FONT}`;
+          ctx.fillText(axis.label, axis.dx + 4, axis.dy + 4);
+        });
+        ctx.restore();
+      }
+
+      function createProjector(width, height, rimRadius, dishDepth, centerZ, centerRadius) {
+        const cameraDistance = 400;
+        const padding = { left: 24, right: 118, top: 16, bottom: 18 };
+        const fitPoints = [
+          ...createRing(rimRadius, 72, (x, y) => ({ x, y, z: 0 })),
+          ...createRing(rimRadius * 0.76, 40, (x, y) => ({
+            x,
+            y,
+            z: paraboloidZ(Math.hypot(x, y), rimRadius, dishDepth)
+          })),
+          ...createRing(centerRadius, 24, (x, y) => ({ x, y, z: centerZ })),
+          ...createRing(centerRadius * 0.42, 24, (x, y) => ({ x, y, z: centerZ + 2 })),
+          ...createRing(centerRadius * 0.18, 24, (x, y) => ({ x, y, z: centerZ + 30 })),
+          { x: 0, y: 0, z: paraboloidZ(0, rimRadius, dishDepth) }
+        ];
+
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
+        fitPoints.forEach((point) => {
+          const rotated = rotatePoint(point, state.view.yaw, state.view.pitch);
+          const depth = rotated.z + cameraDistance;
+          const projectedX = rotated.x / depth;
+          const projectedY = -rotated.y / depth;
+          minX = Math.min(minX, projectedX);
+          maxX = Math.max(maxX, projectedX);
+          minY = Math.min(minY, projectedY);
+          maxY = Math.max(maxY, projectedY);
+        });
+
+        const spanX = Math.max(maxX - minX, 1e-6);
+        const spanY = Math.max(maxY - minY, 1e-6);
+        const availableWidth = Math.max(80, width - padding.left - padding.right);
+        const availableHeight = Math.max(80, height - padding.top - padding.bottom);
+        const focal = Math.min(availableWidth / spanX, availableHeight / spanY) * state.view.zoom;
+        const centerX = (minX + maxX) * 0.5;
+        const centerY = (minY + maxY) * 0.5;
+        const targetX = padding.left + availableWidth * 0.5 + state.view.panX;
+        const targetY = padding.top + availableHeight * 0.5 + state.view.panY;
+
+        return (point) => {
+          const rotated = rotatePoint(point, state.view.yaw, state.view.pitch);
+          const depth = rotated.z + cameraDistance;
+          return {
+            x: targetX + (rotated.x / depth - centerX) * focal,
+            y: targetY + (-rotated.y / depth - centerY) * focal,
+            z: rotated.z
+          };
+        };
+      }
+
+      function rotatePoint(point, yaw, pitch) {
+        const cosYaw = Math.cos(yaw);
+        const sinYaw = Math.sin(yaw);
+        const cosPitch = Math.cos(pitch);
+        const sinPitch = Math.sin(pitch);
+        const x1 = point.x * cosYaw + point.z * sinYaw;
+        const z1 = -point.x * sinYaw + point.z * cosYaw;
+        const y2 = point.y * cosPitch - z1 * sinPitch;
+        const z2 = point.y * sinPitch + z1 * cosPitch;
+        return { x: x1, y: y2, z: z2 };
+      }
+
+      function paraboloidZ(radius, rimRadius, depth) {
+        const fraction = radius / rimRadius;
+        return -depth * (1 - fraction * fraction);
+      }
+
+      function createRing(radius, points, mapper) {
+        const ring = [];
+        for (let index = 0; index < points; index += 1) {
+          const theta = (index / points) * Math.PI * 2;
+          ring.push(mapper(radius * Math.cos(theta), radius * Math.sin(theta)));
+        }
+        return ring;
+      }
+
+      function drawPolyline(ctx, points, options) {
+        ctx.save();
+        ctx.strokeStyle = options.color;
+        ctx.lineWidth = options.width;
+        ctx.lineJoin = "round";
+        ctx.lineCap = options.lineCap || "round";
+        ctx.beginPath();
+        points.forEach((point, index) => {
+          if (index === 0) {
+            ctx.moveTo(point.x, point.y);
+          } else {
+            ctx.lineTo(point.x, point.y);
+          }
+        });
+        if (options.closed) {
+          ctx.closePath();
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function syncCanvas(canvas) {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const width = Math.max(1, Math.round(rect.width * dpr));
+        const height = Math.max(1, Math.round(rect.height * dpr));
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+        }
+        const ctx = canvas.getContext("2d");
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return ctx;
+      }
+
+      function distanceToSegment(px, py, x1, y1, x2, y2) {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const lengthSq = dx * dx + dy * dy || 1;
+        const t = clamp(((px - x1) * dx + (py - y1) * dy) / lengthSq, 0, 1);
+        const projX = x1 + t * dx;
+        const projY = y1 + t * dy;
+        return Math.hypot(px - projX, py - projY);
+      }
+
+      function extractRowPower(spectrum) {
+        const center = GRID_SIZE / 2;
+        const row = [];
+        for (let x = 0; x < GRID_SIZE; x += 1) {
+          const index = center * GRID_SIZE + x;
+          row.push(spectrum.re[index] * spectrum.re[index] + spectrum.im[index] * spectrum.im[index]);
+        }
+        return row;
+      }
+
+      function centerIndex() {
+        return (GRID_SIZE / 2) * GRID_SIZE + GRID_SIZE / 2;
+      }
+
+      function averageDistance(points, center) {
+        const total = points.reduce((sum, point) => sum + Math.hypot(point.x - center.x, point.y - center.y), 0);
+        return total / points.length;
+      }
+
+      function logPowerColor(value) {
+        const stops = [
+          { t: 0, r: 0, g: 0, b: 4 },
+          { t: 0.25, r: 87, g: 16, b: 110 },
+          { t: 0.5, r: 188, g: 55, b: 84 },
+          { t: 0.75, r: 251, g: 148, b: 36 },
+          { t: 1, r: 252, g: 255, b: 164 }
+        ];
+        const t = clamp(value, 0, 1);
+        for (let index = 0; index < stops.length - 1; index += 1) {
+          const start = stops[index];
+          const end = stops[index + 1];
+          if (t <= end.t) {
+            return mixRgb(start, end, (t - start.t) / (end.t - start.t));
+          }
+        }
+        const last = stops[stops.length - 1];
+        return [last.r, last.g, last.b];
+      }
+
+      function mixRgb(a, b, t) {
+        return [
+          Math.round(a.r + (b.r - a.r) * t),
+          Math.round(a.g + (b.g - a.g) * t),
+          Math.round(a.b + (b.b - a.b) * t)
+        ];
+      }
+
+      function colorWithAlpha(color, alpha) {
+        const rgb = hexToRgb(color);
+        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+      }
+
+      function hexToRgb(hex) {
+        const clean = hex.replace("#", "");
+        const value = clean.length === 3
+          ? clean.split("").map((char) => char + char).join("")
+          : clean;
+        return {
+          r: parseInt(value.slice(0, 2), 16),
+          g: parseInt(value.slice(2, 4), 16),
+          b: parseInt(value.slice(4, 6), 16)
+        };
+      }
+
+      function signedFormat(value) {
+        return `${value >= 0 ? "+" : ""}${formatNumber(value, 3)}`;
+      }
+
+      function formatNumber(value, digits) {
+        return Number(value).toFixed(digits);
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+    })();
+  </script>
+</body>
+</html>

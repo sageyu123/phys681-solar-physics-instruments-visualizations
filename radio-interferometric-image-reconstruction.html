@@ -1,0 +1,4122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Reconstruction — Deconvolution Methods</title>
+<style>
+:root {
+  --bg: #f3efe7;
+  --bg-grad: linear-gradient(170deg, #f3efe7 0%, #e8e4dc 100%);
+  --panel: rgba(255, 252, 246, 0.92);
+  --panel-border: rgba(31, 36, 48, 0.10);
+  --ink: #1f2430;
+  --muted: #5f6673;
+  --grid: rgba(31, 36, 48, 0.10);
+  --accent-sky: #2563eb;
+  --accent-psf: #d97706;
+  --accent-dirty: #6b7280;
+  --accent-residual: #ef4444;
+  --accent-comp: #10b981;
+  --accent-restored: #7c3aed;
+  --accent-minor: #f59e0b;
+  --accent-major: #3b82f6;
+  --radius: 18px;
+  --radius-sm: 10px;
+  --shadow: 0 18px 48px rgba(31, 36, 48, 0.10);
+  --gap: 18px;
+  --ui-font-text: "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --ui-font-display: "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --math-font: "STIX Two Text", "STIX Two Math", "Cambria Math", "Latin Modern Math", Georgia, serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--ui-font-text);
+  background: var(--bg-grad);
+  color: var(--ink);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ── Hero ── */
+.hero {
+  max-width: min(1320px, calc(100vw - 24px));
+  margin: 0 auto;
+  padding: 28px 28px 16px;
+}
+.eyebrow {
+  font-size: 0.70rem;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.hero h1 {
+  font-family: var(--ui-font-display);
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+.hero .desc {
+  font-size: 0.95rem;
+  color: var(--muted);
+  max-width: 680px;
+  line-height: 1.5;
+}
+.hero .desc em { font-family: var(--math-font); font-style: normal; }
+
+/* ── Shell ── */
+.shell {
+  max-width: min(1320px, calc(100vw - 24px));
+  margin: 0 auto;
+  padding: 0 28px 48px;
+  display: grid;
+  gap: 14px;
+}
+
+/* ── Tab bar ── */
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  background: rgba(31, 36, 48, 0.06);
+  border-radius: 12px;
+  padding: 3px;
+  width: fit-content;
+}
+.tab {
+  font-family: var(--ui-font-text);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+.tab:hover { background: rgba(255,255,255,0.5); }
+.tab.active {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 2px 8px rgba(31,36,48,0.08);
+}
+
+/* ── Layout ── */
+.layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.main-stack {
+  display: grid;
+  gap: 14px;
+}
+
+/* ── Controls ── */
+.controls {
+  position: sticky;
+  top: 12px;
+  display: grid;
+  gap: 14px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  padding: 16px 16px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+.controls h3 {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color: var(--muted);
+  font-weight: 600;
+}
+.control-section { display: grid; gap: 8px; }
+.control-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 10px;
+  align-items: center;
+}
+.control-row label {
+  font-size: 0.84rem;
+  font-weight: 500;
+  grid-column: 1 / -1;
+}
+.control-row label em {
+  font-family: var(--math-font);
+  font-style: normal;
+}
+.control-row input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--grid);
+  outline: none;
+}
+.range-wrap {
+  position: relative;
+  width: 100%;
+}
+.range-wrap input[type="range"] {
+  position: relative;
+  z-index: 1;
+}
+.range-threshold {
+  position: absolute;
+  top: 50%;
+  left: var(--threshold-pos);
+  width: 0;
+  height: 16px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 2;
+}
+.range-threshold::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  height: 16px;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.88);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.9);
+}
+.range-threshold::after {
+  content: attr(data-label);
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  font-size: 0.63rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(185, 28, 28, 0.9);
+  white-space: nowrap;
+}
+.range-note {
+  grid-column: 1 / -1;
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.3;
+}
+.control-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--ink);
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}
+.control-row input[type="number"] {
+  width: 72px;
+  padding: 5px 8px;
+  border: 1px solid rgba(31,36,48,0.14);
+  border-radius: 7px;
+  font-family: var(--ui-font-text);
+  font-size: 0.82rem;
+  text-align: center;
+  background: rgba(255,255,255,0.7);
+}
+.control-row input[type="number"]:focus {
+  outline: 2px solid var(--accent-sky);
+  outline-offset: -1px;
+}
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: rgba(31,36,48,0.04);
+  border: 1px solid rgba(31,36,48,0.08);
+}
+.toggle-copy {
+  display: grid;
+  gap: 2px;
+}
+.toggle-copy strong {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.toggle-copy span {
+  font-size: 0.76rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+.toggle-switch {
+  position: relative;
+  width: 46px;
+  height: 28px;
+  flex: 0 0 auto;
+}
+.toggle-switch input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.toggle-switch span {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: rgba(31,36,48,0.18);
+  transition: background 160ms ease;
+}
+.toggle-switch span::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+  transition: transform 160ms ease;
+}
+.toggle-switch input:checked + span {
+  background: rgba(37,99,235,0.9);
+}
+.toggle-switch input:checked + span::after {
+  transform: translateX(18px);
+}
+.control-row select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid rgba(31,36,48,0.14);
+  border-radius: 9px;
+  font-family: var(--ui-font-text);
+  font-size: 0.84rem;
+  background: rgba(255,255,255,0.78);
+  color: var(--ink);
+}
+.control-row select:disabled {
+  color: rgba(95,102,115,0.72);
+  background: rgba(31,36,48,0.05);
+}
+
+/* ── Buttons ── */
+.button-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.button-row button, .btn {
+  font-family: var(--ui-font-text);
+  font-size: 0.92rem;
+  font-weight: 600;
+  min-width: 42px;
+  min-height: 38px;
+  padding: 7px 12px;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: filter 160ms ease, transform 80ms ease;
+}
+.button-row button.symbol {
+  font-size: 1.08rem;
+  line-height: 1;
+  padding: 6px 12px;
+}
+.button-row button:hover, .btn:hover { filter: brightness(0.92); }
+.button-row button:active, .btn:active { transform: scale(0.97); }
+.button-row button:disabled, .btn:disabled {
+  cursor: default;
+  opacity: 0.45;
+  filter: none;
+  transform: none;
+}
+#btn-step { background: var(--accent-minor); color: #fff; }
+#btn-run { background: var(--accent-comp); color: #fff; }
+#btn-run.running { background: var(--accent-residual); }
+#btn-major { background: var(--accent-major); color: #fff; }
+#btn-reset { background: rgba(31,36,48,0.08); color: var(--ink); }
+
+/* ── Status ── */
+.status-panel {
+  background: rgba(31,36,48,0.03);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+}
+.status-badge {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  width: fit-content;
+  background: rgba(31,36,48,0.08);
+  color: var(--muted);
+  transition: background 200ms, color 200ms;
+}
+.status-badge.minor { background: rgba(245,158,11,0.15); color: #b45309; }
+.status-badge.major { background: rgba(59,130,246,0.15); color: #1d4ed8; }
+.status-badge.done { background: rgba(16,185,129,0.15); color: #047857; }
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+}
+.status-label { color: var(--muted); }
+.status-value { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ── Convergence & UV ── */
+.convergence-container, .uv-container {
+  display: grid;
+  gap: 4px;
+}
+.convergence-container canvas, .uv-container canvas {
+  width: 100%;
+  aspect-ratio: 2.2 / 1;
+  display: block;
+  background: rgba(255,255,255,0.6);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+}
+.uv-container canvas { aspect-ratio: 1 / 1; }
+
+/* ── Merged flow diagram ── */
+.flow-panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  padding: 16px 16px 18px;
+  box-shadow: 0 8px 32px rgba(31,36,48,0.08);
+  backdrop-filter: blur(12px);
+  display: grid;
+  gap: 12px;
+}
+.flow-head {
+  display: flex;
+  justify-content: flex-start;
+  align-items: end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.flow-head h3 {
+  font-size: 0.70rem;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color: var(--muted);
+  font-weight: 600;
+}
+.flow-legend {
+  display: grid;
+  grid-template-columns: auto auto auto auto auto;
+  gap: 6px;
+  align-items: center;
+  width: 240px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.flow-context {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.45;
+  max-width: 820px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(31,36,48,0.035);
+  border: 1px solid rgba(31,36,48,0.07);
+}
+.reference-card {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  box-shadow: 0 4px 16px rgba(31,36,48,0.06);
+  display: grid;
+  gap: 10px;
+}
+.reference-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  gap: 10px;
+}
+.reference-card-header:hover { opacity: 0.8; }
+.reference-card h3 {
+  font-size: 0.70rem;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color: var(--muted);
+  font-weight: 600;
+  margin: 0;
+}
+.reference-toggle {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-sky);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 160ms;
+}
+.reference-toggle .chevron {
+  display: inline-block;
+  transition: transform 200ms ease;
+  font-size: 0.8rem;
+}
+.reference-card.collapsed .reference-toggle .chevron {
+  transform: rotate(-90deg);
+}
+.reference-card.collapsed {
+  gap: 0;
+}
+.reference-card-body {
+  display: grid;
+  overflow: hidden;
+  transition: grid-template-rows 300ms ease;
+  grid-template-rows: 1fr;
+}
+.reference-card.collapsed .reference-card-body {
+  grid-template-rows: 0fr;
+}
+.reference-card-body-inner {
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  gap: 10px;
+}
+.reference-card p {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.48;
+  max-width: 880px;
+}
+.reference-figure {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(31,36,48,0.08);
+  background: rgba(255,255,255,0.72);
+}
+.reference-figure img {
+  width: 100%;
+  display: block;
+}
+.flow-bar {
+  width: 12px;
+  height: 58px;
+  border-radius: 999px;
+  border: 1px solid rgba(31,36,48,0.18);
+}
+.flow-bar.data { background: #2563eb; }
+.flow-bar.model { background: #84cc16; }
+.flow-bar.residual { background: #14b8a6; }
+.flow-symbol {
+  font-size: 1.5rem;
+  line-height: 1;
+  color: rgba(31,36,48,0.78);
+}
+.flow-stage-grid {
+  display: grid;
+  gap: 14px;
+}
+.flow-topband {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) minmax(140px, 170px) minmax(140px, 170px) minmax(200px, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+.flow-topband .flow-legend {
+  justify-self: start;
+  align-self: center;
+}
+.flow-psf-card, .flow-explainer-card {
+  background: rgba(255,255,255,0.72);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(31,36,48,0.06);
+  height: 146px;
+}
+.flow-psf-card, .flow-explainer-card {
+  display: grid;
+  grid-template-rows: 110px auto;
+}
+.flow-psf-card canvas, .flow-explainer-card canvas {
+  width: 100%;
+  display: block;
+}
+.flow-psf-card canvas, .flow-explainer-card canvas { height: 110px; }
+.flow-psf-label, .flow-explainer-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 6px 8px 8px;
+  color: var(--muted);
+}
+.flow-note-card {
+  background: rgba(255,255,255,0.72);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(31,36,48,0.06);
+  display: grid;
+  align-items: center;
+  padding: 12px 16px;
+  height: 146px;
+}
+.explainer-text {
+  display: grid;
+  gap: 5px;
+  min-height: 0;
+  align-content: center;
+}
+.explainer-kicker {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.explainer-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.explainer-copy {
+  font-size: 0.81rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.explainer-metric {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0f766e;
+}
+/* ── Flow panels wrapper ── */
+.flow-panels-wrap {
+  position: relative;
+  padding: 32px 16px 24px;
+}
+.flow-bg {
+  position: absolute;
+  z-index: 0;
+  border-radius: 16px;
+  border: none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.42);
+  transition: background 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+.flow-bg-label {
+  position: absolute;
+  top: 7px;
+  font-size: 0.70rem;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.25;
+  padding: 3px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.flow-bg-label small { font-weight: 600; font-size: 0.65rem; opacity: 0.8; }
+.flow-bg-major {
+  background: rgba(239, 68, 68, 0.075);
+  border-color: rgba(220, 38, 38, 0.34);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.48), 0 6px 18px rgba(239, 68, 68, 0.06);
+}
+.flow-bg-major .flow-bg-label {
+  left: 12px;
+  color: rgba(185,28,28,0.82);
+  background: rgba(239,68,68,0.08);
+}
+.flow-bg-major.highlight {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(220, 38, 38, 0.56);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.52), 0 10px 28px rgba(239, 68, 68, 0.10);
+}
+.flow-bg-minor {
+  background: rgba(16,185,129,0.075);
+  border-color: rgba(5,150,105,0.34);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.48), 0 6px 18px rgba(16,185,129,0.06);
+}
+.flow-bg-minor .flow-bg-label {
+  right: 12px;
+  color: rgba(4,120,87,0.82);
+  background: rgba(16,185,129,0.08);
+}
+.flow-bg-minor.highlight {
+  background: rgba(16,185,129,0.18);
+  border-color: rgba(5,150,105,0.56);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.52), 0 10px 28px rgba(16,185,129,0.10);
+}
+.flow-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  overflow: visible;
+}
+.flow-svg text {
+  font-family: "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  pointer-events: none;
+}
+.flow-panels-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 40px 64px;
+  position: relative;
+  z-index: 1;
+}
+.cycle-caption {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.52;
+}
+.canvas-card {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(31,36,48,0.06);
+  position: relative;
+  z-index: 1;
+}
+.canvas-card canvas {
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  display: block;
+}
+.canvas-card.flow-active {}
+.canvas-card.flow-major.flow-active {}
+.canvas-card.flow-minor.flow-active {}
+.canvas-panel-status {
+  position: static;
+  max-width: 100%;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(15,23,42,0.78);
+  color: rgba(255,255,255,0.95);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  box-shadow: 0 2px 8px rgba(15,23,42,0.14);
+  white-space: nowrap;
+}
+.canvas-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 10px 7px;
+  color: var(--muted);
+}
+.canvas-label-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  text-align: left;
+}
+.canvas-label-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+.canvas-label-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: rgba(95,102,115,0.92);
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.canvas-card .color-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+/* ── Info panel ── */
+.info-panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  box-shadow: 0 4px 16px rgba(31,36,48,0.06);
+  backdrop-filter: blur(12px);
+}
+.info-panel h3 {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.info-steps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.info-step {
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.info-step strong {
+  display: block;
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+}
+.info-step p { color: var(--muted); font-size: 0.84rem; }
+.info-step.minor {
+  background: rgba(245,158,11,0.08);
+  border-left: 3px solid var(--accent-minor);
+}
+.info-step.minor strong { color: #b45309; }
+.info-step.major {
+  background: rgba(59,130,246,0.08);
+  border-left: 3px solid var(--accent-major);
+}
+.info-step.major strong { color: #1d4ed8; }
+.weighting-panel {
+  margin-top: 18px;
+}
+.weighting-toolbar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+.weighting-toolbar .control-row {
+  margin: 0;
+}
+.weighting-metric {
+  grid-column: 1 / -1;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(31,36,48,0.04);
+  border: 1px solid rgba(31,36,48,0.08);
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+.weighting-grid {
+  display: grid;
+  --weighting-plot-size: clamp(210px, 19vw, 255px);
+  --weighting-beam-width: clamp(340px, 31vw, 470px);
+  grid-template-columns: max-content max-content minmax(280px, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+  align-items: start;
+  justify-content: space-between;
+}
+.weighting-grid .canvas-card {
+  display: grid;
+  align-content: start;
+}
+.weighting-grid > .canvas-card:first-child {
+  justify-self: start;
+  width: var(--weighting-plot-size);
+}
+.weighting-grid > .canvas-card:nth-child(2) {
+  width: var(--weighting-beam-width);
+}
+#canvas-weight-grid {
+  width: var(--weighting-plot-size);
+  height: auto;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+}
+#canvas-weight-beam {
+  width: var(--weighting-beam-width);
+  height: var(--weighting-plot-size);
+  max-height: var(--weighting-plot-size);
+  aspect-ratio: auto;
+}
+.weighting-formula-card {
+  min-height: calc(var(--weighting-plot-size) + 54px);
+}
+.weighting-formula {
+  min-height: var(--weighting-plot-size);
+  padding: 18px 20px 16px;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(248,246,241,0.76));
+}
+.weighting-formula-kicker {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--muted);
+}
+.weighting-formula-eq {
+  font-family: var(--math-font);
+  font-size: 0.98rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.weighting-formula-eq .eq-line {
+  display: block;
+}
+.weighting-formula-eq code {
+  font-family: var(--math-font);
+  font-size: 1em;
+  background: transparent;
+  padding: 0;
+}
+.weighting-formula-copy {
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.weighting-formula-note {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #0f766e;
+  font-weight: 600;
+}
+.weighting-steps {
+  margin-top: 16px;
+}
+.info-step.weighting {
+  background: rgba(15,118,110,0.06);
+  border-left: 3px solid rgba(13,148,136,0.72);
+}
+.info-step.weighting strong {
+  color: #0f766e;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .flow-topband { grid-template-columns: minmax(170px, 200px) minmax(130px, 156px) minmax(130px, 156px) minmax(180px, 1fr); }
+  .flow-psf-card, .flow-explainer-card { height: 138px; grid-template-rows: 104px auto; }
+  .flow-psf-card canvas, .flow-explainer-card canvas { height: 104px; }
+  .flow-note-card { height: 138px; }
+  .weighting-toolbar { grid-template-columns: 1fr 1fr; }
+  .weighting-grid { grid-template-columns: 1fr; }
+  .weighting-grid {
+    --weighting-plot-size: clamp(220px, 54vw, 280px);
+    --weighting-beam-width: min(100%, 520px);
+  }
+  .weighting-grid > .canvas-card:nth-child(2) { width: 100%; }
+  #canvas-weight-beam { width: 100%; }
+}
+@media (max-width: 920px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .controls {
+    position: static;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .controls .convergence-container { grid-column: 1 / -1; }
+  .controls .uv-container { grid-column: 1 / -1; }
+  .flow-panels-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 36px 44px; }
+  .flow-panels-wrap { padding: 28px 12px 20px; }
+  .flow-topband { grid-template-columns: 1fr 1fr; }
+  .flow-topband .flow-legend { grid-column: 1 / -1; }
+  .flow-note-card { grid-column: 1 / -1; }
+  .flow-psf-card, .flow-explainer-card, .flow-note-card { height: auto; }
+  .flow-psf-card canvas, .flow-explainer-card canvas { height: auto; aspect-ratio: 1.7 / 1; }
+  .weighting-toolbar { grid-template-columns: 1fr 1fr; }
+  .reference-card.collapsed .reference-card-body { grid-template-rows: 0fr; }
+}
+@media (max-width: 720px) {
+  .hero { padding: 20px 14px 12px; }
+  .shell { padding: 0 10px 28px; }
+  .flow-topband { grid-template-columns: 1fr; }
+  .controls { grid-template-columns: 1fr; }
+  .canvas-card canvas { aspect-ratio: 1.6 / 1; }
+  .flow-panels-grid { gap: 28px 36px; }
+  .flow-note-card { grid-column: auto; }
+  .flow-psf-card, .flow-explainer-card, .flow-note-card { height: auto; }
+  .flow-psf-card canvas, .flow-explainer-card canvas { height: auto; aspect-ratio: 1.7 / 1; }
+  .weighting-toolbar { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .button-row { flex-direction: column; }
+  .button-row button { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <h3 class="eyebrow">Phys 681 · Radio Astronomy</h3>
+  <h1>Image Reconstruction</h1>
+  <p class="desc">
+    Interactive deconvolution in radio interferometry.
+    <strong>1-D profile</strong> compares Högbom, Clark, and multiscale CLEAN;
+    <strong>2-D image</strong> demonstrates Högbom CLEAN.
+  </p>
+</header>
+
+<div class="shell">
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button class="tab active" data-mode="1d">1-D Profile</button>
+    <button class="tab" data-mode="2d">2-D Image</button>
+  </div>
+
+  <!-- Main layout -->
+  <div class="layout">
+
+    <!-- Controls panel -->
+    <aside class="controls">
+      <div class="control-section">
+        <h3>Algorithm Parameters</h3>
+        <div class="control-row">
+          <label for="algorithm-select">1-D deconvolver</label>
+          <select id="algorithm-select">
+            <option value="hogbom">Högbom CLEAN</option>
+            <option value="clark">Clark CLEAN</option>
+            <option value="multiscale">Multiscale CLEAN</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label for="source-model-select">1-D sky model</label>
+          <select id="source-model-select">
+            <option value="points">Point sources</option>
+            <option value="mixed">Point + extended</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label>Loop gain <em>γ</em></label>
+          <input type="range" id="gain-slider" min="0.01" max="1" step="0.01" value="0.1">
+          <input type="number" id="gain-input" min="0.01" max="1" step="0.01" value="0.1">
+        </div>
+        <div class="control-row">
+          <label>Threshold</label>
+          <input type="range" id="thresh-slider" min="0.001" max="0.3" step="0.001" value="0.02">
+          <input type="number" id="thresh-input" min="0.001" max="0.3" step="0.001" value="0.02">
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-copy">
+            <strong>Imperfect data</strong>
+            <span>Noise and sparse sampling / sidelobes</span>
+          </div>
+          <label class="toggle-switch" for="imperfection-toggle" aria-label="Toggle imperfect data">
+            <input type="checkbox" id="imperfection-toggle">
+            <span></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="control-section">
+        <h3>Playback</h3>
+        <div class="button-row">
+          <button id="btn-step" class="symbol" title="Minor step" aria-label="Minor step">&gt;</button>
+          <button id="btn-run" class="symbol" title="Run" aria-label="Run">&#9654;</button>
+          <button id="btn-major" class="symbol" title="Major cycle" aria-label="Major cycle">&#8646;</button>
+          <button id="btn-reset" class="symbol" title="Reset" aria-label="Reset">&#8635;</button>
+        </div>
+        <div class="control-row">
+          <label>Animation speed</label>
+          <div class="range-wrap" id="speed-range-wrap" style="--threshold-pos: 50%;">
+            <input type="range" id="speed-slider" min="0" max="100" step="0.1" value="23.3">
+            <span class="range-threshold" id="speed-threshold-marker" data-label="Fast"></span>
+          </div>
+          <input type="number" id="speed-input" min="0.1" max="400" step="0.1" value="1">
+          <div class="range-note">Exponential ramp. Higher speeds batch more iterations per frame.</div>
+        </div>
+      </div>
+
+      <div class="status-panel">
+        <div class="status-badge" id="cycle-badge">Ready</div>
+        <div class="status-row">
+          <span class="status-label">Iteration</span>
+          <span class="status-value" id="iter-display">0</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Major cycle</span>
+          <span class="status-value" id="major-display">0</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Minor in cycle</span>
+          <span class="status-value" id="minor-display">0 / 10</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Peak residual</span>
+          <span class="status-value" id="peak-display">—</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Components</span>
+          <span class="status-value" id="comp-display">0</span>
+        </div>
+      </div>
+
+      <div class="convergence-container">
+        <h3>Convergence</h3>
+        <canvas id="convergence-canvas"></canvas>
+      </div>
+
+      <div class="uv-container" id="uv-container">
+        <h3>UV Coverage</h3>
+        <canvas id="uv-canvas"></canvas>
+      </div>
+    </aside>
+
+    <div class="main-stack">
+    <div class="reference-card" id="reference-card">
+      <div class="reference-card-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <h3>CASA Cycle Reference</h3>
+        <span class="reference-toggle">Show / Hide <span class="chevron">▼</span></span>
+      </div>
+      <div class="reference-card-body">
+        <div class="reference-card-body-inner">
+          <p>
+            The live panels below mirror this major / minor cycle structure: data minus model, gridding and inverse FFT
+            into the residual image, image-domain deconvolution, then FFT and de-gridding back.
+          </p>
+          <div class="reference-figure">
+            <img src="figures/casatasks.imaging.tclean.webp" alt="CASA tclean major and minor cycle schematic">
+          </div>
+          <p style="font-size:0.78rem; margin-top:2px;">
+            Figure credit: NRAO / CASA documentation. Source:
+            <a href="https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.imaging.tclean.html" target="_blank" rel="noreferrer">casadocs.readthedocs.io</a>
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="flow-panel">
+      <div class="flow-head">
+        <div>
+          <h3>Live CASA-Style Flow</h3>
+        </div>
+      </div>
+      <div class="flow-context">
+        The interactive panels below are the live version of the reference sketch: the left side emphasizes the major-cycle imaging path,
+        while the right side isolates the image-domain minor cycle between residual image and model components.
+      </div>
+      <div class="flow-stage-grid">
+        <div class="flow-topband">
+          <div class="flow-legend">
+            <div><div>DATA</div><div class="flow-bar data"></div></div>
+            <div class="flow-symbol">−</div>
+            <div><div>MODEL</div><div class="flow-bar model"></div></div>
+            <div class="flow-symbol">=</div>
+            <div><div>RESIDUAL</div><div class="flow-bar residual"></div></div>
+          </div>
+          <div class="flow-psf-card" id="card-psf">
+            <canvas id="canvas-psf"></canvas>
+            <div class="flow-psf-label" id="psf-card-label"><span class="color-dot" style="background:var(--accent-psf)"></span>PSF (Dirty Beam)</div>
+          </div>
+          <div class="flow-explainer-card" id="card-explainer">
+            <canvas id="canvas-explainer"></canvas>
+            <div class="flow-psf-label" id="explainer-plot-label"><span class="color-dot" style="background:var(--accent-minor)"></span>Reference Beam</div>
+          </div>
+          <div class="flow-note-card">
+            <div class="explainer-text" id="explainer-text">
+              <div class="explainer-kicker" id="explainer-kicker">Algorithm Focus</div>
+              <div class="explainer-title" id="explainer-title">Full PSF Subtraction</div>
+              <div class="explainer-copy" id="explainer-copy">Högbom subtracts the full dirty beam at the brightest residual peak.</div>
+              <div class="explainer-metric" id="explainer-metric">Reference beam: full PSF</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-panels-wrap" id="flow-panels-wrap">
+          <!-- Background boxes (bottom layer) -->
+          <div class="flow-bg flow-bg-major" id="flow-bg-major">
+            <span class="flow-bg-label">Major Cycle<br><small>(Imager)</small></span>
+          </div>
+          <div class="flow-bg flow-bg-minor" id="flow-bg-minor">
+            <span class="flow-bg-label">Minor Cycle<br><small>(Deconvolver)</small></span>
+          </div>
+          <!-- SVG arrow overlay -->
+          <svg class="flow-svg" id="flow-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+          <!-- 2×2 panel grid -->
+          <div class="flow-panels-grid" id="flow-panels-grid">
+            <div class="canvas-card flow-major" data-role="sky" id="card-sky">
+              <canvas id="canvas-sky"></canvas>
+              <div class="canvas-label" id="label-sky"></div>
+            </div>
+            <div class="canvas-card flow-minor" data-role="dirty" id="card-dirty">
+              <canvas id="canvas-dirty"></canvas>
+              <div class="canvas-label" id="label-dirty"></div>
+            </div>
+            <div class="canvas-card flow-major" data-role="restored" id="card-restored">
+              <canvas id="canvas-restored"></canvas>
+              <div class="canvas-label" id="label-restored"></div>
+            </div>
+            <div class="canvas-card flow-minor" data-role="residual" id="card-residual">
+              <canvas id="canvas-residual"></canvas>
+              <div class="canvas-label" id="label-residual"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="info-panel" style="margin-top:0;">
+        <h3>Execution Highlighting</h3>
+        <div class="cycle-caption">
+        The major cycle moves between visibility and image domains; the minor cycle works entirely in the image domain.
+        During playback, the active part of the loop is highlighted so the CLEAN iteration structure is visible.
+      </div>
+      </div>
+      <div class="info-panel weighting-panel">
+        <h3>Gridding & Weighting</h3>
+        <div class="cycle-caption">
+          Before the FFT, visibilities are accumulated onto uv cells. Natural weighting keeps raw sample counts, uniform weighting
+          equalizes occupied cells, Briggs robust interpolates between the two, and superuniform expands the local density estimate
+          with the CASA-style <code>npixels</code> footprint.
+        </div>
+        <div class="weighting-toolbar">
+          <div class="control-row">
+            <label for="weighting-select">Weighting mode</label>
+            <select id="weighting-select">
+              <option value="natural">Natural</option>
+              <option value="uniform">Uniform</option>
+              <option value="briggs">Briggs</option>
+              <option value="superuniform">Superuniform</option>
+            </select>
+          </div>
+          <div class="control-row" id="briggs-control-row">
+            <label for="briggs-slider">Briggs robust</label>
+            <input type="range" id="briggs-slider" min="-2" max="2" step="0.1" value="0.5">
+            <input type="number" id="briggs-input" min="-2" max="2" step="0.1" value="0.5">
+          </div>
+          <div class="control-row" id="super-control-row">
+            <label for="super-slider">Superuniform npixels</label>
+            <input type="range" id="super-slider" min="1" max="9" step="2" value="3">
+            <input type="number" id="super-input" min="1" max="9" step="2" value="3">
+          </div>
+          <div class="weighting-metric" id="weighting-metric"></div>
+        </div>
+        <div class="weighting-grid">
+          <div class="canvas-card">
+            <canvas id="canvas-weight-grid"></canvas>
+            <div class="canvas-label" id="label-weight-grid"></div>
+          </div>
+          <div class="canvas-card">
+            <canvas id="canvas-weight-beam"></canvas>
+            <div class="canvas-label" id="label-weight-beam"></div>
+          </div>
+          <div class="canvas-card weighting-formula-card">
+            <div class="weighting-formula" id="weighting-formula"></div>
+            <div class="canvas-label" id="label-weight-formula"></div>
+          </div>
+        </div>
+        <div class="info-steps weighting-steps">
+          <div class="info-step weighting">
+            <strong>Natural</strong>
+            <p>Best point-source sensitivity. Dense central uv regions dominate, so the dirty beam keeps broader wings and stronger sidelobes.</p>
+          </div>
+          <div class="info-step weighting">
+            <strong>Uniform</strong>
+            <p>Each occupied uv cell contributes comparably. Resolution improves and sidelobes tighten, but thermal sensitivity drops.</p>
+          </div>
+          <div class="info-step weighting">
+            <strong>Briggs Robust</strong>
+            <p>CASA-style robust weighting blends natural and uniform. Positive robust stays sensitivity-friendly; negative robust behaves more like uniform.</p>
+          </div>
+          <div class="info-step weighting">
+            <strong>Superuniform</strong>
+            <p>Local density is measured over a larger uv neighborhood. Increasing <code>npixels</code> makes the weighting less sensitive to tiny cell-to-cell fluctuations.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   Radio-Interferometric Image Reconstruction — Högbom CLEAN
+   ================================================================ */
+
+// ── DOM refs ──
+const $ = id => document.getElementById(id);
+const canvases = {
+  sky:        $('canvas-sky'),
+  psf:        $('canvas-psf'),
+  explainer:  $('canvas-explainer'),
+  dirty:      $('canvas-dirty'),
+  residual:   $('canvas-residual'),
+  restored:   $('canvas-restored'),
+  convergence:$('convergence-canvas'),
+  uv:         $('uv-canvas'),
+  weightGrid: $('canvas-weight-grid'),
+  weightBeam: $('canvas-weight-beam'),
+};
+const ctxMap = {};
+for (const [k, c] of Object.entries(canvases)) {
+  ctxMap[k] = c.getContext('2d');
+}
+const flowCards = {
+  sky: $('card-sky'),
+  dirty: $('card-dirty'),
+  residual: $('card-residual'),
+  psf: $('card-psf'),
+  restored: $('card-restored'),
+};
+const flowBgMajor = $('flow-bg-major');
+const flowBgMinor = $('flow-bg-minor');
+const flowSvg = $('flow-svg');
+const flowPanelsWrap = $('flow-panels-wrap');
+const algorithmSelect = $('algorithm-select');
+const sourceModelSelect = $('source-model-select');
+const imperfectionToggle = $('imperfection-toggle');
+const weightingSelect = $('weighting-select');
+const briggsControlRow = $('briggs-control-row');
+const superControlRow = $('super-control-row');
+const weightingMetric = $('weighting-metric');
+const weightingFormula = $('weighting-formula');
+const weightingState = {
+  mode: 'natural',
+  briggsRobust: 0.5,
+  superPixels: 3,
+  demo: null,
+  naturalReference: null,
+};
+
+// ── State ──
+const state = {
+  mode: '1d',
+  algorithm: 'hogbom',
+  last1DAlgorithm: 'hogbom',
+  sourceModel: 'points',
+  imperfect: false,
+  gain: 0.1,
+  threshold: 0.02,
+  speedFactor: 1,
+  running: false,
+  scene: null,         // current 1d or 2d scene
+  anim: null,
+  animFrame: null,
+};
+
+const SPEED_MIN = 0.1;
+const FAST_PLAYBACK_THRESHOLD = 20;
+const SPEED_MAX = 400;
+const SPEED_SLIDER_MIN = 0;
+const SPEED_SLIDER_MAX = 100;
+const SPEED_THRESHOLD_POSITION = 0.5;
+const PLAYBACK_DELAY_MS = 60;
+const BATCHING_START_SPEED = 55;
+const ENABLED_1D_ALGORITHMS = ['hogbom', 'clark', 'multiscale'];
+const PLOT_STYLE = {
+  currentLineWidth: 1.0,
+  currentStemWidth: 2.0,
+  referenceLineWidth: 1.0,
+  referenceStemWidth: 1.5,
+  referenceStemRadius: 3,
+};
+
+// ── Hi-DPI canvas helper ──
+function sizeCanvas(canvas, ctx) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.round(rect.width);
+  const h = Math.round(rect.height);
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w, h };
+}
+function sizeAllCanvases() {
+  for (const [k, c] of Object.entries(canvases)) {
+    sizeCanvas(c, ctxMap[k]);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  MATH UTILITIES
+// ════════════════════════════════════════════════════════════════
+
+function circIdx(i, N) { return ((i % N) + N) % N; }
+
+// 1D circular convolution (a ⊛ b), b centered at N/2
+function convolve1D(a, b, N) {
+  const out = new Float64Array(N);
+  const h = N >> 1;
+  for (let i = 0; i < N; i++) {
+    let s = 0;
+    for (let j = 0; j < N; j++) {
+      if (a[j] === 0) continue;
+      s += a[j] * b[circIdx(i - j + h, N)];
+    }
+    out[i] = s;
+  }
+  return out;
+}
+
+function subtractArrays(a, b) {
+  const out = new Float64Array(a.length);
+  for (let i = 0; i < a.length; i++) out[i] = a[i] - b[i];
+  return out;
+}
+
+function maxAbs(data) {
+  let m = 0;
+  for (let i = 0; i < data.length; i++) m = Math.max(m, Math.abs(data[i]));
+  return m;
+}
+
+function makePRNG(seed) {
+  let s = seed >>> 0;
+  return function() {
+    s = (1664525 * s + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+function addNoise1D(data, sigma, seed) {
+  const rng = makePRNG(seed);
+  const out = Float64Array.from(data);
+  for (let i = 0; i < out.length; i++) {
+    out[i] += (rng() * 2 - 1) * sigma;
+  }
+  return out;
+}
+
+function addNoise2D(data, sigma, seed) {
+  const rng = makePRNG(seed);
+  const out = Float64Array.from(data);
+  for (let i = 0; i < out.length; i++) {
+    out[i] += (rng() * 2 - 1) * sigma;
+  }
+  return out;
+}
+
+function effectiveThreshold(scene) {
+  return (scene ? scene.initialPeak : 1) * state.threshold;
+}
+
+const ALGORITHM_META = {
+  hogbom: {
+    label: 'Högbom CLEAN',
+    short: 'Högbom',
+    panelLabels: {
+      sky: 'Residual Visibility',
+      dirty: 'Residual Image',
+      restored: 'Model Visibility',
+      residual: 'Model Image',
+    },
+  },
+  clark: {
+    label: 'Clark CLEAN',
+    short: 'Clark',
+    panelLabels: {
+      sky: 'Residual Visibility',
+      dirty: 'Approx. Residual Image',
+      restored: 'Model Visibility',
+      residual: 'Model Image',
+    },
+  },
+  multiscale: {
+    label: 'Multiscale CLEAN',
+    short: 'Multiscale',
+    panelLabels: {
+      sky: 'Residual Visibility',
+      dirty: 'Residual Image',
+      restored: 'Model Visibility',
+      residual: 'Scale-Aware Model Image',
+    },
+  },
+  mem: {
+    label: 'MEM (conceptual)',
+    short: 'MEM',
+    panelLabels: {
+      sky: 'Residual Visibility',
+      dirty: 'Residual Image',
+      restored: 'Model Visibility',
+      residual: 'Positive Model Image',
+    },
+  },
+};
+
+function currentAlgorithm() {
+  return state.mode === '1d' && ENABLED_1D_ALGORITHMS.includes(state.algorithm) ? state.algorithm : 'hogbom';
+}
+
+function isMemScene(scene = state.scene) {
+  return !!scene && scene.algorithm === 'mem';
+}
+
+function isCleanFamily(scene = state.scene) {
+  return !!scene && scene.algorithm !== 'mem';
+}
+
+function shiftKernel1D(kernel, centerIdx) {
+  const N = kernel.length;
+  const h = N >> 1;
+  const out = new Float64Array(N);
+  for (let i = 0; i < N; i++) {
+    out[i] = kernel[circIdx(i - centerIdx + h, N)];
+  }
+  return out;
+}
+
+function addScaledShiftedKernel(target, kernel, centerIdx, scale) {
+  const N = target.length;
+  const h = N >> 1;
+  for (let i = 0; i < N; i++) {
+    target[i] += scale * kernel[circIdx(i - centerIdx + h, N)];
+  }
+}
+
+function addGaussianSource1D(target, centerIdx, amp, sigma) {
+  const N = target.length;
+  for (let i = 0; i < N; i++) {
+    const dx = i - centerIdx;
+    target[i] += amp * Math.exp(-(dx * dx) / (2 * sigma * sigma));
+  }
+}
+
+function gaussianKernel1D(N, sigma) {
+  const h = N >> 1;
+  const out = new Float64Array(N);
+  let sum = 0;
+  for (let i = 0; i < N; i++) {
+    const x = i - h;
+    const v = Math.exp(-(x * x) / (2 * sigma * sigma));
+    out[i] = v;
+    sum += v;
+  }
+  for (let i = 0; i < N; i++) out[i] /= sum;
+  return out;
+}
+
+function dotArray(a, b) {
+  let sum = 0;
+  for (let i = 0; i < a.length; i++) sum += a[i] * b[i];
+  return sum;
+}
+
+function estimateMainLobeRadius(psf, h) {
+  for (let r = 1; r < h - 2; r++) {
+    const a = psf[h + r];
+    const b = psf[h + r + 1];
+    if (a === 0 || a * b <= 0) return r + 1;
+  }
+  return Math.max(6, Math.round(h * 0.12));
+}
+
+function estimateClarkSupportRadius(psf, h) {
+  const mainLobeRadius = estimateMainLobeRadius(psf, h);
+  let zeroCrossingsSeen = 0;
+  for (let r = mainLobeRadius + 1; r < h - 2; r++) {
+    const a = psf[h + r];
+    const b = psf[h + r + 1];
+    if (a === 0 || a * b <= 0) {
+      zeroCrossingsSeen++;
+      if (zeroCrossingsSeen >= 2) return r + 1;
+    }
+  }
+  return Math.min(h - 2, mainLobeRadius * 3);
+}
+
+function buildWeightingDemo() {
+  const antennas = [[0, 0]];
+  const armRadii = [1.2, 1.8, 2.5, 3.3, 4.6, 6.4, 8.9, 12.6, 17.8, 23.8];
+  for (let arm = 0; arm < 3; arm++) {
+    const angle = arm * 2 * Math.PI / 3 - Math.PI / 2;
+    for (let i = 0; i < armRadii.length; i++) {
+      const r = armRadii[i];
+      const twist = (i % 2 === 0 ? 1 : -1) * 0.035;
+      antennas.push([r * Math.cos(angle + twist), r * Math.sin(angle + twist)]);
+    }
+  }
+
+  const signedSamples = [];
+  let uvMax = 0;
+  for (let i = 0; i < antennas.length; i++) {
+    for (let j = i + 1; j < antennas.length; j++) {
+      const du = antennas[i][0] - antennas[j][0];
+      const dv = antennas[i][1] - antennas[j][1];
+      const radius = Math.hypot(du, dv);
+      uvMax = Math.max(uvMax, radius);
+      signedSamples.push({ u: du, v: dv });
+      signedSamples.push({ u: -du, v: -dv });
+    }
+  }
+  return {
+    gridSize: 41,
+    beamSize: 256,
+    uvMax,
+    signedSamples,
+  };
+}
+
+function boxSumGrid(grid, N, radius) {
+  if (radius <= 0) return Float64Array.from(grid);
+  const out = new Float64Array(N * N);
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      let sum = 0;
+      for (let dy = -radius; dy <= radius; dy++) {
+        const yy = y + dy;
+        if (yy < 0 || yy >= N) continue;
+        for (let dx = -radius; dx <= radius; dx++) {
+          const xx = x + dx;
+          if (xx < 0 || xx >= N) continue;
+          sum += grid[yy * N + xx];
+        }
+      }
+      out[y * N + x] = sum;
+    }
+  }
+  return out;
+}
+
+function computeWeightingResult(demo, mode, briggsRobust, superPixels) {
+  const N = demo.gridSize;
+  const h = N >> 1;
+  const scale = (h - 2) / Math.max(1e-6, demo.uvMax);
+  const densityGrid = new Float64Array(N * N);
+  const assignments = new Uint16Array(demo.signedSamples.length);
+
+  demo.signedSamples.forEach((sample, idx) => {
+    const gx = clamp(Math.round(sample.u * scale) + h, 0, N - 1);
+    const gy = clamp(Math.round(-sample.v * scale) + h, 0, N - 1);
+    const cell = gy * N + gx;
+    assignments[idx] = cell;
+    densityGrid[cell] += 1;
+  });
+
+  const localRadius = Math.max(0, Math.floor((superPixels - 1) / 2));
+  const neighborhoodGrid = boxSumGrid(densityGrid, N, localRadius);
+  let sumW = 0;
+  let sumD2 = 0;
+  for (let i = 0; i < densityGrid.length; i++) {
+    const d = densityGrid[i];
+    if (d > 0) {
+      sumW += d;
+      sumD2 += d * d;
+    }
+  }
+  const briggsF2 = Math.pow(5 * Math.pow(10, -briggsRobust), 2) / Math.max(1e-6, sumD2 / Math.max(1, sumW));
+
+  const weightedGrid = new Float64Array(N * N);
+  const perSampleWeights = new Float64Array(demo.signedSamples.length);
+  let weightSum = 0;
+  let weightSqSum = 0;
+  for (let i = 0; i < demo.signedSamples.length; i++) {
+    const cell = assignments[i];
+    const density = Math.max(1, densityGrid[cell]);
+    let weight = 1;
+    if (mode === 'uniform') weight = 1 / density;
+    else if (mode === 'briggs') weight = 1 / (1 + density * briggsF2);
+    else if (mode === 'superuniform') weight = 1 / Math.max(1, neighborhoodGrid[cell]);
+    perSampleWeights[i] = weight;
+    weightedGrid[cell] += weight;
+    weightSum += weight;
+    weightSqSum += weight * weight;
+  }
+
+  const beam = new Float64Array(demo.beamSize);
+  const beamH = demo.beamSize >> 1;
+  for (let i = 0; i < demo.beamSize; i++) {
+    const l = (i - beamH) / demo.beamSize;
+    let sum = 0;
+    for (let j = 0; j < demo.signedSamples.length; j++) {
+      sum += perSampleWeights[j] * Math.cos(2 * Math.PI * demo.signedSamples[j].u * l);
+    }
+    beam[i] = sum / Math.max(1e-6, weightSum);
+  }
+
+  return {
+    densityGrid,
+    neighborhoodGrid,
+    weightedGrid,
+    beam,
+    occupiedCells: densityGrid.reduce((count, v) => count + (v > 0 ? 1 : 0), 0),
+    briggsF2,
+    weightSum,
+    weightSqSum,
+  };
+}
+
+function estimateBeamFwhmSamples(beam) {
+  const h = beam.length >> 1;
+  let right = h;
+  while (right < beam.length - 1 && beam[right] >= 0.5) right++;
+  let left = h;
+  while (left > 0 && beam[left] >= 0.5) left--;
+  return Math.max(1, right - left);
+}
+
+function updateWeightingControls() {
+  if (!weightingSelect) return;
+  const mode = weightingState.mode;
+  briggsControlRow.style.display = mode === 'briggs' ? '' : 'none';
+  superControlRow.style.display = mode === 'superuniform' ? '' : 'none';
+}
+
+function setWeightingLabel(id, title, subtitle) {
+  $(id).innerHTML = `
+    <div class="canvas-label-copy">
+      <div class="canvas-label-title">${title}</div>
+      <div class="canvas-label-legend">${subtitle}</div>
+    </div>
+  `;
+}
+
+function renderWeightingFormula(result) {
+  if (!weightingFormula) return;
+  const mode = weightingState.mode;
+  let kicker = 'Natural Weighting';
+  let eq = '<span class="eq-line"><code>w<sub>i</sub> = 1</code></span><span class="eq-line"><code>W<sub>cell</sub> = Σ w<sub>i</sub> = n<sub>cell</sub></code></span>';
+  let copy = 'Every sampled visibility keeps full weight, so densely populated central uv cells dominate the gridded map.';
+  let note = 'Best sensitivity, but the beam usually keeps broader sidelobes.';
+
+  if (mode === 'uniform') {
+    kicker = 'Uniform Weighting';
+    eq = '<span class="eq-line"><code>w<sub>i</sub> = 1 / n<sub>cell</sub></code></span><span class="eq-line"><code>W<sub>cell</sub> ≈ 1</code> for each occupied cell</span>';
+    copy = 'Each occupied uv cell is equalized, so crowded inner cells stop overpowering sparse long-baseline cells.';
+    note = 'Sharper beam and lower sidelobes, but reduced sensitivity.';
+  } else if (mode === 'briggs') {
+    kicker = 'Briggs Weighting';
+    eq = `<span class="eq-line"><code>w<sub>i</sub> = 1 / (1 + f<sup>2</sup> n<sub>cell</sub>)</code></span><span class="eq-line"><code>f<sup>2</sup> = (5 × 10<sup>-R</sup>)<sup>2</sup> / &lt;n&gt;</code></span>`;
+    copy = `The robust parameter interpolates between natural and uniform by damping dense cells without fully flattening them.`;
+    note = `Current setting: <code>R = ${weightingState.briggsRobust.toFixed(1)}</code>, so <code>f² ≈ ${result.briggsF2.toFixed(2)}</code>.`;
+  } else if (mode === 'superuniform') {
+    kicker = 'Superuniform Weighting';
+    eq = `<span class="eq-line"><code>w<sub>i</sub> = 1 / n<sub>local</sub></code></span><span class="eq-line"><code>n<sub>local</sub> = Σ n<sub>cell</sub></code> over the local <code>n<sub>pixels</sub></code> box</span>`;
+    copy = 'Local density is measured over a larger neighborhood, so weighting responds to regional uv crowding rather than a single cell alone.';
+    note = `Current footprint: <code>n<sub>pixels</sub> = ${weightingState.superPixels}</code>. Larger footprints suppress local clumping more strongly.`;
+  }
+
+  weightingFormula.innerHTML = `
+    <div class="weighting-formula-kicker">${kicker}</div>
+    <div class="weighting-formula-eq">${eq}</div>
+    <div class="weighting-formula-copy">${copy}</div>
+    <div class="weighting-formula-note">${note}</div>
+  `;
+  setWeightingLabel('label-weight-formula', 'Weight Rule', 'How each visibility sample is scaled before gridding');
+}
+
+function renderWeightingDemo() {
+  if (!canvases.weightGrid || !canvases.weightBeam) return;
+  if (!weightingState.demo) weightingState.demo = buildWeightingDemo();
+  const demo = weightingState.demo;
+  const result = computeWeightingResult(demo, weightingState.mode, weightingState.briggsRobust, weightingState.superPixels);
+  if (!weightingState.naturalReference) {
+    weightingState.naturalReference = computeWeightingResult(demo, 'natural', weightingState.briggsRobust, weightingState.superPixels);
+  }
+
+  draw2DImage('weightGrid', result.weightedGrid, demo.gridSize, {
+    bg: '#faf8f3',
+    range: [0, Math.max(1e-6, maxAbs(result.weightedGrid))],
+    colormap: hotCM,
+  });
+  draw1DPlot('weightBeam', result.beam, {
+    color: '#2563eb',
+    range: [-0.18, 1.05],
+    bg: '#faf8f3',
+    fill: 'rgba(37,99,235,0.06)',
+    overlaySeries: [{
+      data: weightingState.naturalReference.beam,
+      color: rgba('#64748b', 0.50),
+      lineWidth: 1.1,
+      alpha: weightingState.mode === 'natural' ? 0.22 : 0.78,
+    }],
+  });
+
+  const naturalSens = weightingState.naturalReference.weightSum / Math.sqrt(weightingState.naturalReference.weightSqSum);
+  const currentSens = result.weightSum / Math.sqrt(result.weightSqSum);
+  const relativeSens = currentSens / Math.max(1e-6, naturalSens);
+  const fwhm = estimateBeamFwhmSamples(result.beam);
+  const occupied = result.occupiedCells;
+  const subtitle = weightingState.mode === 'briggs'
+    ? `Robust = ${weightingState.briggsRobust.toFixed(1)}`
+    : weightingState.mode === 'superuniform'
+      ? `npixels = ${weightingState.superPixels}`
+      : weightingState.mode.charAt(0).toUpperCase() + weightingState.mode.slice(1);
+
+  setWeightingLabel('label-weight-grid', 'Gridded uv Weights', `Occupied cells: ${occupied}`);
+  setWeightingLabel('label-weight-beam', 'Dirty Beam Cut', `Central slice through weighted PSF`);
+  renderWeightingFormula(result);
+  weightingMetric.innerHTML = `
+    <strong>${subtitle}</strong> rebalances how crowded central uv cells compete with sparse long baselines.
+    Relative sensitivity: <strong>${relativeSens.toFixed(2)}× natural</strong>. Beam FWHM proxy:
+    <strong>${fwhm} samples</strong>.
+    ${weightingState.mode === 'briggs' ? `Current Briggs scale factor <code>f²</code> ≈ ${result.briggsF2.toFixed(2)}.` : ''}
+  `;
+}
+
+function computeResidualFromModel1D(scene) {
+  return subtractArrays(scene.dirty, convolve1D(scene.cleanComp, scene.psf, scene.N));
+}
+
+function computeEntropy(scene) {
+  let s = 0;
+  for (let i = 0; i < scene.N; i++) {
+    const m = Math.max(scene.cleanComp[i], scene.memEps);
+    const p = scene.prior[i];
+    s -= (m * Math.log(m / p) - m + p);
+  }
+  return s;
+}
+
+function computeMemObjective(scene, residualOverride = null) {
+  const residual = residualOverride || scene.residual;
+  let chi2 = 0;
+  for (let i = 0; i < residual.length; i++) chi2 += residual[i] * residual[i];
+  return 0.5 * chi2 / residual.length - scene.memLambda * computeEntropy(scene);
+}
+
+function applyPositiveMemUpdate(scene, baseModel, gradient, stepSize) {
+  const out = new Float64Array(scene.N);
+  for (let i = 0; i < scene.N; i++) {
+    out[i] = Math.max(scene.memEps, baseModel[i] - stepSize * gradient[i]);
+  }
+  return out;
+}
+
+function updateMemDerivedState(scene) {
+  scene.residual = computeResidualFromModel1D(scene);
+  scene.componentCount = scene.cleanComp.reduce((count, v) => count + (v > scene.initialPeak * 0.03 ? 1 : 0), 0);
+}
+
+function setExplainerCopy({ kicker, title, copy, metric, showCanvas = true, plotLabel = 'Reference Beam' }) {
+  $('explainer-kicker').textContent = kicker;
+  $('explainer-title').textContent = title;
+  $('explainer-copy').textContent = copy;
+  $('explainer-metric').textContent = metric;
+  $('explainer-plot-label').innerHTML = `<span class="color-dot" style="background:var(--accent-minor)"></span>${plotLabel}`;
+  canvases.explainer.style.display = showCanvas ? 'block' : 'none';
+  $('card-explainer').style.display = showCanvas ? '' : 'none';
+}
+
+function makeLegendItem(color, text) {
+  return `<span class="legend-item"><span class="color-dot" style="background:${color}"></span>${text}</span>`;
+}
+
+function setPanelLabel(id, title, legends, statusText = '') {
+  const statusHtml = statusText ? `<div class="canvas-panel-status">${statusText}</div>` : '';
+  $(id).innerHTML = `
+    <div class="canvas-label-copy">
+      <div class="canvas-label-title">${title}</div>
+      <div class="canvas-label-legend">${legends.join('')}</div>
+    </div>
+    ${statusHtml}
+  `;
+}
+
+function compute1DVisibilitySeries(signal, uvSampled, uMax, N, h) {
+  const out = new Float64Array(uMax + 1);
+  for (const u of uvSampled) {
+    let re = 0, im = 0;
+    for (let j = 0; j < N; j++) {
+      const ph = 2 * Math.PI * u * (j - h) / N;
+      const s = signal[j];
+      if (s === 0) continue;
+      re += s * Math.cos(ph);
+      im -= s * Math.sin(ph);
+    }
+    out[u] = Math.hypot(re, im);
+  }
+  return out;
+}
+
+function compute2DVisibilitySamples(image, baselines, N, h) {
+  const out = new Float64Array(baselines.length);
+  for (let k = 0; k < baselines.length; k++) {
+    const [u, v] = baselines[k];
+    let re = 0, im = 0;
+    for (let iy = 0; iy < N; iy++) {
+      const ly = (iy - h) / N;
+      for (let ix = 0; ix < N; ix++) {
+        const val = image[iy * N + ix];
+        if (val === 0) continue;
+        const lx = (ix - h) / N;
+        const ph = 2 * Math.PI * (u * lx + v * ly);
+        re += val * Math.cos(ph);
+        im -= val * Math.sin(ph);
+      }
+    }
+    out[k] = Math.hypot(re, im);
+  }
+  return out;
+}
+
+// Auto-range for 1D data
+function range1D(data) {
+  let lo = Infinity, hi = -Infinity;
+  for (let i = 0; i < data.length; i++) {
+    if (data[i] < lo) lo = data[i];
+    if (data[i] > hi) hi = data[i];
+  }
+  if (lo === hi) { lo -= 0.5; hi += 0.5; }
+  const pad = (hi - lo) * 0.08;
+  return [lo - pad, hi + pad];
+}
+
+// Auto-range for 2D data
+function range2D(data) {
+  let lo = Infinity, hi = -Infinity;
+  for (let i = 0; i < data.length; i++) {
+    if (data[i] < lo) lo = data[i];
+    if (data[i] > hi) hi = data[i];
+  }
+  if (lo === hi) { lo -= 0.5; hi += 0.5; }
+  return [lo, hi];
+}
+
+// Simple colormaps
+function grayscaleCM(t) {
+  const v = Math.max(0, Math.min(1, t)) * 255;
+  return [v, v, v];
+}
+
+function hotCM(t) {
+  t = Math.max(0, Math.min(1, t));
+  const r = Math.min(1, t * 2.5) * 255;
+  const g = Math.max(0, Math.min(1, (t - 0.4) * 2.5)) * 255;
+  const b = Math.max(0, Math.min(1, (t - 0.75) * 4)) * 255;
+  return [r, g, b];
+}
+
+function divergingCM(t) {
+  // blue – white – red
+  t = Math.max(0, Math.min(1, t));
+  if (t < 0.5) {
+    const s = t * 2;
+    return [s * 255, s * 255, 255];
+  } else {
+    const s = (1 - t) * 2;
+    return [255, s * 255, s * 255];
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  1D SCENE
+// ════════════════════════════════════════════════════════════════
+
+function initialize1DAlgorithmScene(scene, algorithm) {
+  scene.algorithm = algorithm;
+  scene.objectiveHistory = [];
+  scene.entropyHistory = [];
+  scene.componentCount = 0;
+  scene.scaleKernels = null;
+  scene.scaleResponses = null;
+  scene.selectedScale = 0;
+  scene.clarkSupportRadius = null;
+  scene.clarkPatch = null;
+  scene.prior = null;
+  scene.memLambda = null;
+  scene.memStep = null;
+  scene.memEps = null;
+  scene.memMinStep = null;
+  scene.memBacktrack = null;
+  scene.memAcceptedSteps = 0;
+  scene.memRejectedSteps = 0;
+  scene.memLastStep = null;
+  scene.memStalled = false;
+  scene.memLastLineSearchIters = 0;
+
+  if (algorithm === 'clark') {
+    const radius = estimateClarkSupportRadius(scene.psf, scene.h);
+    const patch = new Float64Array(scene.N);
+    for (let dx = -radius; dx <= radius; dx++) {
+      patch[circIdx(scene.h + dx, scene.N)] = scene.psf[circIdx(scene.h + dx, scene.N)];
+    }
+    scene.clarkSupportRadius = radius;
+    scene.clarkPatch = patch;
+  } else if (algorithm === 'multiscale') {
+    const scales = [
+      { name: 'delta', kernel: (() => { const k = new Float64Array(scene.N); k[scene.h] = 1; return k; })() },
+      { name: 'narrow', kernel: gaussianKernel1D(scene.N, 2.5) },
+      { name: 'medium', kernel: gaussianKernel1D(scene.N, 6.5) },
+      { name: 'broad', kernel: gaussianKernel1D(scene.N, 13.0) },
+      { name: 'very broad', kernel: gaussianKernel1D(scene.N, 22.0) },
+    ];
+    const maxScaleIdx = Math.max(1, scales.length - 1);
+    scene.scaleKernels = scales.map(scale => ({
+      ...scale,
+      response: convolve1D(scale.kernel, scene.psf, scene.N),
+    })).map((scale, idx) => {
+      const matchedNorm = Math.max(1e-6, dotArray(scale.kernel, scale.response));
+      return {
+        ...scale,
+        matchedNorm,
+        selectionBias: idx === 0 ? 1 : 1 + 0.12 * (idx / maxScaleIdx),
+      };
+    });
+    scene.scaleResponses = scene.scaleKernels.map(() => new Float64Array(scene.N));
+  } else if (algorithm === 'mem') {
+    scene.memEps = Math.max(scene.initialPeak * 1e-3, 1e-4);
+    scene.prior = new Float64Array(scene.N);
+    scene.cleanComp.fill(scene.memEps);
+    for (let i = 0; i < scene.N; i++) scene.prior[i] = scene.memEps;
+    scene.memLambda = 0.012;
+    scene.memStep = 0.05;
+    scene.memMinStep = 0.00005;
+    scene.memBacktrack = 0.55;
+    updateMemDerivedState(scene);
+    scene.objectiveHistory.push(computeMemObjective(scene));
+    scene.entropyHistory.push(computeEntropy(scene));
+  }
+
+  return scene;
+}
+
+function create1DScene(algorithm = 'hogbom', imperfect = true, sourceModel = 'points') {
+  const N = 256;
+  const h = N >> 1;
+
+  // True sky: either compact point sources or a mixed point+extended scene
+  const trueSky = new Float64Array(N);
+  const sources = [];
+  if (sourceModel === 'mixed') {
+    const pointSources = [
+      { idx: h - 54, amp: 0.24 },
+      { idx: h + 68, amp: 0.34 },
+      { idx: h + 16, amp: 0.18 },
+    ];
+    pointSources.forEach(s => {
+      trueSky[s.idx] += s.amp;
+      sources.push(s);
+    });
+    addGaussianSource1D(trueSky, h - 18, 0.035, 11);
+    addGaussianSource1D(trueSky, h + 34, 0.028, 19);
+  } else {
+    const pointSources = [
+      { idx: h + 38, amp: 1.0 },
+      { idx: h - 26, amp: 0.55 },
+      { idx: h + 70, amp: 0.38 },
+      { idx: h - 55, amp: 0.22 },
+      { idx: h + 12, amp: 0.15 },
+    ];
+    pointSources.forEach(s => {
+      trueSky[s.idx] += s.amp;
+      sources.push(s);
+    });
+  }
+
+  // UV coverage: integers 1..uMax with optional gaps
+  const uMax = 28;
+  const uvSampled = [];
+  for (let u = 1; u <= uMax; u++) {
+    if (imperfect && (u === 9 || u === 10 || u === 17 || u === 18)) continue; // gaps
+    uvSampled.push(u);
+  }
+
+  // PSF centered at h
+  const psf = new Float64Array(N);
+  const norm = 1 + 2 * uvSampled.length;
+  for (let i = 0; i < N; i++) {
+    const theta = (i - h) / N;
+    let s = 1;
+    for (const u of uvSampled) s += 2 * Math.cos(2 * Math.PI * u * theta);
+    psf[i] = s / norm;
+  }
+
+  // Dirty image plus optional deterministic measurement noise
+  const dirtyIdeal = convolve1D(trueSky, psf, N);
+  const dirty = imperfect
+    ? addNoise1D(dirtyIdeal, 0.018 * maxAbs(dirtyIdeal), 68101)
+    : Float64Array.from(dirtyIdeal);
+  const dataVisIdeal = compute1DVisibilitySeries(trueSky, uvSampled, uMax, N, h);
+  const dataVis = imperfect
+    ? addNoise1D(dataVisIdeal, 0.012 * Math.max(...dataVisIdeal), 68102)
+    : Float64Array.from(dataVisIdeal);
+  const zeroVis = new Float64Array(uMax + 1);
+
+  // Clean beam: Gaussian matching PSF main lobe
+  const sigma = N / (2 * Math.PI * uMax) * 1.0;
+  const cleanBeam = new Float64Array(N);
+  let bSum = 0;
+  for (let i = 0; i < N; i++) {
+    const x = i - h;
+    cleanBeam[i] = Math.exp(-x * x / (2 * sigma * sigma));
+    bSum += cleanBeam[i];
+  }
+  for (let i = 0; i < N; i++) cleanBeam[i] /= bSum;
+
+  const initPeak = findPeak(dirty).absVal;
+  const initResidualRange = range1D(dirty);
+  const trueSkyPeak = maxAbs(trueSky);
+  const modelDisplayTop = Math.max(initPeak, trueSkyPeak, 0.01) * 1.06;
+  const modelDisplayBottom = -0.08 * Math.max(initPeak, trueSkyPeak, 0.01);
+  const visibilityPeak = Math.max(maxAbs(dataVisIdeal), maxAbs(dataVis), 0.01);
+  const scene = {
+    N, h, trueSky, psf, dirty, uvSampled, uMax,
+    dataVis,
+    truthVis: Float64Array.from(dataVisIdeal),
+    majorModelVis: Float64Array.from(zeroVis),
+    majorResidualVis: Float64Array.from(dataVis),
+    residual: Float64Array.from(dirty),
+    cleanComp: new Float64Array(N),
+    cleanBeam,
+    restored: new Float64Array(N),
+    iteration: 0,
+    majorCycle: 0,
+    lastMajorIteration: 0,
+    peakHistory: [],
+    componentList: [], // sparse list of {idx, amp} for drawing
+    initialPeak: initPeak,
+    initialResidualRange: initResidualRange,
+    visibilityDisplayRange: [-0.08 * visibilityPeak, visibilityPeak * 1.06],
+    modelDisplayRange: [modelDisplayBottom, modelDisplayTop],
+    memModelDisplayRange: [0, modelDisplayTop],
+    sourceModel,
+    imperfect,
+  };
+  return initialize1DAlgorithmScene(scene, algorithm);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  2D SCENE
+// ════════════════════════════════════════════════════════════════
+
+function create2DScene(imperfect = true) {
+  const N = 64;
+  const h = N >> 1;
+  const NN = N * N;
+
+  // True sky: a few point sources
+  const trueSky = new Float64Array(NN);
+  const sources2d = [
+    { y: 20, x: 25, amp: 1.0 },
+    { y: 38, x: 44, amp: 0.55 },
+    { y: 48, x: 18, amp: 0.38 },
+    { y: 28, x: 50, amp: 0.25 },
+    { y: 14, x: 40, amp: 0.15 },
+  ];
+  for (const s of sources2d) trueSky[s.y * N + s.x] = s.amp;
+
+  // Y-shaped array (antenna positions in lambda)
+  const antennas = [[0, 0]];
+  const armR = imperfect ? [2, 5, 9, 14] : [2, 4, 6, 8, 10, 12, 14];
+  for (let arm = 0; arm < 3; arm++) {
+    const angle = arm * 2 * Math.PI / 3 - Math.PI / 2;
+    for (const r of armR) {
+      antennas.push([r * Math.cos(angle), r * Math.sin(angle)]);
+    }
+  }
+
+  // Baselines
+  const baselines = [];
+  for (let i = 0; i < antennas.length; i++) {
+    for (let j = i + 1; j < antennas.length; j++) {
+      const du = antennas[i][0] - antennas[j][0];
+      const dv = antennas[i][1] - antennas[j][1];
+      baselines.push([du, dv]);
+    }
+  }
+
+  // PSF by direct summation (centered at h,h)
+  const psf = new Float64Array(NN);
+  const norm2d = 1 + 2 * baselines.length;
+  for (let iy = 0; iy < N; iy++) {
+    const ly = (iy - h) / N;
+    for (let ix = 0; ix < N; ix++) {
+      const lx = (ix - h) / N;
+      let s = 1;
+      for (const [u, v] of baselines) {
+        s += 2 * Math.cos(2 * Math.PI * (u * lx + v * ly));
+      }
+      psf[iy * N + ix] = s / norm2d;
+    }
+  }
+
+  // Dirty image (convolve trueSky with PSF — sparse sources make this fast)
+  const dirtyIdeal = new Float64Array(NN);
+  for (const src of sources2d) {
+    for (let iy = 0; iy < N; iy++) {
+      for (let ix = 0; ix < N; ix++) {
+        const py = circIdx(iy - src.y + h, N);
+        const px = circIdx(ix - src.x + h, N);
+        dirtyIdeal[iy * N + ix] += src.amp * psf[py * N + px];
+      }
+    }
+  }
+  const dirty = imperfect
+    ? addNoise2D(dirtyIdeal, 0.016 * maxAbs(dirtyIdeal), 68103)
+    : Float64Array.from(dirtyIdeal);
+  const dataVisIdeal = compute2DVisibilitySamples(trueSky, baselines, N, h);
+  const dataVis = imperfect
+    ? addNoise2D(dataVisIdeal, 0.01 * maxAbs(dataVisIdeal), 68104)
+    : Float64Array.from(dataVisIdeal);
+  const zeroVis = new Float64Array(baselines.length);
+
+  // Clean beam: 2D Gaussian
+  const maxB = Math.max(...baselines.map(b => Math.sqrt(b[0]*b[0]+b[1]*b[1])));
+  const sigma2d = N / (2 * Math.PI * maxB) * 1.0;
+  const cleanBeam = new Float64Array(NN);
+  let bSum = 0;
+  for (let iy = 0; iy < N; iy++) {
+    const dy = iy - h;
+    for (let ix = 0; ix < N; ix++) {
+      const dx = ix - h;
+      const v = Math.exp(-(dx*dx + dy*dy) / (2 * sigma2d * sigma2d));
+      cleanBeam[iy * N + ix] = v;
+      bSum += v;
+    }
+  }
+  for (let i = 0; i < NN; i++) cleanBeam[i] /= bSum;
+
+  const initPeak = findPeak(dirty).absVal;
+  const initResidualRange = range2D(dirty);
+  return {
+    N, h, NN, trueSky, psf, dirty,
+    dataVis,
+    truthVis: Float64Array.from(dataVisIdeal),
+    majorModelVis: Float64Array.from(zeroVis),
+    majorResidualVis: Float64Array.from(dataVis),
+    residual: Float64Array.from(dirty),
+    cleanComp: new Float64Array(NN),
+    cleanBeam,
+    restored: new Float64Array(NN),
+    iteration: 0,
+    majorCycle: 0,
+    lastMajorIteration: 0,
+    peakHistory: [],
+    componentList: [],
+    antennas,
+    baselines,
+    initialPeak: initPeak,
+    initialResidualRange: initResidualRange,
+    sources2d,
+    imperfect,
+  };
+}
+
+function createScene(mode, algorithm) {
+  return mode === '1d'
+    ? create1DScene(algorithm, state.imperfect, state.sourceModel)
+    : create2DScene(state.imperfect);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  CLEAN ALGORITHM (shared for 1D and 2D)
+// ════════════════════════════════════════════════════════════════
+
+function findPeak(data) {
+  let idx = 0, val = Math.abs(data[0]);
+  for (let i = 1; i < data.length; i++) {
+    const a = Math.abs(data[i]);
+    if (a > val) { val = a; idx = i; }
+  }
+  return { idx, absVal: val, val: data[idx] };
+}
+
+function stepClean1D(scene, gain) {
+  const { residual, psf, cleanComp, N, h } = scene;
+  const beforeResidual = Float64Array.from(residual);
+  const beforeCleanComp = Float64Array.from(cleanComp);
+  const peak = findPeak(residual);
+  if (peak.absVal < 1e-12) return { peakVal: peak.absVal, peak };
+
+  const comp = gain * peak.val;
+  cleanComp[peak.idx] += comp;
+  scene.componentList.push({ idx: peak.idx, amp: comp });
+  const term = new Float64Array(N);
+
+  // Subtract shifted PSF
+  for (let i = 0; i < N; i++) {
+    const pi = circIdx(i - peak.idx + h, N);
+    term[i] = comp * psf[pi];
+    residual[i] -= term[i];
+  }
+
+  scene.iteration++;
+  scene.peakHistory.push(peak.absVal);
+  return {
+    peakVal: peak.absVal,
+    peak,
+    comp,
+    term,
+    beforeResidual,
+    afterResidual: Float64Array.from(residual),
+    beforeCleanComp,
+    afterCleanComp: Float64Array.from(cleanComp),
+  };
+}
+
+function stepClark1D(scene, gain) {
+  const { residual, cleanComp, N, h, clarkSupportRadius, clarkPatch } = scene;
+  const beforeResidual = Float64Array.from(residual);
+  const beforeCleanComp = Float64Array.from(cleanComp);
+  const peak = findPeak(residual);
+  if (peak.absVal < 1e-12) return { peakVal: peak.absVal, peak };
+
+  const comp = gain * peak.val;
+  cleanComp[peak.idx] += comp;
+  scene.componentList.push({ idx: peak.idx, amp: comp, supportRadius: clarkSupportRadius });
+  const term = new Float64Array(N);
+
+  for (let dx = -clarkSupportRadius; dx <= clarkSupportRadius; dx++) {
+    const i = circIdx(peak.idx + dx, N);
+    const pi = circIdx(i - peak.idx + h, N);
+    term[i] = comp * clarkPatch[pi];
+    residual[i] -= term[i];
+  }
+
+  scene.iteration++;
+  scene.componentCount++;
+  scene.peakHistory.push(peak.absVal);
+  return {
+    peakVal: peak.absVal,
+    peak,
+    comp,
+    term,
+    supportRadius: clarkSupportRadius,
+    beforeResidual,
+    afterResidual: Float64Array.from(residual),
+    beforeCleanComp,
+    afterCleanComp: Float64Array.from(cleanComp),
+  };
+}
+
+function stepMultiscale1D(scene, gain) {
+  const { residual, cleanComp, N, scaleKernels } = scene;
+  const beforeResidual = Float64Array.from(residual);
+  const beforeCleanComp = Float64Array.from(cleanComp);
+
+  let best = {
+    scaleIdx: 0,
+    idx: 0,
+    val: 0,
+    absVal: -Infinity,
+    score: -Infinity,
+    estimatedAmp: 0,
+    estimatedAbs: 0,
+    response: null
+  };
+  scaleKernels.forEach((scale, scaleIdx) => {
+    const response = convolve1D(residual, scale.kernel, N);
+    scene.scaleResponses[scaleIdx] = response;
+    const peak = findPeak(response);
+    const estimatedAmp = peak.val / scale.matchedNorm;
+    const estimatedAbs = Math.abs(estimatedAmp);
+    const score = estimatedAbs * scale.selectionBias;
+    if (score > best.score) {
+      best = {
+        scaleIdx,
+        idx: peak.idx,
+        val: peak.val,
+        absVal: peak.absVal,
+        score,
+        estimatedAmp,
+        estimatedAbs,
+        response
+      };
+    }
+  });
+  if (best.estimatedAbs < 1e-12) return { peakVal: best.estimatedAbs, peak: best };
+
+  const scale = scaleKernels[best.scaleIdx];
+  const comp = gain * best.estimatedAmp;
+  addScaledShiftedKernel(cleanComp, scale.kernel, best.idx, comp);
+  scene.componentList.push({ idx: best.idx, amp: comp, scaleIdx: best.scaleIdx, width: scale.name });
+  scene.selectedScale = best.scaleIdx;
+  scene.componentCount++;
+
+  const term = shiftKernel1D(scale.response, best.idx);
+  for (let i = 0; i < N; i++) {
+    term[i] *= comp;
+    residual[i] -= term[i];
+  }
+
+  const modelDelta = shiftKernel1D(scale.kernel, best.idx);
+  for (let i = 0; i < N; i++) modelDelta[i] *= comp;
+
+  scene.iteration++;
+  scene.peakHistory.push(best.estimatedAbs);
+  return {
+    peakVal: best.estimatedAbs,
+    peak: { idx: best.idx, absVal: best.estimatedAbs, val: best.estimatedAmp },
+    comp,
+    term,
+    modelDelta,
+    scaleIdx: best.scaleIdx,
+    scaleName: scale.name,
+    scaleScore: best.score,
+    matchedNorm: scale.matchedNorm,
+    scaleKernel: shiftKernel1D(scale.kernel, best.idx),
+    beforeResidual,
+    afterResidual: Float64Array.from(residual),
+    beforeCleanComp,
+    afterCleanComp: Float64Array.from(cleanComp),
+  };
+}
+
+function stepMem1D(scene, gain) {
+  const { residual, cleanComp, psf, N, prior, memLambda, memEps } = scene;
+  const beforeResidual = Float64Array.from(residual);
+  const beforeCleanComp = Float64Array.from(cleanComp);
+  const objectiveBefore = computeMemObjective(scene, beforeResidual);
+  const gradient = new Float64Array(N);
+  const dataGrad = convolve1D(scaledArray(residual, -1), psf, N);
+
+  for (let i = 0; i < N; i++) {
+    const m = Math.max(cleanComp[i], memEps);
+    gradient[i] = dataGrad[i] / N + memLambda * Math.log(m / prior[i]);
+  }
+
+  const gradPeak = findPeak(gradient);
+  let stepSize = Math.max(scene.memMinStep, scene.memStep * (0.5 + 0.5 * gain));
+  let candidateModel = null;
+  let candidateResidual = null;
+  let objectiveAfter = Infinity;
+  let accepted = false;
+  let attempts = 0;
+
+  while (stepSize >= scene.memMinStep && attempts < 14) {
+    candidateModel = applyPositiveMemUpdate(scene, beforeCleanComp, gradient, stepSize);
+    for (let i = 0; i < N; i++) cleanComp[i] = candidateModel[i];
+    candidateResidual = computeResidualFromModel1D(scene);
+    objectiveAfter = computeMemObjective(scene, candidateResidual);
+    if (objectiveAfter <= objectiveBefore - 1e-7) {
+      accepted = true;
+      break;
+    }
+    stepSize *= scene.memBacktrack;
+    attempts++;
+  }
+
+  if (!accepted) {
+    for (let i = 0; i < N; i++) cleanComp[i] = beforeCleanComp[i];
+    scene.residual = beforeResidual;
+    scene.memRejectedSteps++;
+    scene.memStalled = true;
+    scene.memLastStep = 0;
+    scene.memLastLineSearchIters = attempts;
+    return {
+      peakVal: findPeak(beforeResidual).absVal,
+      peak: gradPeak,
+      gradient,
+      term: gradient,
+      beforeResidual,
+      afterResidual: Float64Array.from(beforeResidual),
+      beforeCleanComp,
+      afterCleanComp: Float64Array.from(beforeCleanComp),
+      objectiveBefore,
+      objectiveAfter: objectiveBefore,
+      stepSize: 0,
+      stalled: true,
+      lineSearchIters: attempts,
+    };
+  }
+
+  scene.memAcceptedSteps++;
+  scene.memStalled = false;
+  scene.memLastStep = stepSize;
+  scene.memLastLineSearchIters = attempts;
+  scene.memStep = Math.min(0.08, Math.max(scene.memMinStep, stepSize * 1.05));
+  scene.residual = candidateResidual;
+  scene.iteration++;
+  updateMemDerivedState(scene);
+  const residualPeak = findPeak(scene.residual);
+  scene.peakHistory.push(residualPeak.absVal);
+  scene.objectiveHistory.push(objectiveAfter);
+  scene.entropyHistory.push(computeEntropy(scene));
+
+  return {
+    peakVal: residualPeak.absVal,
+    peak: gradPeak,
+    gradient,
+    term: gradient,
+    beforeResidual,
+    afterResidual: Float64Array.from(scene.residual),
+    beforeCleanComp,
+    afterCleanComp: Float64Array.from(cleanComp),
+    objectiveBefore,
+    objectiveAfter,
+    stepSize,
+    stalled: false,
+    lineSearchIters: attempts,
+  };
+}
+
+function stepClean2D(scene, gain) {
+  const { residual, psf, cleanComp, N, h, NN } = scene;
+  const beforeResidual = Float64Array.from(residual);
+  const beforeCleanComp = Float64Array.from(cleanComp);
+  const peak = findPeak(residual);
+  if (peak.absVal < 1e-12) return { peakVal: peak.absVal, peak };
+
+  const peakY = Math.floor(peak.idx / N);
+  const peakX = peak.idx % N;
+  const comp = gain * peak.val;
+  cleanComp[peak.idx] += comp;
+  scene.componentList.push({ y: peakY, x: peakX, amp: comp });
+  const term = new Float64Array(NN);
+
+  for (let iy = 0; iy < N; iy++) {
+    const py = circIdx(iy - peakY + h, N);
+    for (let ix = 0; ix < N; ix++) {
+      const px = circIdx(ix - peakX + h, N);
+      const t = comp * psf[py * N + px];
+      term[iy * N + ix] = t;
+      residual[iy * N + ix] -= t;
+    }
+  }
+
+  scene.iteration++;
+  scene.peakHistory.push(peak.absVal);
+  return {
+    peakVal: peak.absVal,
+    peak,
+    peakX,
+    peakY,
+    comp,
+    term,
+    beforeResidual,
+    afterResidual: Float64Array.from(residual),
+    beforeCleanComp,
+    afterCleanComp: Float64Array.from(cleanComp),
+  };
+}
+
+function restore1D(scene) {
+  const { cleanComp, cleanBeam, residual, restored, N, uvSampled, uMax, h, dataVis } = scene;
+  const beforeRestored = Float64Array.from(restored);
+  const beforeResidual = Float64Array.from(residual);
+  const beforeMajorResidualVis = Float64Array.from(scene.majorResidualVis);
+  const beforeMajorModelVis = Float64Array.from(scene.majorModelVis);
+  const conv = convolve1D(cleanComp, cleanBeam, N);
+  if (scene.algorithm === 'clark' || scene.algorithm === 'mem' || scene.algorithm === 'multiscale') {
+    scene.residual = computeResidualFromModel1D(scene);
+  }
+  const currentResidual = scene.residual;
+  for (let i = 0; i < N; i++) restored[i] = conv[i] + currentResidual[i];
+  scene.majorModelVis = compute1DVisibilitySeries(cleanComp, uvSampled, uMax, N, h);
+  scene.majorResidualVis = subtractArrays(dataVis, scene.majorModelVis);
+  scene.majorCycle++;
+  scene.lastMajorIteration = scene.iteration;
+  return {
+    beforeResidual,
+    afterResidual: Float64Array.from(scene.residual),
+    beforeRestored,
+    afterRestored: Float64Array.from(restored),
+    beforeMajorResidualVis,
+    afterMajorResidualVis: Float64Array.from(scene.majorResidualVis),
+    beforeMajorModelVis,
+    afterMajorModelVis: Float64Array.from(scene.majorModelVis),
+  };
+}
+
+function step1DAlgorithm(scene, gain) {
+  if (scene.algorithm === 'clark') return stepClark1D(scene, gain);
+  if (scene.algorithm === 'multiscale') return stepMultiscale1D(scene, gain);
+  if (scene.algorithm === 'mem') return stepMem1D(scene, gain);
+  return stepClean1D(scene, gain);
+}
+
+function updatePanelLabels() {
+  const meta = ALGORITHM_META[currentAlgorithm()];
+  const scene = state.scene;
+  const minorCount = scene ? Math.max(0, scene.iteration - scene.lastMajorIteration) : 0;
+  const minorStatus = scene ? `Major ${scene.majorCycle} Minor ${minorCount} / 10` : '';
+  setPanelLabel('label-sky', meta.panelLabels.sky, [
+    makeLegendItem('var(--accent-sky)', 'current'),
+    makeLegendItem('rgba(71,85,105,0.86)', 'ground truth'),
+  ]);
+  setPanelLabel('label-dirty', meta.panelLabels.dirty, [
+    makeLegendItem('var(--accent-residual)', 'current'),
+    makeLegendItem('rgba(71,85,105,0.82)', 'reference'),
+  ], minorStatus);
+  setPanelLabel('label-restored', meta.panelLabels.restored, [
+    makeLegendItem('var(--accent-restored)', 'current'),
+    makeLegendItem('rgba(71,85,105,0.86)', 'ground truth'),
+  ]);
+  setPanelLabel('label-residual', meta.panelLabels.residual, [
+    makeLegendItem('var(--accent-comp)', 'current'),
+    makeLegendItem('rgba(71,85,105,0.86)', 'ground truth'),
+  ]);
+}
+
+function restore2D(scene) {
+  const { cleanComp, cleanBeam, residual, restored, N, h, NN, componentList, dataVis, baselines } = scene;
+  const beforeRestored = Float64Array.from(restored);
+  const beforeMajorResidualVis = Float64Array.from(scene.majorResidualVis);
+  const beforeMajorModelVis = Float64Array.from(scene.majorModelVis);
+  // Convolve clean components with clean beam (sparse approach)
+  restored.fill(0);
+  for (const c of componentList) {
+    for (let iy = 0; iy < N; iy++) {
+      const by = circIdx(iy - c.y + h, N);
+      for (let ix = 0; ix < N; ix++) {
+        const bx = circIdx(ix - c.x + h, N);
+        restored[iy * N + ix] += c.amp * cleanBeam[by * N + bx];
+      }
+    }
+  }
+  for (let i = 0; i < NN; i++) restored[i] += residual[i];
+  scene.majorModelVis = compute2DVisibilitySamples(cleanComp, baselines, N, h);
+  scene.majorResidualVis = subtractArrays(dataVis, scene.majorModelVis);
+  scene.majorCycle++;
+  scene.lastMajorIteration = scene.iteration;
+  return {
+    beforeRestored,
+    afterRestored: Float64Array.from(restored),
+    beforeMajorResidualVis,
+    afterMajorResidualVis: Float64Array.from(scene.majorResidualVis),
+    beforeMajorModelVis,
+    afterMajorModelVis: Float64Array.from(scene.majorModelVis),
+  };
+}
+
+// ════════════════════════════════════════════════════════════════
+//  DRAWING — 1D PLOTS
+// ════════════════════════════════════════════════════════════════
+
+function draw1DPlot(canvasKey, data, opts) {
+  const ctx = ctxMap[canvasKey];
+  const { w, h } = sizeCanvas(canvases[canvasKey], ctx);
+  if (w < 2 || h < 2) return;
+
+  const m = { top: 8, right: 8, bottom: 4, left: 8 };
+  const pw = w - m.left - m.right;
+  const ph = h - m.top - m.bottom;
+
+  // Background
+  ctx.fillStyle = opts.bg || '#faf8f3';
+  ctx.fillRect(0, 0, w, h);
+
+  const N = data.length;
+  const [yMin, yMax] = opts.range || range1D(data);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(31,36,48,0.07)';
+  ctx.lineWidth = 0.5;
+  // Horizontal zero line
+  const zeroY = m.top + (1 - (0 - yMin) / (yMax - yMin)) * ph;
+  if (zeroY > m.top && zeroY < m.top + ph) {
+    ctx.beginPath();
+    ctx.moveTo(m.left, zeroY);
+    ctx.lineTo(m.left + pw, zeroY);
+    ctx.stroke();
+  }
+  if (opts.threshold != null) {
+    const ty = m.top + (1 - (opts.threshold - yMin) / (yMax - yMin)) * ph;
+    if (ty >= m.top && ty <= m.top + ph) {
+      ctx.save();
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = 'rgba(239,68,68,0.72)';
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(m.left, ty);
+      ctx.lineTo(m.left + pw, ty);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(239,68,68,0.9)';
+      ctx.font = '11px -apple-system, Helvetica Neue, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(`threshold ${opts.threshold.toFixed(3)}`, m.left + pw - 4, ty - 5);
+      ctx.restore();
+    }
+  }
+
+  function drawSeries(seriesData, seriesOpts) {
+    ctx.save();
+    if (seriesOpts.alpha != null) ctx.globalAlpha = seriesOpts.alpha;
+    if (!seriesOpts.stems) {
+      ctx.beginPath();
+      for (let i = 0; i < N; i++) {
+        const x = m.left + (i / (N - 1)) * pw;
+        const y = m.top + (1 - (seriesData[i] - yMin) / (yMax - yMin)) * ph;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = seriesOpts.color || '#333';
+      ctx.lineWidth = seriesOpts.lineWidth || 1.5;
+      ctx.stroke();
+      if (seriesOpts.fill) {
+        ctx.lineTo(m.left + pw, m.top + ph);
+        ctx.lineTo(m.left, m.top + ph);
+        ctx.closePath();
+        ctx.fillStyle = seriesOpts.fill;
+        ctx.fill();
+      }
+    } else {
+      const baseY = m.top + (1 - (0 - yMin) / (yMax - yMin)) * ph;
+      ctx.lineWidth = seriesOpts.lineWidth || 2;
+      for (let i = 0; i < N; i++) {
+        if (Math.abs(seriesData[i]) < 1e-12) continue;
+        const x = m.left + (i / (N - 1)) * pw;
+        const y = m.top + (1 - (seriesData[i] - yMin) / (yMax - yMin)) * ph;
+        ctx.strokeStyle = seriesOpts.color || '#10b981';
+        ctx.beginPath();
+        ctx.moveTo(x, baseY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x, y, seriesOpts.radius || 2.5, 0, 2 * Math.PI);
+        ctx.fillStyle = seriesOpts.color || '#10b981';
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  // Background reference series (e.g. ground truth)
+  if (opts.bgSeries) {
+    for (const bs of opts.bgSeries) {
+      drawSeries(bs.data, { stems: bs.stems, color: bs.color, alpha: bs.alpha || 0.18, lineWidth: bs.lineWidth || 1.2, radius: bs.radius || 2 });
+    }
+  }
+
+  drawSeries(data, opts);
+
+  // Peak marker
+  if (opts.showPeak || opts.peakMarker) {
+    const peak = opts.peakMarker || findPeak(data);
+    const px = m.left + (peak.idx / (N - 1)) * pw;
+    const py = m.top + (1 - ((peak.val != null ? peak.val : data[peak.idx]) - yMin) / (yMax - yMin)) * ph;
+    ctx.beginPath();
+    ctx.arc(px, py, 4, 0, 2 * Math.PI);
+    ctx.fillStyle = peak.color || '#ef4444';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+  if (opts.overlaySeries) {
+    opts.overlaySeries.forEach(series => drawSeries(series.data, series));
+  }
+  if (opts.annotations) {
+    opts.annotations(ctx, { m, pw, ph, yMin, yMax, zeroY });
+  }
+}
+
+function rgba(hex, alpha) {
+  const s = hex.replace('#', '');
+  const v = s.length === 3 ? s.split('').map(ch => ch + ch).join('') : s;
+  const r = parseInt(v.slice(0, 2), 16);
+  const g = parseInt(v.slice(2, 4), 16);
+  const b = parseInt(v.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function mixArrays(a, b, t) {
+  const out = new Float64Array(a.length);
+  for (let i = 0; i < a.length; i++) out[i] = a[i] * (1 - t) + b[i] * t;
+  return out;
+}
+
+function scaledArray(a, t) {
+  const out = new Float64Array(a.length);
+  for (let i = 0; i < a.length; i++) out[i] = a[i] * t;
+  return out;
+}
+
+function smooth01(t) {
+  const x = Math.max(0, Math.min(1, t));
+  return x * x * (3 - 2 * x);
+}
+
+function drawExplainerCard(scene) {
+  if (state.mode !== '1d' || !scene) {
+    ctxMap.explainer.clearRect(0, 0, canvases.explainer.width, canvases.explainer.height);
+    return;
+  }
+  const referenceRange = range1D(scene.psf);
+
+  if (scene.algorithm === 'clark') {
+    draw1DPlot('explainer', scene.clarkPatch, {
+      color: '#f59e0b',
+      range: referenceRange,
+      fill: 'rgba(245,158,11,0.08)',
+      bg: '#faf8f3',
+      overlaySeries: [
+        { data: scene.psf, color: rgba('#64748b', 0.32), lineWidth: 1.1, alpha: 0.78 }
+      ],
+      annotations: (ctx, geo) => {
+        const leftIdx = circIdx(scene.h - scene.clarkSupportRadius, scene.N);
+        const rightIdx = circIdx(scene.h + scene.clarkSupportRadius, scene.N);
+        [leftIdx, rightIdx].forEach(idx => {
+          const x = geo.m.left + (idx / (scene.N - 1)) * geo.pw;
+          ctx.save();
+          ctx.strokeStyle = 'rgba(245,158,11,0.9)';
+          ctx.lineWidth = 1.2;
+          ctx.setLineDash([4, 3]);
+          ctx.beginPath();
+          ctx.moveTo(x, geo.m.top + 4);
+          ctx.lineTo(x, geo.m.top + geo.ph);
+          ctx.stroke();
+          ctx.restore();
+        });
+      },
+    });
+    setExplainerCopy({
+      kicker: 'Clark Minor Cycle',
+      title: 'Truncated Beam Patch',
+      copy: 'Minor iterations only subtract the PSF main lobe. The full dirty beam returns in the next major-cycle refresh.',
+      metric: `Support radius: ±${scene.clarkSupportRadius} samples`,
+      showCanvas: true,
+      plotLabel: 'Truncated Beam',
+    });
+    return;
+  }
+
+  if (scene.algorithm === 'multiscale') {
+    const scale = scene.scaleKernels[scene.selectedScale];
+    const normalizeKernel = (kernel) => {
+      const peak = Math.max(maxAbs(kernel), 1e-6);
+      const out = new Float64Array(kernel.length);
+      for (let i = 0; i < kernel.length; i++) out[i] = kernel[i] / peak;
+      return out;
+    };
+    draw1DPlot('explainer', normalizeKernel(scale.kernel), {
+      color: '#0f766e',
+      range: referenceRange,
+      fill: 'rgba(16,185,129,0.14)',
+      bg: '#faf8f3',
+      overlaySeries: scene.scaleKernels.map((entry, idx) => ({
+        data: normalizeKernel(entry.kernel),
+        color: idx === scene.selectedScale ? rgba('#0f766e', 0.98) : rgba('#94a3b8', 0.42),
+        lineWidth: idx === scene.selectedScale ? 2.3 : 1.4,
+        alpha: idx === scene.selectedScale ? 1 : 0.9,
+      })),
+    });
+    setExplainerCopy({
+      kicker: 'Multiscale Minor Cycle',
+      title: 'Scale Bank Match',
+      copy: 'The deconvolver tests several source widths and subtracts the beam response of whichever scale matches the residual best.',
+      metric: `Active scale: ${scale.name}`,
+      showCanvas: true,
+      plotLabel: 'Active Scale Kernel',
+    });
+    return;
+  }
+
+  draw1DPlot('explainer', scene.psf, {
+    color: '#d97706',
+    range: referenceRange,
+    fill: 'rgba(217,119,6,0.08)',
+    bg: '#faf8f3',
+  });
+  setExplainerCopy({
+    kicker: 'Högbom Reference',
+    title: 'Full Dirty Beam Subtraction',
+    copy: 'Each minor iteration picks the brightest residual peak and subtracts the full shifted dirty beam at that location.',
+    metric: 'Reference beam: full PSF',
+    showCanvas: true,
+    plotLabel: 'Subtracted Beam',
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  DRAWING — 2D IMAGES
+// ════════════════════════════════════════════════════════════════
+
+// Reusable offscreen canvas for 2D image rendering
+let offCanvas = null, offCtx = null;
+
+function draw2DImage(canvasKey, data, N, opts) {
+  const ctx = ctxMap[canvasKey];
+  const { w, h } = sizeCanvas(canvases[canvasKey], ctx);
+  if (w < 2 || h < 2) return;
+
+  const m = { top: 4, right: 4, bottom: 4, left: 4 };
+  const iw = w - m.left - m.right;
+  const ih = h - m.top - m.bottom;
+  const sz = Math.min(iw, ih);
+  const ox = m.left + (iw - sz) / 2;
+  const oy = m.top + (ih - sz) / 2;
+
+  // Background
+  ctx.fillStyle = opts.bg || '#1a1a1a';
+  ctx.fillRect(0, 0, w, h);
+
+  // Prepare image data
+  if (!offCanvas || offCanvas.width !== N) {
+    offCanvas = document.createElement('canvas');
+    offCanvas.width = N;
+    offCanvas.height = N;
+    offCtx = offCanvas.getContext('2d');
+  }
+  const imgData = offCtx.createImageData(N, N);
+  const [vMin, vMax] = opts.range || range2D(data);
+  const cm = opts.colormap || hotCM;
+
+  for (let i = 0; i < N * N; i++) {
+    const t = (data[i] - vMin) / (vMax - vMin);
+    const [r, g, b] = cm(t);
+    imgData.data[4*i]   = r;
+    imgData.data[4*i+1] = g;
+    imgData.data[4*i+2] = b;
+    imgData.data[4*i+3] = 255;
+  }
+  offCtx.putImageData(imgData, 0, 0);
+
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(offCanvas, ox, oy, sz, sz);
+
+  // Ground truth contour overlay (circles marking source positions)
+  if (opts.bgMarkers) {
+    ctx.save();
+    const cellSz = sz / N;
+    for (const mk of opts.bgMarkers) {
+      const cx = ox + (mk.x + 0.5) * cellSz;
+      const cy = oy + (mk.y + 0.5) * cellSz;
+      const r = Math.max(cellSz * 0.6, 3);
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+      ctx.strokeStyle = mk.color || 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  if (opts.overlayData) {
+    const overlayData = offCtx.createImageData(N, N);
+    const [oMin, oMax] = opts.overlayRange || range2D(opts.overlayData);
+    const ocm = opts.overlayColormap || hotCM;
+    const alphaScale = opts.overlayAlpha == null ? 0.55 : opts.overlayAlpha;
+    for (let i = 0; i < N * N; i++) {
+      const t = (opts.overlayData[i] - oMin) / (oMax - oMin);
+      const [r, g, b] = ocm(t);
+      overlayData.data[4*i]   = r;
+      overlayData.data[4*i+1] = g;
+      overlayData.data[4*i+2] = b;
+      overlayData.data[4*i+3] = Math.max(0, Math.min(255, alphaScale * 255));
+    }
+    offCtx.putImageData(overlayData, 0, 0);
+    ctx.save();
+    ctx.globalAlpha = 1;
+    ctx.drawImage(
+      offCanvas,
+      ox + (opts.overlayOffsetX || 0) * (sz / N),
+      oy + (opts.overlayOffsetY || 0) * (sz / N),
+      sz,
+      sz
+    );
+    ctx.restore();
+  }
+  if (opts.threshold != null) {
+    const scale = sz / N;
+    const threshold = Math.abs(opts.threshold);
+    ctx.save();
+    ctx.strokeStyle = opts.thresholdColor || 'rgba(255,255,255,0.72)';
+    ctx.lineWidth = 1;
+    for (let iy = 0; iy < N - 1; iy++) {
+      for (let ix = 0; ix < N - 1; ix++) {
+        const a = Math.abs(data[iy * N + ix]) >= threshold;
+        const b = Math.abs(data[iy * N + ix + 1]) >= threshold;
+        const c = Math.abs(data[(iy + 1) * N + ix]) >= threshold;
+        if (a !== b) {
+          const x = ox + (ix + 1) * scale;
+          const y0 = oy + iy * scale;
+          const y1 = oy + (iy + 1) * scale;
+          ctx.beginPath();
+          ctx.moveTo(x, y0);
+          ctx.lineTo(x, y1);
+          ctx.stroke();
+        }
+        if (a !== c) {
+          const y = oy + (iy + 1) * scale;
+          const x0 = ox + ix * scale;
+          const x1 = ox + (ix + 1) * scale;
+          ctx.beginPath();
+          ctx.moveTo(x0, y);
+          ctx.lineTo(x1, y);
+          ctx.stroke();
+        }
+      }
+    }
+    ctx.fillStyle = 'rgba(15,23,42,0.74)';
+    ctx.fillRect(ox + 8, oy + 8, 112, 24);
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.font = '11px -apple-system, Helvetica Neue, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`threshold ${opts.threshold.toFixed(3)}`, ox + 14, oy + 24);
+    ctx.restore();
+  }
+
+  // Source markers
+  if (opts.markers) {
+    const scale = sz / N;
+    ctx.lineWidth = 1;
+    for (const mk of opts.markers) {
+      const cx = ox + (mk.x + 0.5) * scale;
+      const cy = oy + (mk.y + 0.5) * scale;
+      ctx.beginPath();
+      ctx.arc(cx, cy, Math.max(3, scale * 0.6), 0, 2 * Math.PI);
+      ctx.strokeStyle = mk.color || 'rgba(255,255,255,0.7)';
+      ctx.stroke();
+    }
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  DRAWING — CONVERGENCE PLOT
+// ════════════════════════════════════════════════════════════════
+
+function drawConvergence() {
+  const ctx = ctxMap.convergence;
+  const { w, h } = sizeCanvas(canvases.convergence, ctx);
+  if (w < 2 || h < 2) return;
+
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.fillRect(0, 0, w, h);
+
+  const scene = state.scene;
+  if (!scene || scene.peakHistory.length === 0) {
+    ctx.fillStyle = '#aaa';
+    ctx.font = '11px -apple-system, Helvetica Neue, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('No data yet', w / 2, h / 2 + 4);
+    return;
+  }
+
+  const data = scene.peakHistory;
+  const m = { top: 6, right: 8, bottom: 18, left: 36 };
+  const pw = w - m.left - m.right;
+  const ph = h - m.top - m.bottom;
+
+  // Log scale
+  const logData = data.map(v => Math.log10(Math.max(v, 1e-10)));
+  let lo = Math.min(...logData), hi = Math.max(...logData);
+  if (lo === hi) { lo -= 0.5; hi += 0.5; }
+  const pad = (hi - lo) * 0.05;
+  lo -= pad; hi += pad;
+
+  // Threshold line
+  const threshLog = Math.log10(Math.max(effectiveThreshold(scene), 1e-10));
+  if (threshLog >= lo && threshLog <= hi) {
+    const ty = m.top + (1 - (threshLog - lo) / (hi - lo)) * ph;
+    ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = 'rgba(239,68,68,0.5)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(m.left, ty);
+    ctx.lineTo(m.left + pw, ty);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(239,68,68,0.7)';
+    ctx.font = '9px -apple-system, Helvetica Neue, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('threshold', m.left + pw, ty - 3);
+  }
+
+  // Data line
+  ctx.beginPath();
+  for (let i = 0; i < data.length; i++) {
+    const x = m.left + (i / Math.max(1, data.length - 1)) * pw;
+    const y = m.top + (1 - (logData[i] - lo) / (hi - lo)) * ph;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = '#ef4444';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  if (scene.algorithm === 'mem' && scene.objectiveHistory.length > 1) {
+    const obj = scene.objectiveHistory.map(v => Math.log10(Math.max(Math.abs(v), 1e-10)));
+    let oLo = Math.min(...obj), oHi = Math.max(...obj);
+    if (oLo === oHi) { oLo -= 0.5; oHi += 0.5; }
+    ctx.beginPath();
+    for (let i = 0; i < obj.length; i++) {
+      const x = m.left + (i / Math.max(1, obj.length - 1)) * pw;
+      const y = m.top + (1 - (obj[i] - oLo) / (oHi - oLo)) * ph;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = '#0f766e';
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+
+    ctx.fillStyle = '#0f766e';
+    ctx.font = '9px -apple-system, Helvetica Neue, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('objective', m.left + 4, m.top + 10);
+  }
+
+  // Axis labels
+  ctx.fillStyle = '#999';
+  ctx.font = '9px -apple-system, Helvetica Neue, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('iteration', m.left + pw / 2, h - 2);
+  ctx.save();
+  ctx.translate(10, m.top + ph / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('log₁₀ peak', 0, 0);
+  ctx.restore();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  DRAWING — UV COVERAGE
+// ════════════════════════════════════════════════════════════════
+
+function drawUV() {
+  const ctx = ctxMap.uv;
+  const { w, h } = sizeCanvas(canvases.uv, ctx);
+  if (w < 2 || h < 2) return;
+
+  ctx.fillStyle = '#1f2430';
+  ctx.fillRect(0, 0, w, h);
+
+  const scene = state.scene;
+  if (!scene || !scene.baselines) return;
+
+  const sz = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+  const maxB = Math.max(...scene.baselines.map(b => Math.max(Math.abs(b[0]), Math.abs(b[1]))));
+  const scale = (sz * 0.42) / maxB;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(cx, 4); ctx.lineTo(cx, h - 4);
+  ctx.moveTo(4, cy); ctx.lineTo(w - 4, cy);
+  ctx.stroke();
+
+  // Points
+  for (const [u, v] of scene.baselines) {
+    // Both (u,v) and (-u,-v)
+    for (const sign of [1, -1]) {
+      const px = cx + sign * u * scale;
+      const py = cy - sign * v * scale;
+      ctx.beginPath();
+      ctx.arc(px, py, 2, 0, 2 * Math.PI);
+      ctx.fillStyle = 'rgba(96,165,250,0.8)';
+      ctx.fill();
+    }
+  }
+  // DC
+  ctx.beginPath();
+  ctx.arc(cx, cy, 2.5, 0, 2 * Math.PI);
+  ctx.fillStyle = '#fbbf24';
+  ctx.fill();
+
+  // Labels
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '9px -apple-system, Helvetica Neue, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('u', w - 12, cy - 5);
+  ctx.fillText('v', cx + 8, 12);
+}
+
+function drawVisibilityUV(canvasKey, scene, values, opts) {
+  const ctx = ctxMap[canvasKey];
+  const { w, h } = sizeCanvas(canvases[canvasKey], ctx);
+  if (w < 2 || h < 2) return;
+  ctx.fillStyle = '#101621';
+  ctx.fillRect(0, 0, w, h);
+
+  const sz = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+  const maxB = Math.max(...scene.baselines.map(b => Math.max(Math.abs(b[0]), Math.abs(b[1]))), 1);
+  const scale = (sz * 0.42) / maxB;
+  const vMax = opts.max || Math.max(...values, 1e-6);
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(cx, 4); ctx.lineTo(cx, h - 4);
+  ctx.moveTo(4, cy); ctx.lineTo(w - 4, cy);
+  ctx.stroke();
+
+  if (opts.bgValues) {
+    for (let k = 0; k < scene.baselines.length; k++) {
+      const [u, v] = scene.baselines[k];
+      const t = opts.bgValues[k] / vMax;
+      const [r, g, b] = hotCM(t);
+      for (const sign of [1, -1]) {
+        const px = cx + sign * u * scale;
+        const py = cy - sign * v * scale;
+        ctx.beginPath();
+        ctx.arc(px, py, 3.1, 0, 2 * Math.PI);
+        ctx.fillStyle = `rgba(${r},${g},${b},0.42)`;
+        ctx.fill();
+      }
+    }
+  }
+
+  for (let k = 0; k < scene.baselines.length; k++) {
+    const [u, v] = scene.baselines[k];
+    const t = values[k] / vMax;
+    const [r, g, b] = hotCM(t);
+    for (const sign of [1, -1]) {
+      const px = cx + sign * u * scale;
+      const py = cy - sign * v * scale;
+      ctx.beginPath();
+      ctx.arc(px, py, 2.3, 0, 2 * Math.PI);
+      ctx.fillStyle = `rgba(${r},${g},${b},0.95)`;
+      ctx.fill();
+    }
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,0.42)';
+  ctx.font = '9px -apple-system, Helvetica Neue, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('u', w - 12, cy - 5);
+  ctx.fillText('v', cx + 8, 12);
+}
+
+function currentAnimProgress() {
+  if (!state.anim) return 1;
+  const raw = Math.min(1, (performance.now() - state.anim.start) / state.anim.duration);
+  // When step button is held, clamp progress so overlay is visible but subtraction doesn't complete
+  if (state.anim.held) return Math.min(raw, 0.15);
+  // After release, remap remaining progress so the full animation plays out from the held point
+  if (state.anim.releaseTime != null) {
+    const sinceRelease = performance.now() - state.anim.releaseTime;
+    const releaseDuration = state.anim.duration * 0.85; // remaining 85% of animation
+    return 0.15 + 0.85 * Math.min(1, sinceRelease / releaseDuration);
+  }
+  return raw;
+}
+
+function updateFlowState(scene) {
+  const minorCount = scene.iteration - scene.lastMajorIteration;
+  const majorZone = $('flow-major-zone');
+  const minorZone = $('flow-minor-zone');
+
+  [majorZone, minorZone].filter(Boolean).forEach(el => el.classList.remove('active', 'major', 'minor'));
+  Object.values(flowCards).forEach(el => el.classList.remove('flow-active'));
+  if (flowBgMajor) flowBgMajor.classList.remove('highlight');
+  if (flowBgMinor) flowBgMinor.classList.remove('highlight');
+
+  const kind = state.anim ? state.anim.kind : null;
+  const algo = scene.algorithm || 'hogbom';
+  if (kind === 'minor') {
+    if (minorZone) minorZone.classList.add('active', 'minor');
+    if (flowBgMinor) flowBgMinor.classList.add('highlight');
+    flowCards.dirty.classList.add('flow-active');
+    flowCards.residual.classList.add('flow-active');
+  } else if (kind === 'major') {
+    if (majorZone) majorZone.classList.add('active', 'major');
+    if (flowBgMajor) flowBgMajor.classList.add('highlight');
+    flowCards.sky.classList.add('flow-active');
+    flowCards.restored.classList.add('flow-active');
+    flowCards.psf.classList.add('flow-active');
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RENDER DISPATCH
+// ════════════════════════════════════════════════════════════════
+
+function render() {
+  const scene = state.scene;
+  if (!scene) return;
+  const anim = state.anim;
+  const p = currentAnimProgress();
+  const thresholdAbs = effectiveThreshold(scene);
+  updatePanelLabels();
+
+  if (state.mode === '1d') {
+    const algorithm = scene.algorithm || 'hogbom';
+    const isMem = algorithm === 'mem';
+    const isMultiscale = algorithm === 'multiscale';
+    const isClark = algorithm === 'clark';
+    const hasExtendedTruth = scene.sourceModel === 'mixed';
+    const psfRange = range1D(scene.psf);
+    const residualRange = range1D(scene.residual);
+    const visCommonRange = scene.visibilityDisplayRange;
+    const imageRange = [
+      Math.min(residualRange[0], scene.modelDisplayRange[0], 0),
+      Math.max(residualRange[1], scene.modelDisplayRange[1], scene.initialPeak || 0.01),
+    ];
+    const modelImageRange = isMem
+      ? scene.memModelDisplayRange
+      : scene.modelDisplayRange;
+
+    if (anim && anim.kind === 'major' && anim.mode === '1d') {
+      draw1DPlot('sky', mixArrays(anim.beforeMajorResidualVis, anim.afterMajorResidualVis, p), {
+        color: '#2563eb', range: visCommonRange,
+        stems: true, bg: '#faf8f3', lineWidth: PLOT_STYLE.currentStemWidth,
+        bgSeries: [{ data: scene.truthVis, stems: true, color: 'rgba(71,85,105,0.86)', alpha: 0.64, radius: PLOT_STYLE.referenceStemRadius, lineWidth: PLOT_STYLE.referenceStemWidth }],
+      });
+    } else {
+      draw1DPlot('sky', scene.majorResidualVis, {
+        color: '#2563eb', range: visCommonRange,
+        stems: true, bg: '#faf8f3', lineWidth: PLOT_STYLE.currentStemWidth,
+        bgSeries: [{ data: scene.truthVis, stems: true, color: 'rgba(71,85,105,0.86)', alpha: 0.64, radius: PLOT_STYLE.referenceStemRadius, lineWidth: PLOT_STYLE.referenceStemWidth }],
+      });
+    }
+    draw1DPlot('psf', scene.psf, {
+      color: '#d97706', range: psfRange,
+      fill: 'rgba(217,119,6,0.08)', bg: '#faf8f3',
+      overlaySeries: isClark ? [
+        { data: scene.clarkPatch, color: rgba('#ef4444', 0.92), lineWidth: 1.5, alpha: 0.9 }
+      ] : isMultiscale ? [
+        { data: scene.scaleKernels[scene.selectedScale].response, color: rgba('#0f766e', 0.7), lineWidth: 1.4, alpha: 0.82 }
+      ] : [],
+    });
+    drawExplainerCard(scene);
+    if (anim && anim.kind === 'minor' && anim.mode === '1d') {
+      const termIn = smooth01(Math.min(1, p / 0.12));
+      const termOut = smooth01(Math.max(0, (p - 0.4) / 0.6));
+      const termAlpha = termIn * (1 - termOut);
+      const settle = smooth01(Math.max(0, (p - 0.15) / 0.85));
+      const currentResidual = mixArrays(anim.beforeResidual, anim.afterResidual, settle);
+      const peakIdx = anim.peak.idx;
+
+      draw1DPlot('dirty', currentResidual, {
+        color: '#ef4444', range: scene.initialResidualRange,
+        lineWidth: PLOT_STYLE.currentLineWidth,
+        bg: '#faf8f3',
+        threshold: thresholdAbs,
+        bgSeries: [{ data: scene.dirty, stems: false, color: 'rgba(71,85,105,0.82)', alpha: 0.62, lineWidth: PLOT_STYLE.referenceLineWidth }],
+        overlaySeries: termAlpha > 0.01 ? [
+          {
+            data: anim.term,
+            color: rgba(isMem ? '#2563eb' : '#f59e0b', 0.88 * termAlpha),
+            lineWidth: isMem ? 1.4 : 1.8,
+            alpha: termAlpha,
+          }
+        ] : [],
+        annotations: (ctx, geo) => {
+          const x = geo.m.left + (peakIdx / (scene.N - 1)) * geo.pw;
+          const yBefore = geo.m.top + (1 - (anim.beforeResidual[peakIdx] - geo.yMin) / (geo.yMax - geo.yMin)) * geo.ph;
+          const yNow = geo.m.top + (1 - (currentResidual[peakIdx] - geo.yMin) / (geo.yMax - geo.yMin)) * geo.ph;
+
+          if (!isMem && settle < 0.98) {
+            ctx.save();
+            ctx.globalAlpha = 1 - settle * 0.6;
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 3]);
+            ctx.beginPath();
+            ctx.moveTo(x, yBefore);
+            ctx.lineTo(x, yNow);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.restore();
+          }
+          // Current peak dot
+          ctx.beginPath();
+          ctx.arc(x, yNow, 4, 0, 2 * Math.PI);
+          ctx.fillStyle = isMem ? '#2563eb' : '#ef4444';
+          ctx.fill();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        },
+      });
+      const modelSeries = mixArrays(anim.beforeCleanComp, anim.afterCleanComp, settle);
+      draw1DPlot('residual', modelSeries, {
+        color: '#10b981',
+        range: modelImageRange,
+        stems: !isMem && !isMultiscale,
+        lineWidth: !isMem && !isMultiscale ? PLOT_STYLE.currentStemWidth : PLOT_STYLE.currentLineWidth,
+        bg: '#faf8f3',
+        peakMarker: !isMem ? { idx: peakIdx, val: modelSeries[peakIdx], color: '#10b981' } : null,
+        bgSeries: [{
+          data: scene.trueSky,
+          stems: true,
+          color: hasExtendedTruth ? 'rgba(100,116,139,0.58)' : 'rgba(71,85,105,0.86)',
+          alpha: hasExtendedTruth ? 0.20 : 0.68,
+          radius: PLOT_STYLE.referenceStemRadius,
+          lineWidth: PLOT_STYLE.referenceStemWidth
+        }],
+        overlaySeries: isMultiscale && termAlpha > 0.02 ? [
+          { data: anim.modelDelta, color: rgba('#0f766e', 0.70), lineWidth: 1.5, alpha: termAlpha }
+        ] : [],
+      });
+    } else {
+      draw1DPlot('dirty', scene.residual, {
+        color: '#ef4444', range: scene.initialResidualRange,
+        showPeak: true, bg: '#faf8f3', lineWidth: PLOT_STYLE.currentLineWidth,
+        threshold: thresholdAbs,
+        bgSeries: [{ data: scene.dirty, stems: false, color: 'rgba(71,85,105,0.82)', alpha: 0.62, lineWidth: PLOT_STYLE.referenceLineWidth }],
+      });
+      draw1DPlot('residual', scene.cleanComp, {
+        color: '#10b981', range: modelImageRange,
+        stems: !isMem && !isMultiscale, bg: '#faf8f3',
+        lineWidth: !isMem && !isMultiscale ? PLOT_STYLE.currentStemWidth : PLOT_STYLE.currentLineWidth,
+        bgSeries: [{
+          data: scene.trueSky,
+          stems: true,
+          color: hasExtendedTruth ? 'rgba(100,116,139,0.58)' : 'rgba(71,85,105,0.86)',
+          alpha: hasExtendedTruth ? 0.20 : 0.68,
+          radius: PLOT_STYLE.referenceStemRadius,
+          lineWidth: PLOT_STYLE.referenceStemWidth
+        }],
+      });
+    }
+    if (anim && anim.kind === 'major' && anim.mode === '1d') {
+      draw1DPlot('restored', mixArrays(anim.beforeMajorModelVis, anim.afterMajorModelVis, p), {
+        color: '#7c3aed', range: visCommonRange,
+        stems: true, bg: '#faf8f3', lineWidth: PLOT_STYLE.currentStemWidth,
+        bgSeries: [{ data: scene.truthVis, stems: true, color: 'rgba(71,85,105,0.86)', alpha: 0.64, radius: PLOT_STYLE.referenceStemRadius, lineWidth: PLOT_STYLE.referenceStemWidth }],
+      });
+    } else {
+      draw1DPlot('restored', scene.majorModelVis, {
+        color: '#7c3aed', range: visCommonRange,
+        stems: true, bg: '#faf8f3', lineWidth: PLOT_STYLE.currentStemWidth,
+        bgSeries: [{ data: scene.truthVis, stems: true, color: 'rgba(71,85,105,0.86)', alpha: 0.64, radius: PLOT_STYLE.referenceStemRadius, lineWidth: PLOT_STYLE.referenceStemWidth }],
+      });
+    }
+
+  } else {
+    const N = scene.N;
+    const residualVisR = range2D(scene.majorResidualVis);
+    const modelVisR = range2D(scene.majorModelVis);
+    const psfR = range2D(scene.psf);
+    const residualR = range2D(scene.residual);
+    const compR = range2D(scene.cleanComp);
+    const imgRange = [Math.min(residualR[0], compR[0], 0), Math.max(residualR[1], compR[1], scene.initialPeak || 0.01)];
+    const visMax = Math.max(residualVisR[1], modelVisR[1], 1e-6);
+
+    if (anim && anim.kind === 'major' && anim.mode === '2d') {
+      drawVisibilityUV('sky', scene, mixArrays(anim.beforeMajorResidualVis, anim.afterMajorResidualVis, p), { max: visMax, bgValues: scene.truthVis });
+    } else {
+      drawVisibilityUV('sky', scene, scene.majorResidualVis, { max: visMax, bgValues: scene.truthVis });
+    }
+    draw2DImage('psf', scene.psf, N, {
+      range: [Math.min(psfR[0], -0.05), psfR[1]], colormap: divergingCM,
+    });
+    ctxMap.explainer.clearRect(0, 0, canvases.explainer.width, canvases.explainer.height);
+    setExplainerCopy({
+      kicker: '2-D Mode',
+      title: 'Högbom CLEAN Only',
+      copy: 'The image view stays focused on the reference Högbom reconstruction loop.',
+      metric: 'Algorithm selector disabled in 2-D',
+      showCanvas: false,
+    });
+    if (anim && anim.kind === 'minor' && anim.mode === '2d') {
+      const appear = smooth01(Math.min(1, p / 0.34));
+      const settle = smooth01(Math.max(0, (p - 0.18) / 0.82));
+      const subtracting = scaledArray(anim.term, appear * (1 - 0.25 * settle));
+      const broughtDown = mixArrays(anim.beforeResidual, anim.afterResidual, settle);
+      draw2DImage('dirty', broughtDown, N, {
+        range: scene.initialResidualRange, colormap: hotCM,
+        threshold: thresholdAbs,
+        overlayData: subtracting,
+        overlayRange: [-Math.max(Math.abs(anim.comp), 1e-3), Math.max(Math.abs(anim.comp), 1e-3)],
+        overlayColormap: divergingCM,
+        overlayAlpha: 0.48,
+        markers: [{ x: anim.peakX, y: anim.peakY, color: 'rgba(255,255,255,0.86)' }],
+      });
+      draw2DImage('residual', anim.afterCleanComp, N, {
+        range: [0, Math.max(compR[1], 0.01)], colormap: hotCM,
+        markers: [{ x: anim.peakX, y: anim.peakY, color: 'rgba(16,185,129,0.92)' }],
+        bgMarkers: scene.sources2d.map(s => ({ x: s.x, y: s.y, color: 'rgba(255,255,255,0.35)' })),
+      });
+    } else {
+      draw2DImage('dirty', scene.residual, N, {
+        range: scene.initialResidualRange, colormap: hotCM,
+        threshold: thresholdAbs,
+      });
+      draw2DImage('residual', scene.cleanComp, N, {
+        range: [0, Math.max(compR[1], 0.01)], colormap: hotCM,
+        bgMarkers: scene.sources2d.map(s => ({ x: s.x, y: s.y, color: 'rgba(255,255,255,0.35)' })),
+      });
+    }
+    if (anim && anim.kind === 'major' && anim.mode === '2d') {
+      drawVisibilityUV('restored', scene, mixArrays(anim.beforeMajorModelVis, anim.afterMajorModelVis, p), { max: visMax, bgValues: scene.truthVis });
+    } else {
+      drawVisibilityUV('restored', scene, scene.majorModelVis, { max: visMax, bgValues: scene.truthVis });
+    }
+
+    drawUV();
+  }
+
+  drawConvergence();
+  updateStatus();
+  updateFlowState(scene);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  STATUS UPDATES
+// ════════════════════════════════════════════════════════════════
+
+function updateStatus() {
+  const scene = state.scene;
+  if (!scene) return;
+
+  $('iter-display').textContent = scene.iteration;
+  $('major-display').textContent = scene.majorCycle;
+  $('minor-display').textContent = `${scene.iteration - scene.lastMajorIteration} / 10`;
+  const peak = scene.peakHistory.length > 0
+    ? scene.peakHistory[scene.peakHistory.length - 1]
+    : findPeak(scene.residual).absVal;
+  $('peak-display').textContent = peak.toFixed(4);
+
+  let nComp;
+  if (state.mode === '1d' && scene.algorithm === 'multiscale') {
+    nComp = scene.componentList.length;
+  } else if (state.mode === '1d') {
+    nComp = 0;
+    for (let i = 0; i < scene.cleanComp.length; i++) {
+      if (Math.abs(scene.cleanComp[i]) > 1e-12) nComp++;
+    }
+  } else {
+    nComp = scene.componentList.length;
+  }
+  $('comp-display').textContent = nComp;
+}
+
+function setBadge(text, cls) {
+  const b = $('cycle-badge');
+  b.textContent = text;
+  b.className = 'status-badge' + (cls ? ' ' + cls : '');
+}
+
+function minorDurationMs() {
+  if (state.running && state.speedFactor >= FAST_PLAYBACK_THRESHOLD) return 18;
+  const algorithm = state.scene ? state.scene.algorithm : currentAlgorithm();
+  const base = 100 / Math.max(0.05, state.speedFactor);
+  if (algorithm === 'clark') return base * 0.72;
+  return base;
+}
+
+function majorDurationMs() {
+  if (state.running && state.speedFactor >= FAST_PLAYBACK_THRESHOLD) return 28;
+  return 1500 / Math.max(0.05, state.speedFactor);
+}
+
+function isFastPlaybackMode() {
+  return state.speedFactor >= FAST_PLAYBACK_THRESHOLD;
+}
+
+function isBatchPlaybackMode() {
+  return state.speedFactor >= BATCHING_START_SPEED;
+}
+
+function autoplayDelayMs() {
+  if (state.speedFactor >= BATCHING_START_SPEED) return 0;
+  const span = Math.max(1e-6, BATCHING_START_SPEED - SPEED_MIN);
+  const t = clamp((state.speedFactor - SPEED_MIN) / span, 0, 1);
+  const eased = Math.pow(1 - t, 1.35);
+  return Math.round(PLAYBACK_DELAY_MS * eased);
+}
+
+function queueAutoplayTick(callback) {
+  const delay = autoplayDelayMs();
+  if (delay <= 0) {
+    runTimer = null;
+    requestAnimationFrame(callback);
+    return;
+  }
+  runTimer = setTimeout(() => requestAnimationFrame(callback), delay);
+}
+
+function fastBatchSize() {
+  if (state.speedFactor < BATCHING_START_SPEED) return 1;
+  if (state.speedFactor < 90) return 2;
+  if (state.speedFactor < 120) return 4;
+  if (state.speedFactor < 220) return 7;
+  return 10;
+}
+
+function clamp(v, lo, hi) {
+  return Math.min(hi, Math.max(lo, v));
+}
+
+function roundSpeed(v) {
+  return Math.round(v * 10) / 10;
+}
+
+function expInterp(a, b, t) {
+  return a * Math.exp(Math.log(b / a) * t);
+}
+
+function invExpInterp(a, b, v) {
+  return Math.log(v / a) / Math.log(b / a);
+}
+
+function sliderToSpeed(sliderValue) {
+  const p = clamp((sliderValue - SPEED_SLIDER_MIN) / (SPEED_SLIDER_MAX - SPEED_SLIDER_MIN), 0, 1);
+  if (p <= SPEED_THRESHOLD_POSITION) {
+    const local = p / SPEED_THRESHOLD_POSITION;
+    return roundSpeed(expInterp(SPEED_MIN, FAST_PLAYBACK_THRESHOLD, local));
+  }
+  const local = (p - SPEED_THRESHOLD_POSITION) / (1 - SPEED_THRESHOLD_POSITION);
+  return roundSpeed(expInterp(FAST_PLAYBACK_THRESHOLD, SPEED_MAX, local));
+}
+
+function speedToSlider(speedValue) {
+  const speed = clamp(speedValue, SPEED_MIN, SPEED_MAX);
+  if (speed <= FAST_PLAYBACK_THRESHOLD) {
+    const local = invExpInterp(SPEED_MIN, FAST_PLAYBACK_THRESHOLD, speed);
+    return roundSpeed((SPEED_THRESHOLD_POSITION * local) * (SPEED_SLIDER_MAX - SPEED_SLIDER_MIN) + SPEED_SLIDER_MIN);
+  }
+  const local = invExpInterp(FAST_PLAYBACK_THRESHOLD, SPEED_MAX, speed);
+  return roundSpeed((SPEED_THRESHOLD_POSITION + (1 - SPEED_THRESHOLD_POSITION) * local) * (SPEED_SLIDER_MAX - SPEED_SLIDER_MIN) + SPEED_SLIDER_MIN);
+}
+
+function setRunButton() {
+  $('btn-run').innerHTML = state.running ? '&#9208;' : '&#9654;';
+  $('btn-run').classList.toggle('running', state.running);
+  $('btn-run').title = state.running ? 'Pause' : 'Run';
+  $('btn-run').setAttribute('aria-label', state.running ? 'Pause' : 'Run');
+}
+
+function updateMajorButtonState() {
+  const btn = $('btn-major');
+  const scene = state.scene;
+  const minorSinceMajor = scene ? Math.max(0, scene.iteration - scene.lastMajorIteration) : 0;
+  const disabled = !scene || minorSinceMajor === 0 || !!state.anim;
+  btn.disabled = disabled;
+  if (disabled) {
+    btn.title = 'Run at least one minor step before refreshing the major cycle';
+    btn.setAttribute('aria-label', 'Run at least one minor step before refreshing the major cycle');
+  } else {
+    btn.title = 'Refresh the major cycle';
+    btn.setAttribute('aria-label', 'Refresh the major cycle');
+  }
+}
+
+function finishAnimation() {
+  if (!state.anim) return;
+  const callback = state.anim.onDone;
+  state.anim = null;
+  state.animFrame = null;
+  updateMajorButtonState();
+  render();
+  if (callback) callback();
+}
+
+function animationLoop() {
+  if (!state.anim) {
+    state.animFrame = null;
+    return;
+  }
+  render();
+  if (state.anim.fastMode && !state.anim.held) {
+    finishAnimation();
+    return;
+  }
+  // Don't finish while held
+  if (state.anim.held) {
+    state.animFrame = requestAnimationFrame(animationLoop);
+    return;
+  }
+  // Check completion: either normal time-based or release-based
+  let done = false;
+  if (state.anim.releaseTime != null) {
+    const sinceRelease = performance.now() - state.anim.releaseTime;
+    done = sinceRelease >= state.anim.duration * 0.85;
+  } else {
+    done = performance.now() >= state.anim.start + state.anim.duration;
+  }
+  if (done) {
+    finishAnimation();
+    if (!state.anim) {
+      return;
+    }
+  }
+  state.animFrame = requestAnimationFrame(animationLoop);
+}
+
+function beginAnimation(anim) {
+  state.anim = { ...anim, start: performance.now() };
+  if (!state.animFrame) state.animFrame = requestAnimationFrame(animationLoop);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  CONTROLS
+// ════════════════════════════════════════════════════════════════
+
+// Slider ↔ input sync
+function syncControl(sliderId, inputId, stateKey, transform) {
+  const slider = $(sliderId), input = $(inputId);
+  const update = (val) => {
+    const v = transform ? transform(parseFloat(val)) : parseFloat(val);
+    state[stateKey] = v;
+    slider.value = v;
+    input.value = v;
+  };
+  slider.addEventListener('input', () => update(slider.value));
+  input.addEventListener('change', () => update(input.value));
+}
+
+syncControl('gain-slider', 'gain-input', 'gain');
+syncControl('thresh-slider', 'thresh-input', 'threshold');
+(function syncSpeedControl() {
+  const slider = $('speed-slider');
+  const input = $('speed-input');
+  const updateFromSlider = (sliderVal) => {
+    const speed = sliderToSpeed(parseFloat(sliderVal));
+    state.speedFactor = speed;
+    slider.value = speedToSlider(speed);
+    input.value = speed.toFixed(1);
+  };
+  const updateFromInput = (inputVal) => {
+    const speed = roundSpeed(clamp(parseFloat(inputVal) || state.speedFactor, SPEED_MIN, SPEED_MAX));
+    state.speedFactor = speed;
+    slider.value = speedToSlider(speed);
+    input.value = speed.toFixed(1);
+  };
+  slider.addEventListener('input', () => updateFromSlider(slider.value));
+  input.addEventListener('change', () => updateFromInput(input.value));
+  updateFromInput(state.speedFactor);
+})();
+
+function syncAlgorithmUI() {
+  const disabled = state.mode !== '1d';
+  if (!ENABLED_1D_ALGORITHMS.includes(state.algorithm)) state.algorithm = 'hogbom';
+  algorithmSelect.disabled = disabled;
+  algorithmSelect.value = disabled ? 'hogbom' : state.algorithm;
+  sourceModelSelect.disabled = disabled;
+  sourceModelSelect.value = state.sourceModel;
+  updateMajorButtonState();
+}
+
+algorithmSelect.addEventListener('change', () => {
+  if (state.mode !== '1d') return;
+  stopRunning();
+  state.algorithm = algorithmSelect.value;
+  state.last1DAlgorithm = state.algorithm;
+  resetScene();
+});
+
+sourceModelSelect.addEventListener('change', () => {
+  if (state.mode !== '1d') return;
+  stopRunning();
+  state.sourceModel = sourceModelSelect.value;
+  resetScene();
+});
+
+imperfectionToggle.addEventListener('change', () => {
+  stopRunning();
+  state.imperfect = imperfectionToggle.checked;
+  resetScene();
+});
+
+if (weightingSelect) {
+  weightingSelect.addEventListener('change', () => {
+    weightingState.mode = weightingSelect.value;
+    updateWeightingControls();
+    renderWeightingDemo();
+  });
+}
+
+if ($('briggs-slider') && $('briggs-input')) {
+  const syncBriggs = (val) => {
+    const v = Math.max(-2, Math.min(2, Math.round(parseFloat(val) * 10) / 10));
+    weightingState.briggsRobust = v;
+    $('briggs-slider').value = v;
+    $('briggs-input').value = v.toFixed(1);
+    renderWeightingDemo();
+  };
+  $('briggs-slider').addEventListener('input', () => syncBriggs($('briggs-slider').value));
+  $('briggs-input').addEventListener('change', () => syncBriggs($('briggs-input').value));
+}
+
+if ($('super-slider') && $('super-input')) {
+  const syncSuper = (val) => {
+    const raw = Math.max(1, Math.min(9, Math.round(parseFloat(val) || 3)));
+    const odd = raw % 2 === 0 ? raw + 1 : raw;
+    const v = Math.max(1, Math.min(9, odd));
+    weightingState.superPixels = v;
+    $('super-slider').value = v;
+    $('super-input').value = v;
+    renderWeightingDemo();
+  };
+  $('super-slider').addEventListener('input', () => syncSuper($('super-slider').value));
+  $('super-input').addEventListener('change', () => syncSuper($('super-input').value));
+}
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    if (tab.dataset.mode === state.mode) return;
+    stopRunning();
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    if (state.mode === '1d') state.last1DAlgorithm = state.algorithm;
+    state.mode = tab.dataset.mode;
+    state.algorithm = state.mode === '1d' ? state.last1DAlgorithm : 'hogbom';
+    $('uv-container').style.display = state.mode === '2d' ? '' : 'none';
+    syncAlgorithmUI();
+    resetScene();
+  });
+});
+
+// Buttons
+// Step button: press-and-hold shows the subtraction term; release completes it
+(function() {
+  const btn = $('btn-step');
+  let stepResult = null;
+
+  function onDown(e) {
+    e.preventDefault();
+    if (!state.scene) return;
+    if (state.anim) return;
+    stepResult = doMinorStep(() => {
+      if (stepResult && stepResult.stalled) {
+        setBadge('MEM stalled', 'done');
+      } else if (stepResult && stepResult.peakVal <= effectiveThreshold(state.scene)) {
+        doMajorCycle(() => setBadge('Converged', 'done'));
+      } else if (state.scene.iteration % 10 === 0) {
+        doMajorCycle();
+      }
+    });
+    // Mark the animation as held so progress clamps
+    if (state.anim) state.anim.held = true;
+  }
+
+  function onUp() {
+    if (state.anim && state.anim.held) {
+      state.anim.held = false;
+      state.anim.releaseTime = performance.now();
+    }
+    stepResult = null;
+  }
+
+  btn.addEventListener('mousedown', onDown);
+  btn.addEventListener('touchstart', onDown, { passive: false });
+  window.addEventListener('mouseup', onUp);
+  window.addEventListener('touchend', onUp);
+})();
+
+$('btn-run').addEventListener('click', () => {
+  if (state.running) {
+    stopRunning();
+  } else {
+    startRunning();
+  }
+});
+
+$('btn-major').addEventListener('click', () => {
+  if (!state.scene) return;
+  if (state.anim) return;
+  if ($('btn-major').disabled) return;
+  doMajorCycle();
+});
+
+$('btn-reset').addEventListener('click', () => {
+  stopRunning();
+  resetScene();
+});
+
+function doMinorStep(onDone) {
+  const scene = state.scene;
+  if (!scene) return;
+  let step;
+  if (state.mode === '1d') {
+    step = step1DAlgorithm(scene, state.gain);
+  } else {
+    step = stepClean2D(scene, state.gain);
+  }
+  const badgeName = state.mode === '1d' ? ALGORITHM_META[scene.algorithm].short : 'Högbom';
+  setBadge(
+    step.stalled ? `${badgeName} stalled` : `${badgeName} minor #${scene.iteration}`,
+    step.stalled ? 'done' : 'minor'
+  );
+  if (step.peakVal == null) return step;
+  updateMajorButtonState();
+  beginAnimation({
+    kind: 'minor',
+    mode: state.mode,
+    duration: minorDurationMs(),
+    fastMode: state.running && isFastPlaybackMode(),
+    onDone,
+    ...step,
+  });
+  return step;
+}
+
+function doMinorStepInstant() {
+  const scene = state.scene;
+  if (!scene) return null;
+  let step;
+  if (state.mode === '1d') {
+    step = step1DAlgorithm(scene, state.gain);
+  } else {
+    step = stepClean2D(scene, state.gain);
+  }
+  const badgeName = state.mode === '1d' ? ALGORITHM_META[scene.algorithm].short : 'Högbom';
+  setBadge(
+    step.stalled ? `${badgeName} stalled` : `${badgeName} minor #${scene.iteration}`,
+    step.stalled ? 'done' : 'minor'
+  );
+  if (step.peakVal == null) return step;
+  updateMajorButtonState();
+  return step;
+}
+
+function doMajorCycle(onDone) {
+  const scene = state.scene;
+  if (!scene) return;
+  let major;
+  if (state.mode === '1d') {
+    major = restore1D(scene);
+  } else {
+    major = restore2D(scene);
+  }
+  const badgeName = state.mode === '1d' ? ALGORITHM_META[scene.algorithm].short : 'Högbom';
+  setBadge(`${badgeName} major #${scene.majorCycle}`, 'major');
+  updateMajorButtonState();
+  beginAnimation({
+    kind: 'major',
+    mode: state.mode,
+    duration: majorDurationMs(),
+    fastMode: state.running && isFastPlaybackMode(),
+    onDone,
+    ...major,
+  });
+}
+
+let runTimer = null;
+function startRunning() {
+  state.running = true;
+  setRunButton();
+
+  function tick() {
+    if (!state.running || !state.scene) { stopRunning(); return; }
+    if (isBatchPlaybackMode()) {
+      const batchLimit = fastBatchSize();
+      let lastStep = null;
+      let hitThreshold = false;
+      let hitMajorBoundary = false;
+      for (let i = 0; i < batchLimit; i++) {
+        lastStep = doMinorStepInstant();
+        if (!lastStep) break;
+        if (lastStep.stalled) {
+          setBadge('MEM stalled', 'done');
+          render();
+          stopRunning();
+          return;
+        }
+        if (lastStep.peakVal <= effectiveThreshold(state.scene)) {
+          hitThreshold = true;
+          break;
+        }
+        if (state.scene.iteration % 10 === 0) {
+          hitMajorBoundary = true;
+          break;
+        }
+      }
+
+      render();
+
+      if (!state.running) return;
+      if (hitThreshold) {
+        doMajorCycle(() => {
+          setBadge('Converged', 'done');
+          stopRunning();
+        });
+        return;
+      }
+      if (hitMajorBoundary) {
+        doMajorCycle(() => {
+          if (!state.running) return;
+          queueAutoplayTick(tick);
+        });
+        return;
+      }
+      queueAutoplayTick(tick);
+      return;
+    }
+
+    const step = doMinorStep(() => {
+      if (!state.running) return;
+      if (step.stalled) {
+        setBadge('MEM stalled', 'done');
+        stopRunning();
+        return;
+      }
+      if (step.peakVal <= effectiveThreshold(state.scene)) {
+        doMajorCycle(() => {
+          setBadge('Converged', 'done');
+          stopRunning();
+        });
+        return;
+      }
+      if (state.scene.iteration % 10 === 0) {
+        doMajorCycle(() => {
+          if (!state.running) return;
+          queueAutoplayTick(tick);
+        });
+      } else {
+        queueAutoplayTick(tick);
+      }
+    });
+  }
+  tick();
+}
+
+function stopRunning() {
+  state.running = false;
+  if (runTimer) { clearTimeout(runTimer); runTimer = null; }
+  setRunButton();
+}
+
+function resetScene() {
+  state.scene = createScene(state.mode, state.algorithm);
+  syncAlgorithmUI();
+  setBadge('Ready', '');
+  updateMajorButtonState();
+  render();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  SVG FLOW ARROWS + BACKGROUND BOXES
+// ════════════════════════════════════════════════════════════════
+
+function drawFlowArrows() {
+  if (!flowPanelsWrap || !flowSvg) return;
+  const wrap = flowPanelsWrap.getBoundingClientRect();
+  if (wrap.width < 10) return;
+
+  const cards = {
+    tl: $('card-sky').getBoundingClientRect(),
+    tr: $('card-dirty').getBoundingClientRect(),
+    bl: $('card-restored').getBoundingClientRect(),
+    br: $('card-residual').getBoundingClientRect(),
+  };
+
+  const r = rect => ({
+    x: rect.left - wrap.left,
+    y: rect.top - wrap.top,
+    w: rect.width, h: rect.height,
+    cx: rect.left - wrap.left + rect.width / 2,
+    cy: rect.top - wrap.top + rect.height / 2,
+    r: rect.right - wrap.left,
+    b: rect.bottom - wrap.top,
+  });
+  const tl = r(cards.tl), tr = r(cards.tr), bl = r(cards.bl), br = r(cards.br);
+  const W = wrap.width, H = wrap.height;
+
+  // ── Position background boxes ──
+  const pad = 10;
+  if (flowBgMajor) {
+    flowBgMajor.style.left = (tl.x - pad) + 'px';
+    flowBgMajor.style.top = (tl.y - pad - 18) + 'px';
+    flowBgMajor.style.width = (tl.w + pad * 2) + 'px';
+    flowBgMajor.style.height = (bl.b - tl.y + pad * 2 + 18) + 'px';
+  }
+  if (flowBgMinor) {
+    flowBgMinor.style.left = (tr.x - pad) + 'px';
+    flowBgMinor.style.top = (tr.y - pad - 18) + 'px';
+    flowBgMinor.style.width = (tr.w + pad * 2) + 'px';
+    flowBgMinor.style.height = (br.b - tr.y + pad * 2 + 18) + 'px';
+  }
+
+  // ── Build SVG ──
+  flowSvg.setAttribute('width', W);
+  flowSvg.setAttribute('height', H);
+  flowSvg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const majorCol = 'rgba(37,99,235,0.72)';
+  const majorColStrong = 'rgba(37,99,235,0.92)';
+  const minorCol = 'rgba(16,185,129,0.72)';
+  const minorColStrong = 'rgba(16,185,129,0.92)';
+  const sw = 3;
+  const headSz = 10;
+
+  // Helper: straight arrow with triangular head
+  function arrow(x1, y1, x2, y2, color, label, labelSide) {
+    const dx = x2 - x1, dy = y2 - y1;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    const ux = dx / len, uy = dy / len;
+    // Shorten line so head sits at endpoint
+    const ex = x2 - ux * headSz, ey = y2 - uy * headSz;
+    // Perpendicular
+    const px = -uy, py = ux;
+    // Arrowhead points
+    const ax = x2, ay = y2;
+    const bx = ex + px * headSz * 0.5, by = ey + py * headSz * 0.5;
+    const cx = ex - px * headSz * 0.5, cy = ey - py * headSz * 0.5;
+
+    let s = `<line x1="${x1}" y1="${y1}" x2="${ex}" y2="${ey}" stroke="${color}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    s += `<polygon points="${ax},${ay} ${bx},${by} ${cx},${cy}" fill="${color}"/>`;
+
+    if (label) {
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+      let tx = mx, ty = my;
+      const off = 13;
+      if (labelSide === 'above') ty = my - off;
+      else if (labelSide === 'below') ty = my + off + 4;
+      else if (labelSide === 'left') { tx = mx - off; ty = my; }
+      else if (labelSide === 'right') { tx = mx + off; ty = my; }
+      const anchor = (labelSide === 'left') ? 'end' : (labelSide === 'right') ? 'start' : 'middle';
+      const baseline = (labelSide === 'above') ? 'auto' : (labelSide === 'below') ? 'hanging' : 'central';
+      s += `<text x="${tx}" y="${ty}" text-anchor="${anchor}" dominant-baseline="${baseline}" fill="${color}" font-size="13" font-weight="800" letter-spacing="0.02em">${label}</text>`;
+    }
+    return s;
+  }
+
+  const gapH = tr.x - tl.r;  // horizontal gap between columns
+  const gapV = bl.y - tl.b;  // vertical gap between rows
+  const inset = 6;
+
+  let svg = '';
+
+  // Arrow 1: top row left→right  "iFFT"
+  svg += arrow(tl.r + inset, tl.cy, tr.x - inset, tr.cy, majorCol, 'iFFT', 'above');
+
+  // Arrow 2: bottom row right→left  "FFT"
+  svg += arrow(br.x - inset, br.cy, bl.r + inset, bl.cy, majorCol, 'FFT', 'below');
+
+  // Arrow 3: left column bottom→top  "De-gridding"
+  svg += arrow(bl.cx, bl.y - inset, tl.cx, tl.b + inset, majorCol, 'De-grid', 'left');
+
+  // Arrow 4: right column top→bottom  (minor cycle down)
+  const minorX1 = tr.cx - 10, minorX2 = tr.cx + 10;
+  svg += arrow(minorX1, tr.b + inset, minorX1, br.y - inset, minorCol, '', '');
+  // Arrow 5: right column bottom→top  (minor cycle up)
+  svg += arrow(minorX2, br.y - inset, minorX2, tr.b + inset, minorCol, '', '');
+
+  // Minor cycle label between the two arrows
+  const minorMy = (tr.b + br.y) / 2;
+  // On narrow screens, place label to the left of arrows to avoid overflow
+  const labelRight = tr.cx + 24 + 80; // approximate text width
+  if (labelRight > W - 4) {
+    svg += `<text x="${tr.cx - 24}" y="${minorMy}" text-anchor="end" dominant-baseline="central" fill="${minorCol}" font-size="13" font-weight="800" letter-spacing="0.02em">Deconvolve</text>`;
+  } else {
+    svg += `<text x="${tr.cx + 24}" y="${minorMy}" text-anchor="start" dominant-baseline="central" fill="${minorCol}" font-size="13" font-weight="800" letter-spacing="0.02em">Deconvolve</text>`;
+  }
+
+  flowSvg.innerHTML = svg;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RESIZE
+// ════════════════════════════════════════════════════════════════
+
+let resizeTimer = null;
+const ro = new ResizeObserver(() => {
+  if (resizeTimer) clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { render(); drawFlowArrows(); renderWeightingDemo(); }, 60);
+});
+const flowPanelEl = document.querySelector('.flow-panel');
+if (flowPanelEl) ro.observe(flowPanelEl);
+if (canvases.convergence) ro.observe(canvases.convergence);
+if (canvases.uv) ro.observe(canvases.uv);
+if (canvases.weightGrid) ro.observe(canvases.weightGrid);
+if (canvases.weightBeam) ro.observe(canvases.weightBeam);
+
+// ════════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════════
+
+function initPage() {
+  $('uv-container').style.display = 'none';
+  imperfectionToggle.checked = state.imperfect;
+  setRunButton();
+  sizeAllCanvases();
+  updateWeightingControls();
+  resetScene();
+  renderWeightingDemo();
+  drawFlowArrows();
+}
+
+if (document.readyState === 'complete') {
+  requestAnimationFrame(initPage);
+} else {
+  window.addEventListener('load', () => requestAnimationFrame(initPage), { once: true });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EOVSA Corner-Turn Visualization</title>
+  <style>
+    :root {
+      --bg: #f5f1e8;
+      --panel: #fcfaf5;
+      --panel-border: rgba(66, 59, 48, 0.18);
+      --panel-shadow: 0 16px 40px rgba(43, 38, 33, 0.08);
+      --text: #1a1715;
+      --muted: #6d675f;
+      --grid: rgba(55, 49, 44, 0.12);
+      --ink-soft: rgba(32, 28, 24, 0.78);
+      --accent: #0f766e;
+      --accent-soft: rgba(15, 118, 110, 0.12);
+      --highlight: #175cd3;
+      --wave: #195fa9;
+      --window: #b05f20;
+      --chip: rgba(21, 34, 68, 0.06);
+      --control: #ffffff;
+      --focus: rgba(23, 92, 211, 0.3);
+      --c1: #1f4ed8;
+      --c2: #d97706;
+      --c3: #1d9d3d;
+      --c4: #dc2626;
+      --c5: #8e3bb5;
+      --c6: #0ea5cf;
+      --c7: #8b5a2b;
+      --c8: #d94690;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), transparent 26%),
+        linear-gradient(180deg, #f7f3eb 0%, #f1ece2 100%);
+      color: var(--text);
+      font-family: "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    main {
+      width: min(1520px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    h1, h2 {
+      font-family: "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      letter-spacing: -0.02em;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2.1rem, 3vw, 3.2rem);
+      line-height: 1.02;
+    }
+
+    .intro {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .lede {
+      max-width: 1040px;
+      font-size: 1.04rem;
+      line-height: 1.55;
+      color: var(--ink-soft);
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--chip);
+      border: 1px solid rgba(28, 24, 20, 0.08);
+      font-size: 0.92rem;
+      color: var(--ink-soft);
+    }
+
+    .chip strong {
+      color: var(--text);
+      font-weight: 650;
+    }
+
+    .controls-card,
+    .figure-card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      box-shadow: var(--panel-shadow);
+    }
+
+    .controls-card {
+      padding: 18px 18px 14px;
+      margin-bottom: 18px;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: auto 1fr 1fr 1fr;
+      gap: 12px 18px;
+      align-items: end;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid rgba(31, 23, 19, 0.15);
+      border-radius: 14px;
+      background: var(--control);
+      color: var(--text);
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 640;
+      cursor: pointer;
+      transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(23, 92, 211, 0.28);
+      box-shadow: 0 10px 18px rgba(23, 92, 211, 0.08);
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 4px var(--focus);
+    }
+
+    .control {
+      display: grid;
+      gap: 6px;
+    }
+
+    .control label {
+      font-size: 0.9rem;
+      font-weight: 640;
+      color: var(--ink-soft);
+    }
+
+    .control-pair {
+      display: grid;
+      grid-template-columns: 1fr 82px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--highlight);
+    }
+
+    input[type="number"] {
+      width: 100%;
+      border: 1px solid rgba(31, 23, 19, 0.15);
+      border-radius: 12px;
+      background: var(--control);
+      color: var(--text);
+      padding: 9px 10px;
+      font: inherit;
+    }
+
+    .figures {
+      display: grid;
+      gap: 18px;
+    }
+
+    .figures-top {
+      display: grid;
+      grid-template-columns: minmax(0, 1.8fr) minmax(320px, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .figure-card {
+      padding: 16px 16px 14px;
+      overflow: hidden;
+    }
+
+    .figure-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px 16px;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+
+    .figure-head h2 {
+      font-size: 1.28rem;
+    }
+
+    .figure-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.96rem;
+      line-height: 1.45;
+    }
+
+    .viz-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(248,244,236,0.98));
+    }
+
+    .caption {
+      margin: 10px 4px 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.48;
+    }
+
+    .math {
+      font-family: "STIX Two Math", "Cambria Math", "STIXGeneral", serif;
+      white-space: nowrap;
+    }
+
+    .math .mi {
+      font-style: italic;
+    }
+
+    .math .unit {
+      font-style: normal;
+    }
+
+    .math sub {
+      font-size: 0.72em;
+    }
+
+    @media (max-width: 1080px) {
+      .controls-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .button-group {
+        grid-column: 1 / -1;
+      }
+
+      .figures-top {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      main {
+        width: min(100vw - 18px, 1520px);
+        padding-top: 18px;
+      }
+
+      .controls-card,
+      .figure-card {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .controls-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .control-pair {
+        grid-template-columns: 1fr 78px;
+      }
+
+      .chip {
+        font-size: 0.88rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="intro">
+      <h1>EOVSA Corner Turn</h1>
+      <p class="lede">
+        This interactive demo links one <strong>10.24&nbsp;&micro;s</strong> F-engine frame to the
+        packetized corner turn. The top panel shows a synthetic ADC-like voltage block and the
+        PFB-style window applied before the FFT; the lower diagram shows one active
+        <strong>512-channel slice</strong> being redistributed from all 8 ROACH boards to one
+        destination X-engine while the corresponding RF region is highlighted across the
+        <strong>1&ndash;18&nbsp;GHz</strong> EOVSA tuning range.
+      </p>
+      <div class="status-row" id="statusChips"></div>
+    </section>
+
+    <section class="controls-card" aria-label="Visualization controls">
+      <div class="controls-grid">
+        <div class="button-group">
+          <button id="prevBtn" type="button" aria-label="Previous state">Prev</button>
+          <button id="playBtn" type="button" aria-label="Play or pause autoplay">Pause</button>
+          <button id="nextBtn" type="button" aria-label="Next state">Next</button>
+        </div>
+
+        <div class="control">
+          <label for="bandRange">Band</label>
+          <div class="control-pair">
+            <input id="bandRange" type="range" min="1" max="52" step="1" value="1">
+            <input id="bandNumber" type="number" min="1" max="52" step="1" value="1">
+          </div>
+        </div>
+
+        <div class="control">
+          <label for="sliceRange">Slice</label>
+          <div class="control-pair">
+            <input id="sliceRange" type="range" min="1" max="8" step="1" value="1">
+            <input id="sliceNumber" type="number" min="1" max="8" step="1" value="1">
+          </div>
+        </div>
+
+        <div class="control">
+          <label for="speedRange">Speed (steps/s)</label>
+          <div class="control-pair">
+            <input id="speedRange" type="range" min="0.25" max="8" step="0.25" value="0.5">
+            <input id="speedNumber" type="number" min="0.25" max="8" step="0.25" value="0.5">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="figures">
+      <div class="figures-top">
+        <article class="figure-card">
+          <div class="figure-head">
+            <div>
+              <h2>F-Engine Time Block</h2>
+              <p>One 10.24 &micro;s frame and the 1792-frame accumulation to one 18.35 ms band dwell.</p>
+            </div>
+          </div>
+          <svg id="timePlot" class="viz-svg" viewBox="0 0 1440 360" role="img" aria-label="Time-domain F-engine frame visualization"></svg>
+          <p class="caption">
+            Frame duration matches EOVSA documentation:
+            <span class="math">8192 samples &times; 1.25 ns/sample = 10.24 &micro;s</span>.
+            Below the waveform, the panel expands that single frame into the per-band cadence:
+            <span class="math">1792 &times; 10.24 &micro;s = 18.35 <span class="unit">ms</span></span> on one band.
+          </p>
+        </article>
+
+        <article class="figure-card">
+          <div class="figure-head">
+            <div>
+              <h2>RF Spectrum Context</h2>
+            </div>
+          </div>
+          <svg id="spectrumPanel" class="viz-svg" viewBox="0 0 640 360" role="img" aria-label="EOVSA RF spectrum context"></svg>
+          <p class="caption">
+            The full axis spans <span class="math">1&ndash;18 <span class="unit">GHz</span></span>. The darker window is the current
+            <span class="math"><span class="mi">C</span><sub>k</sub></span> slice inside the active <span class="math">325 <span class="unit">MHz</span></span> band.
+          </p>
+        </article>
+      </div>
+
+      <article class="figure-card">
+        <div class="figure-head">
+          <div>
+            <h2>Corner Turn Data Flow</h2>
+            <p>The active slice <span class="math"><span class="mi">C</span><sub>k</sub></span> is regrouped from all 8 source boards onto destination ROACH <span class="math"><span class="mi">k</span></span>.</p>
+          </div>
+        </div>
+        <svg id="cornerTurn" class="viz-svg" viewBox="0 0 1600 720" role="img" aria-label="EOVSA corner-turn data flow visualization"></svg>
+        <p class="caption">
+          Only the current 8 active transfers are drawn at full strength so the board-level corner turn remains readable.
+        </p>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const NS = "http://www.w3.org/2000/svg";
+    const CARD_COLORS = [
+      getComputedStyle(document.documentElement).getPropertyValue("--c1").trim(),
+      getComputedStyle(document.documentElement).getPropertyValue("--c2").trim(),
+      getComputedStyle(document.documentElement).getPropertyValue("--c3").trim(),
+      getComputedStyle(document.documentElement).getPropertyValue("--c4").trim(),
+      getComputedStyle(document.documentElement).getPropertyValue("--c5").trim(),
+      getComputedStyle(document.documentElement).getPropertyValue("--c6").trim(),
+      getComputedStyle(document.documentElement).getPropertyValue("--c7").trim(),
+      getComputedStyle(document.documentElement).getPropertyValue("--c8").trim()
+    ];
+
+    const CONST = {
+      bandCount: 52,
+      sliceCount: 8,
+      bandStartGHz: 1.075,
+      bandWidthGHz: 0.325,
+      sampleRateHz: 800e6,
+      samplePeriodNs: 1.25,
+      frameSamples: 8192,
+      frameDurationUs: 8192 / 800,
+      framesPerBand: 1792,
+      frameGroupsPerBand: 14,
+      sourceRows: [
+        { label: "ROACH 1", ants: "Ant 1–2" },
+        { label: "ROACH 2", ants: "Ant 3–4" },
+        { label: "ROACH 3", ants: "Ant 5–6" },
+        { label: "ROACH 4", ants: "Ant 7–8" },
+        { label: "ROACH 5", ants: "Ant 9–10" },
+        { label: "ROACH 6", ants: "Ant 11–12" },
+        { label: "ROACH 7", ants: "Ant 13–14" },
+        { label: "ROACH 8", ants: "Ant 15–16" }
+      ]
+    };
+
+    const state = {
+      activeBand: 1,
+      activeSlice: 1,
+      speed: 0.5,
+      playing: true,
+      progress: 0,
+      lastTs: 0
+    };
+
+    const controls = {
+      prevBtn: document.getElementById("prevBtn"),
+      playBtn: document.getElementById("playBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      bandRange: document.getElementById("bandRange"),
+      bandNumber: document.getElementById("bandNumber"),
+      sliceRange: document.getElementById("sliceRange"),
+      sliceNumber: document.getElementById("sliceNumber"),
+      speedRange: document.getElementById("speedRange"),
+      speedNumber: document.getElementById("speedNumber")
+    };
+
+    const statusChips = document.getElementById("statusChips");
+    const timePlot = document.getElementById("timePlot");
+    const spectrumPanel = document.getElementById("spectrumPanel");
+    const cornerTurn = document.getElementById("cornerTurn");
+
+    let routeDots = [];
+    let currentRouteGeometries = [];
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function formatGHz(value) {
+      return `${value.toFixed(3)} GHz`;
+    }
+
+    function getBottomLayoutMode() {
+      return cornerTurn.clientWidth < 920 ? "compact" : "desktop";
+    }
+
+    function getTimeLayout() {
+      if (timePlot.clientWidth < 760) {
+        return {
+          width: 1020,
+          height: 648,
+          plot: { x: 72, y: 122, w: 888, h: 186 },
+          bracketY: 76,
+          titleX: 76,
+          titleY: 42,
+          titleSize: 21,
+          legendX: 76,
+          legendY: 88,
+          legendGap: 214,
+          legendSize: 14,
+          legendVertical: false,
+          bottomLabelY: 338,
+          sequence: {
+            mode: "column",
+            x: 76,
+            y: 380,
+            boxW: 868,
+            boxH: 98,
+            gap: 20
+          }
+        };
+      }
+
+      return {
+        width: 1440,
+        height: 508,
+        plot: { x: 88, y: 84, w: 1240, h: 198 },
+        bracketY: 48,
+        titleX: 96,
+        titleY: 34,
+        titleSize: 22,
+        legendX: 944,
+        legendY: 36,
+        legendGap: 144,
+        legendSize: 13,
+        legendVertical: false,
+        bottomLabelY: 324,
+        sequence: {
+          mode: "row",
+          startX: 198,
+          y: 362,
+          boxW: 472,
+          boxH: 118,
+          gap: 100
+        }
+      };
+    }
+
+    function getSpectrumLayout() {
+      if (spectrumPanel.clientWidth < 440) {
+        return {
+          width: 620,
+          height: 380,
+          plot: { x: 54, y: 104, w: 514, h: 132 },
+          axisBottom: 272,
+          infoY: 314,
+          tickSize: 12,
+          titleSize: 21
+        };
+      }
+
+      return {
+        width: 680,
+        height: 360,
+        plot: { x: 60, y: 94, w: 560, h: 132 },
+        axisBottom: 260,
+        infoY: 300,
+        tickSize: 12.5,
+        titleSize: 22
+      };
+    }
+
+    function getBottomGeometry() {
+      if (getBottomLayoutMode() === "compact") {
+        return {
+          width: 1040,
+          height: 760,
+          source: { x: 26, y: 78, w: 292, h: 660 },
+          transit: { x: 342, y: 78, w: 172, h: 660 },
+          right: { x: 538, y: 78, w: 474, h: 660 },
+          sourcePacketStartX: 150,
+          sourcePacketGap: 19,
+          sourcePacketW: 18,
+          sourcePacketH: 24,
+          rowY: [170, 242, 314, 386, 458, 530, 602, 674],
+          destLabelX: 562,
+          destBoxStartX: 662,
+          destBoxGap: 29,
+          destBoxW: 24,
+          destBoxH: 24,
+          xEngineX: 908,
+          xEngineW: 78,
+          xEngineH: 42,
+          titleSize: 16,
+          subtitleSize: 12.5,
+          routeDrop: 70
+        };
+      }
+
+      return {
+        width: 1600,
+        height: 640,
+        source: { x: 40, y: 78, w: 500, h: 500 },
+        transit: { x: 570, y: 78, w: 360, h: 500 },
+        right: { x: 960, y: 78, w: 600, h: 500 },
+        sourcePacketStartX: 184,
+        sourcePacketGap: 40,
+        sourcePacketW: 36,
+        sourcePacketH: 30,
+        rowY: [148, 202, 256, 310, 364, 418, 472, 526],
+        destLabelX: 1008,
+        destBoxStartX: 1128,
+        destBoxGap: 38,
+        destBoxW: 32,
+        destBoxH: 28,
+        xEngineX: 1456,
+        xEngineW: 82,
+        xEngineH: 44,
+        titleSize: 18,
+        subtitleSize: 15,
+        routeDrop: 92
+      };
+    }
+
+    function getBandStart(band) {
+      return CONST.bandStartGHz + (band - 1) * CONST.bandWidthGHz;
+    }
+
+    function getBandEnd(band) {
+      return getBandStart(band) + CONST.bandWidthGHz;
+    }
+
+    function getSliceWidthGHz() {
+      return CONST.bandWidthGHz / CONST.sliceCount;
+    }
+
+    function getSliceStart(band, slice) {
+      return getBandStart(band) + (slice - 1) * getSliceWidthGHz();
+    }
+
+    function getBandDwellMs() {
+      return (CONST.frameDurationUs * CONST.framesPerBand) / 1000;
+    }
+
+    function getCombinedIndex() {
+      return (state.activeBand - 1) * CONST.sliceCount + (state.activeSlice - 1);
+    }
+
+    function setCombinedIndex(index) {
+      const total = CONST.bandCount * CONST.sliceCount;
+      const wrapped = ((index % total) + total) % total;
+      state.activeBand = Math.floor(wrapped / CONST.sliceCount) + 1;
+      state.activeSlice = (wrapped % CONST.sliceCount) + 1;
+    }
+
+    function advanceState(delta) {
+      setCombinedIndex(getCombinedIndex() + delta);
+      state.progress = 0;
+      syncControls();
+      renderState();
+      updateRouteDots(state.playing ? 0 : 0.55);
+    }
+
+    function syncControls() {
+      controls.bandRange.value = String(state.activeBand);
+      controls.bandNumber.value = String(state.activeBand);
+      controls.sliceRange.value = String(state.activeSlice);
+      controls.sliceNumber.value = String(state.activeSlice);
+      controls.speedRange.value = String(state.speed);
+      controls.speedNumber.value = String(state.speed);
+      controls.playBtn.textContent = state.playing ? "Pause" : "Play";
+    }
+
+    function mulberry32(seed) {
+      let value = seed >>> 0;
+      return function() {
+        value += 0x6D2B79F5;
+        let t = value;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function sinc(x) {
+      if (Math.abs(x) < 1e-8) return 1;
+      const pix = Math.PI * x;
+      return Math.sin(pix) / pix;
+    }
+
+    function generateTimeSeries() {
+      const samples = CONST.frameSamples;
+      const frameSec = CONST.frameDurationUs * 1e-6;
+      const bandFrac = (state.activeBand - 1) / (CONST.bandCount - 1);
+      const sliceFrac = (state.activeSlice - 1) / (CONST.sliceCount - 1 || 1);
+      const rng = mulberry32(state.activeBand * 409 + state.activeSlice * 97);
+
+      const voltage = new Float32Array(samples);
+      const windowVals = new Float32Array(samples);
+
+      const cyclesA = 8 + bandFrac * 18 + sliceFrac * 2.2;
+      const cyclesB = 17 + bandFrac * 9 + sliceFrac * 1.3;
+      const phaseA = bandFrac * Math.PI * 1.3;
+      const phaseB = sliceFrac * Math.PI * 1.7;
+
+      let maxWindow = 0;
+      for (let i = 0; i < samples; i++) {
+        const t = i / (samples - 1);
+        const x = -4 + 8 * t;
+        const taper = 0.54 + 0.46 * Math.cos(Math.PI * x / 4);
+        const w = sinc(x) * taper;
+        windowVals[i] = w;
+        maxWindow = Math.max(maxWindow, Math.abs(w));
+
+        const carrierA = Math.sin(2 * Math.PI * cyclesA * t + phaseA);
+        const carrierB = Math.sin(2 * Math.PI * cyclesB * t + phaseB);
+        const noise = (rng() - 0.5) * 0.42;
+        voltage[i] = 0.62 * carrierA + 0.24 * carrierB + noise;
+      }
+
+      for (let i = 0; i < samples; i++) {
+        windowVals[i] /= maxWindow || 1;
+      }
+
+      return { voltage, windowVals, frameSec };
+    }
+
+    function buildPolyline(samples, x0, y0, width, height, yScale) {
+      const n = samples.length;
+      let d = "";
+      for (let i = 0; i < n; i++) {
+        const x = x0 + (i / (n - 1)) * width;
+        const y = y0 + height / 2 - samples[i] * yScale;
+        d += `${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)} `;
+      }
+      return d.trim();
+    }
+
+    function createSVG(tag, attrs = {}, text = "") {
+      const el = document.createElementNS(NS, tag);
+      Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, String(value)));
+      if (text) el.textContent = text;
+      return el;
+    }
+
+    function renderTimePlot() {
+      const { voltage, windowVals } = generateTimeSeries();
+      const svg = timePlot;
+      svg.innerHTML = "";
+      const layout = getTimeLayout();
+      const w = layout.width;
+      const h = layout.height;
+      const plot = layout.plot;
+      const activeColor = CARD_COLORS[state.activeSlice - 1];
+      const bandDwellMs = getBandDwellMs();
+      const framesPerGroup = CONST.framesPerBand / CONST.frameGroupsPerBand;
+      svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+
+      svg.appendChild(createSVG("rect", {
+        x: 8, y: 8, width: w - 16, height: h - 16, rx: 22,
+        fill: "#fbf8f1",
+        stroke: "rgba(46,39,31,0.12)"
+      }));
+
+      svg.appendChild(createSVG("rect", {
+        x: plot.x, y: plot.y, width: plot.w, height: plot.h, rx: 20,
+        fill: "rgba(255,255,255,0.9)",
+        stroke: "rgba(52,45,37,0.14)"
+      }));
+
+      svg.appendChild(createSVG("rect", {
+        x: plot.x, y: plot.y, width: plot.w, height: plot.h, rx: 20,
+        fill: activeColor,
+        "fill-opacity": 0.06
+      }));
+
+      for (let i = 0; i <= 5; i++) {
+        const gy = plot.y + (plot.h / 5) * i;
+        svg.appendChild(createSVG("line", {
+          x1: plot.x, y1: gy, x2: plot.x + plot.w, y2: gy,
+          stroke: "rgba(43,38,33,0.10)", "stroke-width": 1
+        }));
+      }
+
+      const tickUs = [0, 2, 4, 6, 8, 10.24];
+      tickUs.forEach((tick) => {
+        const x = plot.x + (tick / CONST.frameDurationUs) * plot.w;
+        svg.appendChild(createSVG("line", {
+          x1: x, y1: plot.y, x2: x, y2: plot.y + plot.h,
+          stroke: "rgba(43,38,33,0.10)", "stroke-width": 1
+        }));
+        svg.appendChild(createSVG("text", {
+          x, y: plot.y + plot.h + 26,
+          "text-anchor": "middle",
+          "font-size": 14,
+          fill: "rgba(42,36,31,0.78)"
+        }, tick === 10.24 ? "10.24 μs" : `${tick.toFixed(0)} μs`));
+      });
+
+      [-1.0, -0.5, 0, 0.5, 1.0].forEach((value) => {
+        const y = plot.y + plot.h / 2 - value * 78;
+        svg.appendChild(createSVG("text", {
+          x: plot.x - 18, y: y + 5,
+          "text-anchor": "end",
+          "font-size": 14,
+          fill: "rgba(42,36,31,0.74)"
+        }, value.toFixed(1)));
+      });
+
+      svg.appendChild(createSVG("path", {
+        d: buildPolyline(windowVals, plot.x, plot.y, plot.w, plot.h, 82),
+        fill: "none",
+        stroke: "#b05f20",
+        "stroke-width": 2.8,
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round"
+      }));
+
+      svg.appendChild(createSVG("path", {
+        d: buildPolyline(voltage, plot.x, plot.y, plot.w, plot.h, 74),
+        fill: "none",
+        stroke: "#195fa9",
+        "stroke-width": 1.6,
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round"
+      }));
+
+      const bracketY = layout.bracketY;
+      const bracketX1 = plot.x;
+      const bracketX2 = plot.x + plot.w;
+      svg.appendChild(createSVG("line", {
+        x1: bracketX1, y1: bracketY,
+        x2: bracketX2, y2: bracketY,
+        stroke: activeColor,
+        "stroke-width": 3
+      }));
+      svg.appendChild(createSVG("line", {
+        x1: bracketX1, y1: bracketY - 10,
+        x2: bracketX1, y2: bracketY + 10,
+        stroke: activeColor,
+        "stroke-width": 3
+      }));
+      svg.appendChild(createSVG("line", {
+        x1: bracketX2, y1: bracketY - 10,
+        x2: bracketX2, y2: bracketY + 10,
+        stroke: activeColor,
+        "stroke-width": 3
+      }));
+      svg.appendChild(createSVG("text", {
+        x: (bracketX1 + bracketX2) / 2,
+        y: bracketY - 16,
+        "text-anchor": "middle",
+        "font-size": timePlot.clientWidth < 760 ? 17 : 18,
+        "font-weight": 700,
+        fill: activeColor
+      }, "Active F-engine frame · 8192 samples = 10.24 μs"));
+
+
+      svg.appendChild(createSVG("text", {
+        x: plot.x + plot.w / 2, y: layout.bottomLabelY,
+        "text-anchor": "middle", "font-size": 16, fill: "rgba(42,36,31,0.82)"
+      }, "Time inside one EOVSA channelizer frame"));
+
+      svg.appendChild(createSVG("text", {
+        x: 28, y: plot.y + plot.h / 2,
+        transform: `rotate(-90 28 ${plot.y + plot.h / 2})`,
+        "text-anchor": "middle", "font-size": 16, fill: "rgba(42,36,31,0.82)"
+      }, "Normalized amplitude"));
+
+      const legend = [
+        { color: "#195fa9", text: "Synthetic voltage x[n]" },
+        { color: "#b05f20", text: "PFB-style window w[n]" },
+        { color: activeColor, text: `Band ${state.activeBand}, slice C${state.activeSlice}` }
+      ];
+      legend.forEach((item, idx) => {
+        const lx = layout.legendX + idx * layout.legendGap;
+        const ly = layout.legendY;
+        svg.appendChild(createSVG("circle", { cx: lx, cy: ly, r: 5.5, fill: item.color }));
+        svg.appendChild(createSVG("text", {
+          x: lx + 12, y: ly + 5,
+          "font-size": layout.legendSize,
+          fill: "rgba(42,36,31,0.8)"
+        }, item.text));
+      });
+
+      const sequence = layout.sequence;
+      const stageCount = 2;
+      const stageBoxes = sequence.mode === "row"
+        ? Array.from({ length: stageCount }, (_, index) => ({
+            x: sequence.startX + index * (sequence.boxW + sequence.gap),
+            y: sequence.y,
+            w: sequence.boxW,
+            h: sequence.boxH
+          }))
+        : Array.from({ length: stageCount }, (_, index) => ({
+            x: sequence.x,
+            y: sequence.y + index * (sequence.boxH + sequence.gap),
+            w: sequence.boxW,
+            h: sequence.boxH
+          }));
+
+      stageBoxes.forEach((box, index) => {
+        svg.appendChild(createSVG("rect", {
+          x: box.x, y: box.y, width: box.w, height: box.h, rx: 18,
+          fill: "rgba(255,255,255,0.9)",
+          stroke: index === 1 ? activeColor : "rgba(46,39,31,0.12)",
+          "stroke-opacity": index === 1 ? 0.45 : 1,
+          "stroke-width": index === 1 ? 1.5 : 1.2
+        }));
+      });
+
+      const arrowColor = "rgba(42,36,31,0.4)";
+      if (sequence.mode === "row") {
+        for (let i = 0; i < stageBoxes.length - 1; i++) {
+          const left = stageBoxes[i];
+          const right = stageBoxes[i + 1];
+          const y = left.y + left.h / 2;
+          const startX = left.x + left.w + 14;
+          const endX = right.x - 16;
+          svg.appendChild(createSVG("line", {
+            x1: startX, y1: y, x2: endX, y2: y,
+            stroke: arrowColor,
+            "stroke-width": 2.2
+          }));
+          svg.appendChild(createSVG("path", {
+            d: `M ${endX - 10} ${y - 7} L ${endX} ${y} L ${endX - 10} ${y + 7}`,
+            fill: arrowColor
+          }));
+        }
+      } else {
+        for (let i = 0; i < stageBoxes.length - 1; i++) {
+          const upper = stageBoxes[i];
+          const lower = stageBoxes[i + 1];
+          const x = upper.x + upper.w / 2;
+          const startY = upper.y + upper.h + 8;
+          const endY = lower.y - 10;
+          svg.appendChild(createSVG("line", {
+            x1: x, y1: startY, x2: x, y2: endY,
+            stroke: arrowColor,
+            "stroke-width": 2.2
+          }));
+          svg.appendChild(createSVG("path", {
+            d: `M ${x - 7} ${endY - 10} L ${x} ${endY} L ${x + 7} ${endY - 10}`,
+            fill: arrowColor
+          }));
+        }
+      }
+
+      const frameBox = stageBoxes[0];
+      const dwellBox = stageBoxes[1];
+      const smallLabelSize = sequence.mode === "row" ? 13 : 14;
+      const valueSize = sequence.mode === "row" ? 24 : 26;
+      const bodySize = sequence.mode === "row" ? 14 : 15;
+
+      svg.appendChild(createSVG("text", {
+        x: frameBox.x + 18, y: frameBox.y + 24,
+        "font-size": smallLabelSize,
+        "font-weight": 700,
+        fill: "rgba(42,36,31,0.72)"
+      }, "Step 1 · one F-engine frame"));
+      svg.appendChild(createSVG("text", {
+        x: frameBox.x + 18, y: frameBox.y + 56,
+        "font-size": valueSize,
+        "font-weight": 760,
+        fill: "#181614"
+      }, "10.24 μs"));
+      svg.appendChild(createSVG("text", {
+        x: frameBox.x + 18, y: frameBox.y + 80,
+        "font-size": bodySize,
+        fill: "rgba(42,36,31,0.82)"
+      }, "8192 samples enter the FFT/PFB once"));
+      svg.appendChild(createSVG("path", {
+        d: buildPolyline(
+          voltage,
+          frameBox.x + frameBox.w * 0.58,
+          frameBox.y + 24,
+          frameBox.w * 0.30,
+          frameBox.h * 0.46,
+          15
+        ),
+        fill: "none",
+        stroke: "#195fa9",
+        "stroke-width": 1.5,
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round"
+      }));
+
+      svg.appendChild(createSVG("text", {
+        x: dwellBox.x + 18, y: dwellBox.y + 24,
+        "font-size": smallLabelSize,
+        "font-weight": 700,
+        fill: activeColor
+      }, "Step 2 · accumulate one band dwell"));
+      svg.appendChild(createSVG("text", {
+        x: dwellBox.x + 18, y: dwellBox.y + 56,
+        "font-size": valueSize,
+        "font-weight": 760,
+        fill: "#181614"
+      }, `${bandDwellMs.toFixed(2)} ms`));
+      svg.appendChild(createSVG("text", {
+        x: dwellBox.x + 18, y: dwellBox.y + 80,
+        "font-size": bodySize,
+        fill: "rgba(42,36,31,0.82)"
+      }, `${CONST.framesPerBand} frames = ${CONST.frameGroupsPerBand} groups × ${framesPerGroup} frames`));
+
+      const dwellBar = {
+        x: dwellBox.x + 18,
+        y: dwellBox.y + dwellBox.h - 34,
+        w: dwellBox.w - 36,
+        h: 14
+      };
+      const dwellGap = 4;
+      const dwellCellW = (dwellBar.w - (CONST.frameGroupsPerBand - 1) * dwellGap) / CONST.frameGroupsPerBand;
+      for (let i = 0; i < CONST.frameGroupsPerBand; i++) {
+        svg.appendChild(createSVG("rect", {
+          x: dwellBar.x + i * (dwellCellW + dwellGap),
+          y: dwellBar.y,
+          width: dwellCellW,
+          height: dwellBar.h,
+          rx: 4,
+          fill: activeColor,
+          "fill-opacity": 0.16 + (0.22 * i) / Math.max(1, CONST.frameGroupsPerBand - 1),
+          stroke: activeColor,
+          "stroke-opacity": 0.35,
+          "stroke-width": 0.8
+        }));
+      }
+    }
+
+    function renderSpectrumPanel() {
+      const svg = spectrumPanel;
+      svg.innerHTML = "";
+
+      const layout = getSpectrumLayout();
+      const w = layout.width;
+      const h = layout.height;
+      const plot = layout.plot;
+      const activeColor = CARD_COLORS[state.activeSlice - 1];
+      const bandStart = getBandStart(state.activeBand);
+      const bandEnd = getBandEnd(state.activeBand);
+      const sliceStart = getSliceStart(state.activeBand, state.activeSlice);
+      const sliceEnd = sliceStart + getSliceWidthGHz();
+      const domainMin = 1;
+      const domainMax = 18;
+      const mapFreq = (f) => plot.x + ((f - domainMin) / (domainMax - domainMin)) * plot.w;
+
+      svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+
+      svg.appendChild(createSVG("rect", {
+        x: 8, y: 8, width: w - 16, height: h - 16, rx: 22,
+        fill: "#fbf8f1",
+        stroke: "rgba(46,39,31,0.12)"
+      }));
+
+      svg.appendChild(createSVG("text", {
+        x: 26, y: 38,
+        "font-size": layout.titleSize,
+        "font-weight": 700,
+        fill: "#181614"
+      }, "1–18 GHz EOVSA tuning context"));
+
+      svg.appendChild(createSVG("text", {
+        x: 26, y: 62,
+        "font-size": 14,
+        fill: "rgba(42,36,31,0.78)"
+      }, "Highlighted: active 325 MHz band and its current 1/8 corner-turn slice"));
+
+      svg.appendChild(createSVG("rect", {
+        x: plot.x, y: plot.y, width: plot.w, height: plot.h, rx: 18,
+        fill: "rgba(255,255,255,0.88)",
+        stroke: "rgba(46,39,31,0.12)"
+      }));
+
+      for (let tick = 1; tick <= 18; tick++) {
+        const x = mapFreq(tick);
+        svg.appendChild(createSVG("line", {
+          x1: x, y1: plot.y + 12, x2: x, y2: layout.axisBottom,
+          stroke: "rgba(43,38,33,0.10)",
+          "stroke-width": tick === 1 || tick === 18 ? 0 : 1
+        }));
+      }
+
+      for (let band = 1; band <= CONST.bandCount; band++) {
+        const bx = mapFreq(getBandStart(band));
+        const bw = mapFreq(getBandEnd(band)) - bx;
+        const active = band === state.activeBand;
+        svg.appendChild(createSVG("rect", {
+          x: bx,
+          y: plot.y + 38,
+          width: bw,
+          height: 38,
+          rx: 5,
+          fill: active ? activeColor : CARD_COLORS[(band - 1) % CARD_COLORS.length],
+          "fill-opacity": active ? 0.18 : 0.06,
+          stroke: active ? activeColor : "rgba(50,42,36,0.08)",
+          "stroke-width": active ? 2.1 : 0.7
+        }));
+      }
+
+      svg.appendChild(createSVG("rect", {
+        x: mapFreq(sliceStart),
+        y: plot.y + 32,
+        width: mapFreq(sliceEnd) - mapFreq(sliceStart),
+        height: 50,
+        rx: 6,
+        fill: activeColor,
+        "fill-opacity": 0.42,
+        stroke: activeColor,
+        "stroke-width": 2.4
+      }));
+
+      svg.appendChild(createSVG("line", {
+        x1: mapFreq(sliceStart + getSliceWidthGHz() / 2),
+        y1: plot.y + 16,
+        x2: mapFreq(sliceStart + getSliceWidthGHz() / 2),
+        y2: plot.y + 98,
+        stroke: activeColor,
+        "stroke-width": 2.1,
+        "stroke-dasharray": "6 5"
+      }));
+
+      const axisY = plot.y + 104;
+      svg.appendChild(createSVG("line", {
+        x1: plot.x, y1: axisY, x2: plot.x + plot.w, y2: axisY,
+        stroke: "rgba(42,36,31,0.72)", "stroke-width": 1.7
+      }));
+
+      [1, 2, 4, 6, 8, 10, 12, 14, 16, 18].forEach((tick) => {
+        const x = mapFreq(tick);
+        svg.appendChild(createSVG("line", {
+          x1: x, y1: axisY, x2: x, y2: axisY + 7,
+          stroke: "rgba(42,36,31,0.62)", "stroke-width": 1.2
+        }));
+        svg.appendChild(createSVG("text", {
+          x, y: axisY + 24,
+          "text-anchor": "middle",
+          "font-size": layout.tickSize,
+          fill: "rgba(42,36,31,0.82)"
+        }, `${tick}`));
+      });
+
+      svg.appendChild(createSVG("text", {
+        x: plot.x + plot.w / 2,
+        y: axisY + 44,
+        "text-anchor": "middle",
+        "font-size": 14,
+        fill: "rgba(42,36,31,0.82)"
+      }, "RF frequency (GHz)"));
+
+      const infoBoxes = [
+        { label: "Band", value: `${state.activeBand}: ${formatGHz(bandStart)}–${formatGHz(bandEnd)}` },
+        { label: "Slice", value: `C${state.activeSlice}: ${formatGHz(sliceStart)}–${formatGHz(sliceEnd)}` },
+        { label: "Destination", value: `ROACH ${state.activeSlice}` }
+      ];
+
+      infoBoxes.forEach((item, idx) => {
+        const bx = 26 + idx * (layout.width < 650 ? 188 : 206);
+        const bw = layout.width < 650 ? 176 : 194;
+        svg.appendChild(createSVG("rect", {
+          x: bx, y: layout.infoY, width: bw, height: 42, rx: 12,
+          fill: idx === 1 || idx === 2 ? activeColor : "rgba(28,24,20,0.04)",
+          "fill-opacity": idx === 1 || idx === 2 ? 0.09 : 1,
+          stroke: idx === 1 || idx === 2 ? activeColor : "rgba(46,39,31,0.10)"
+        }));
+        svg.appendChild(createSVG("text", {
+          x: bx + 14, y: layout.infoY + 17,
+          "font-size": 12.5,
+          "font-weight": 700,
+          fill: idx === 1 || idx === 2 ? activeColor : "rgba(42,36,31,0.82)"
+        }, item.label));
+        svg.appendChild(createSVG("text", {
+          x: bx + 14, y: layout.infoY + 32,
+          "font-size": 12,
+          fill: "rgba(42,36,31,0.80)"
+        }, item.value));
+      });
+    }
+
+    function roundedRectPath(x, y, w, h, r) {
+      return [
+        `M ${x + r} ${y}`,
+        `H ${x + w - r}`,
+        `Q ${x + w} ${y} ${x + w} ${y + r}`,
+        `V ${y + h - r}`,
+        `Q ${x + w} ${y + h} ${x + w - r} ${y + h}`,
+        `H ${x + r}`,
+        `Q ${x} ${y + h} ${x} ${y + h - r}`,
+        `V ${y + r}`,
+        `Q ${x} ${y} ${x + r} ${y}`,
+        "Z"
+      ].join(" ");
+    }
+
+    function computeActiveRouteGeometry(g, rowIndex) {
+      const sourceX = g.sourcePacketStartX + (state.activeSlice - 1) * g.sourcePacketGap + g.sourcePacketW / 2;
+      const sourceY = g.rowY[rowIndex] + g.sourcePacketH / 2;
+      const destX = g.destBoxStartX + rowIndex * g.destBoxGap + g.destBoxW / 2;
+      const destY = g.rowY[state.activeSlice - 1] + g.destBoxH / 2;
+      const dx = g.width < 1200 ? 74 : 110;
+      const c1 = { x: sourceX + dx, y: sourceY + g.routeDrop };
+      const c2 = { x: destX - dx, y: destY + g.routeDrop };
+      return {
+        start: { x: sourceX, y: sourceY },
+        c1,
+        c2,
+        end: { x: destX, y: destY }
+      };
+    }
+
+    function bezierPoint(route, t) {
+      const mt = 1 - t;
+      const x =
+        mt * mt * mt * route.start.x +
+        3 * mt * mt * t * route.c1.x +
+        3 * mt * t * t * route.c2.x +
+        t * t * t * route.end.x;
+      const y =
+        mt * mt * mt * route.start.y +
+        3 * mt * mt * t * route.c1.y +
+        3 * mt * t * t * route.c2.y +
+        t * t * t * route.end.y;
+      return { x, y };
+    }
+
+    function routePath(route) {
+      return `M ${route.start.x} ${route.start.y} C ${route.c1.x} ${route.c1.y}, ${route.c2.x} ${route.c2.y}, ${route.end.x} ${route.end.y}`;
+    }
+
+    function renderBottomPanel() {
+      cornerTurn.innerHTML = "";
+      currentRouteGeometries = [];
+      routeDots = [];
+      const svg = cornerTurn;
+      const g = getBottomGeometry();
+      const activeColor = CARD_COLORS[state.activeSlice - 1];
+      const compact = getBottomLayoutMode() === "compact";
+      svg.setAttribute("viewBox", `0 0 ${g.width} ${g.height}`);
+
+      svg.appendChild(createSVG("defs"));
+      const defs = svg.querySelector("defs");
+      const marker = createSVG("marker", {
+        id: "routeArrow",
+        markerWidth: 12,
+        markerHeight: 12,
+        refX: 9,
+        refY: 6,
+        orient: "auto",
+        markerUnits: "userSpaceOnUse"
+      });
+      marker.appendChild(createSVG("path", { d: "M 0 0 L 12 6 L 0 12 z", fill: activeColor }));
+      defs.appendChild(marker);
+
+      svg.appendChild(createSVG("rect", {
+        x: 8, y: 8, width: g.width - 16, height: g.height - 16, rx: 26,
+        fill: "#fbf8f1",
+        stroke: "rgba(45,39,32,0.12)"
+      }));
+
+      [
+        { box: g.source, title: "ROACH-major packet order" },
+        { box: g.transit, title: "EOVSA corner turn" },
+        { box: g.right, title: "Destination packet order" }
+      ].forEach(({ box, title }) => {
+        svg.appendChild(createSVG("path", {
+          d: roundedRectPath(box.x, box.y, box.w, box.h, 24),
+          fill: "rgba(255,255,255,0.86)",
+          stroke: "rgba(46,40,33,0.12)"
+        }));
+        svg.appendChild(createSVG("text", {
+          x: box.x + box.w / 2,
+          y: box.y - 12,
+          "text-anchor": "middle",
+          "font-size": g.titleSize,
+          "font-weight": 750,
+          fill: "#1a1715"
+        }, title));
+      });
+
+      svg.appendChild(createSVG("text", {
+        x: g.transit.x + g.transit.w / 2,
+        y: compact ? 104 : 108,
+        "text-anchor": "middle",
+        "font-size": compact ? 16 : 18,
+        "font-weight": 700,
+        fill: "#181614"
+      }, "10 GbE switch"));
+      svg.appendChild(createSVG("text", {
+        x: g.transit.x + g.transit.w / 2,
+        y: compact ? 124 : 132,
+        "text-anchor": "middle",
+        "font-size": compact ? 11.5 : 15,
+        fill: "rgba(42,36,31,0.78)"
+      }, compact ? "one active slice from all 8 ROACH boards" : "one 512-channel slice from all 8 source ROACH boards"));
+
+      svg.appendChild(createSVG("text", {
+        x: g.transit.x + g.transit.w / 2,
+        y: compact ? 144 : 162,
+        "text-anchor": "middle",
+        "font-size": compact ? 11.5 : 15,
+        fill: activeColor,
+        "font-weight": 700
+      }, compact ? `C${state.activeSlice} -> ROACH ${state.activeSlice}` : `Active transfer: slice C${state.activeSlice} -> destination ROACH ${state.activeSlice}`));
+
+      for (let row = 0; row < CONST.sourceRows.length; row++) {
+        const y = g.rowY[row];
+
+        svg.appendChild(createSVG("rect", {
+          x: g.source.x + 16, y: y - 26, width: g.source.w - 30, height: 50, rx: 14,
+          fill: row === 0 ? activeColor : "#000000",
+          "fill-opacity": row === 0 ? 0.08 : 0.02
+        }));
+
+        svg.appendChild(createSVG("text", {
+          x: g.source.x + 18, y: y - 4, "font-size": 15, "font-weight": 700,
+          fill: row === 0 ? activeColor : "#1b1816"
+        }, compact ? `R${row + 1}` : CONST.sourceRows[row].label));
+        svg.appendChild(createSVG("text", {
+          x: g.source.x + 18, y: y + 16, "font-size": 14,
+          fill: "rgba(42,36,31,0.76)"
+        }, compact ? `A${2 * row + 1}-${2 * row + 2}` : CONST.sourceRows[row].ants));
+
+        svg.appendChild(createSVG("line", {
+          x1: g.source.x + 110, y1: y,
+          x2: g.sourcePacketStartX - 10, y2: y,
+          stroke: "rgba(28,24,20,0.62)", "stroke-width": 1.8
+        }));
+        svg.appendChild(createSVG("path", {
+          d: `M ${g.sourcePacketStartX - 10} ${y - 6} L ${g.sourcePacketStartX} ${y} L ${g.sourcePacketStartX - 10} ${y + 6}`,
+          fill: "rgba(28,24,20,0.62)"
+        }));
+
+        for (let slice = 0; slice < CONST.sliceCount; slice++) {
+          const x = g.sourcePacketStartX + slice * g.sourcePacketGap;
+          const active = slice + 1 === state.activeSlice;
+          svg.appendChild(createSVG("rect", {
+            x, y: y - g.sourcePacketH / 2,
+            width: g.sourcePacketW, height: g.sourcePacketH, rx: 7,
+            fill: active ? CARD_COLORS[slice] : "#ffffff",
+            "fill-opacity": active ? 0.16 : 0.72,
+            stroke: CARD_COLORS[slice],
+            "stroke-width": active ? 2.4 : 1.5
+          }));
+          svg.appendChild(createSVG("text", {
+            x: x + g.sourcePacketW / 2, y: y + 5,
+            "text-anchor": "middle",
+            "font-size": compact ? 11 : 13,
+            "font-weight": active ? 700 : 500,
+            fill: active ? CARD_COLORS[slice] : "rgba(44,38,32,0.86)"
+          }, `C${slice + 1}`));
+        }
+      }
+
+      const switchTickXs = [620, 690, 760, 830, 900];
+      switchTickXs.forEach((x, idx) => {
+        for (let r = 0; r < CONST.sliceCount; r++) {
+          const y = g.rowY[r] + (idx % 2 === 0 ? -2 : 2);
+          svg.appendChild(createSVG("circle", {
+            cx: x,
+            cy: y,
+            r: idx === 2 ? 2.4 : 2,
+            fill: idx === 2 ? activeColor : "rgba(50,42,36,0.55)"
+          }));
+        }
+      });
+
+      for (let row = 0; row < CONST.sliceCount; row++) {
+        const y = g.rowY[row];
+        const isActiveRow = row + 1 === state.activeSlice;
+        const rowColor = CARD_COLORS[row];
+
+        svg.appendChild(createSVG("rect", {
+          x: g.right.x + 16, y: y - 28, width: g.right.w - 30, height: 54, rx: 14,
+          fill: isActiveRow ? rowColor : "#000000",
+          "fill-opacity": isActiveRow ? 0.08 : 0.02
+        }));
+
+        svg.appendChild(createSVG("text", {
+          x: g.destLabelX, y: y - 6,
+          "font-size": compact ? 13 : 15, "font-weight": 700,
+          fill: isActiveRow ? rowColor : "#1a1715"
+        }, `Slice C${row + 1}`));
+        const chStart = row * 512 + 1;
+        const chStop = chStart + 511;
+        svg.appendChild(createSVG("text", {
+          x: g.destLabelX, y: y + 14,
+          "font-size": compact ? 11.5 : 13.5, fill: "rgba(42,36,31,0.76)"
+        }, compact ? `${chStart}–${chStop}` : `ch. ${chStart}–${chStop}`));
+
+        for (let col = 0; col < CONST.sourceRows.length; col++) {
+          const x = g.destBoxStartX + col * g.destBoxGap;
+          const active = isActiveRow;
+          svg.appendChild(createSVG("rect", {
+            x, y: y - g.destBoxH / 2,
+            width: g.destBoxW, height: g.destBoxH, rx: 7,
+            fill: active ? rowColor : "#ffffff",
+            "fill-opacity": active ? 0.14 : 0.72,
+            stroke: rowColor,
+            "stroke-width": active ? 2.0 : 1.2
+          }));
+          svg.appendChild(createSVG("text", {
+            x: x + g.destBoxW / 2, y: y + 4.5,
+            "text-anchor": "middle",
+            "font-size": compact ? 10.5 : 12.5,
+            "font-weight": active && col + 1 === 1 ? 700 : 560,
+            fill: active ? rowColor : "rgba(44,38,32,0.82)"
+          }, `R${col + 1}`));
+        }
+
+        const destPacketsRight = g.destBoxStartX +
+          (CONST.sourceRows.length - 1) * g.destBoxGap +
+          g.destBoxW;
+
+        svg.appendChild(createSVG("path", {
+          d: `M ${destPacketsRight + 12} ${y} H ${g.xEngineX - 10}`,
+          fill: "none",
+          stroke: isActiveRow ? rowColor : "rgba(40,34,29,0.36)",
+          "stroke-width": isActiveRow ? 2.2 : 1.3
+        }));
+        svg.appendChild(createSVG("path", {
+          d: `M ${g.xEngineX - 10} ${y - 5} L ${g.xEngineX} ${y} L ${g.xEngineX - 10} ${y + 5}`,
+          fill: isActiveRow ? rowColor : "rgba(40,34,29,0.36)"
+        }));
+
+        svg.appendChild(createSVG("rect", {
+          x: g.xEngineX, y: y - g.xEngineH / 2,
+          width: g.xEngineW, height: g.xEngineH, rx: 10,
+          fill: isActiveRow ? rowColor : "#ffffff",
+          "fill-opacity": isActiveRow ? 0.10 : 0.76,
+          stroke: isActiveRow ? rowColor : "rgba(42,36,31,0.28)",
+          "stroke-width": isActiveRow ? 2.2 : 1.2
+        }));
+        svg.appendChild(createSVG("text", {
+          x: g.xEngineX + g.xEngineW / 2, y: y - 4,
+          "text-anchor": "middle", "font-size": compact ? 12.5 : 13.5,
+          "font-weight": 700,
+          fill: isActiveRow ? rowColor : "#1a1715"
+        }, compact ? `R${row + 1}` : `ROACH ${row + 1}`));
+        svg.appendChild(createSVG("text", {
+          x: g.xEngineX + g.xEngineW / 2, y: y + 14,
+          "text-anchor": "middle", "font-size": compact ? 11 : 12.5,
+          fill: "rgba(42,36,31,0.78)"
+        }, compact ? "X" : "X-engine"));
+      }
+
+      // Active route paths and animated dots.
+      for (let row = 0; row < CONST.sourceRows.length; row++) {
+        const route = computeActiveRouteGeometry(g, row);
+        currentRouteGeometries.push(route);
+        svg.appendChild(createSVG("path", {
+          d: routePath(route),
+          fill: "none",
+          stroke: activeColor,
+          "stroke-width": row === 0 ? 3.1 : 2.4,
+          "stroke-opacity": row === 0 ? 0.96 : 0.9,
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round",
+          "marker-end": "url(#routeArrow)"
+        }));
+
+        const dot = createSVG("circle", {
+          cx: route.start.x,
+          cy: route.start.y,
+          r: row === 0 ? 6.2 : 5.2,
+          fill: activeColor,
+          "fill-opacity": row === 0 ? 1 : 0.92,
+          stroke: "#ffffff",
+          "stroke-width": 1.3
+        });
+        routeDots.push(dot);
+        svg.appendChild(dot);
+      }
+    }
+
+    function updateRouteDots(progress) {
+      const t = state.playing ? clamp(progress, 0, 0.999) : 0.55;
+      for (let i = 0; i < routeDots.length; i++) {
+        const route = currentRouteGeometries[i];
+        if (!route) continue;
+        const jitter = (i / Math.max(1, routeDots.length - 1)) * 0.08;
+        const point = bezierPoint(route, clamp(t + jitter, 0, 0.999));
+        routeDots[i].setAttribute("cx", point.x.toFixed(2));
+        routeDots[i].setAttribute("cy", point.y.toFixed(2));
+      }
+    }
+
+    function renderStatusChips() {
+      const bandStart = getBandStart(state.activeBand);
+      const bandEnd = getBandEnd(state.activeBand);
+      const sliceStart = getSliceStart(state.activeBand, state.activeSlice);
+      const sliceEnd = sliceStart + getSliceWidthGHz();
+      const activeColor = CARD_COLORS[state.activeSlice - 1];
+
+      statusChips.innerHTML = "";
+
+      const chips = [
+        ["Frame", `8192 samples · ${CONST.frameDurationUs.toFixed(2)} μs`],
+        ["Band", `${state.activeBand} · ${formatGHz(bandStart)}–${formatGHz(bandEnd)}`],
+        ["Slice", `C${state.activeSlice} · ${formatGHz(sliceStart)}–${formatGHz(sliceEnd)}`],
+        ["Destination", `ROACH ${state.activeSlice}`]
+      ];
+
+      chips.forEach(([label, value], idx) => {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.innerHTML = `<span style="width:10px;height:10px;border-radius:999px;display:inline-block;background:${idx === 2 || idx === 3 ? activeColor : "rgba(28,24,20,0.38)"};"></span><strong>${label}</strong> ${value}`;
+        statusChips.appendChild(chip);
+      });
+    }
+
+    function renderState() {
+      renderStatusChips();
+      renderTimePlot();
+      renderSpectrumPanel();
+      renderBottomPanel();
+    }
+
+    function setBand(value) {
+      state.activeBand = clamp(Math.round(value), 1, CONST.bandCount);
+      state.progress = 0;
+      syncControls();
+      renderState();
+      updateRouteDots(state.playing ? 0 : 0.55);
+    }
+
+    function setSlice(value) {
+      state.activeSlice = clamp(Math.round(value), 1, CONST.sliceCount);
+      state.progress = 0;
+      syncControls();
+      renderState();
+      updateRouteDots(state.playing ? 0 : 0.55);
+    }
+
+    function setSpeed(value) {
+      state.speed = clamp(Number(value), 0.25, 8);
+      syncControls();
+    }
+
+    function bindPairedInputs(rangeInput, numberInput, onChange, parse = Number) {
+      rangeInput.addEventListener("input", () => {
+        numberInput.value = rangeInput.value;
+        onChange(parse(rangeInput.value));
+      });
+      numberInput.addEventListener("input", () => {
+        onChange(parse(numberInput.value));
+      });
+      numberInput.addEventListener("change", () => {
+        onChange(parse(numberInput.value));
+      });
+    }
+
+    controls.prevBtn.addEventListener("click", () => advanceState(-1));
+    controls.nextBtn.addEventListener("click", () => advanceState(1));
+    controls.playBtn.addEventListener("click", () => {
+      state.playing = !state.playing;
+      state.lastTs = 0;
+      syncControls();
+      updateRouteDots(state.playing ? 0 : 0.55);
+    });
+
+    bindPairedInputs(controls.bandRange, controls.bandNumber, setBand);
+    bindPairedInputs(controls.sliceRange, controls.sliceNumber, setSlice);
+    bindPairedInputs(controls.speedRange, controls.speedNumber, setSpeed);
+
+    function tick(ts) {
+      if (!state.lastTs) state.lastTs = ts;
+      const dt = (ts - state.lastTs) / 1000;
+      state.lastTs = ts;
+
+      if (state.playing) {
+        state.progress += dt * state.speed;
+        while (state.progress >= 1) {
+          state.progress -= 1;
+          setCombinedIndex(getCombinedIndex() + 1);
+          syncControls();
+          renderState();
+        }
+        updateRouteDots(state.progress);
+      } else {
+        updateRouteDots(0.55);
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    window.addEventListener("resize", () => {
+      renderState();
+      updateRouteDots(state.playing ? state.progress : 0.55);
+    });
+
+    syncControls();
+    renderState();
+    updateRouteDots(0.55);
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>

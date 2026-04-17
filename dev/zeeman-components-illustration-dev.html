@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zeeman Components Illustration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f3efe7;
+      --panel: rgba(255, 252, 246, 0.92);
+      --panel-strong: #fffaf2;
+      --ink: #1f2430;
+      --muted: #5f6673;
+      --grid: rgba(31, 36, 48, 0.12);
+      --accent: #a15c38;
+      --sigma-blue: #2563eb;
+      --pi: #16a34a;
+      --sigma-red: #dc2626;
+      --gold: #c9901a;
+      --shadow: 0 22px 60px rgba(75, 52, 26, 0.12);
+      --radius: 22px;
+      --ui-font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --ui-font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --math-font: "STIX Two Text", "Cambria Math", "STIXGeneral", "Times New Roman", serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--ui-font-text);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(220, 176, 97, 0.18), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.13), transparent 28%),
+        linear-gradient(160deg, #ede6d6 0%, #f6f2ea 42%, #ece4d7 100%);
+      padding: 24px;
+    }
+
+    .shell {
+      max-width: 1360px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero,
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(99, 79, 50, 0.14);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    .hero {
+      padding: 24px 26px 20px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-family: var(--ui-font-display);
+      font-size: clamp(2rem, 3.6vw, 3.5rem);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 76ch;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .controls {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: 90px minmax(0, 1fr);
+      gap: 14px;
+      align-items: end;
+    }
+
+    .control-row.two-up {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .control-row.example-row {
+      grid-template-columns: minmax(0, 1fr) 56px;
+    }
+
+    .control {
+      display: grid;
+      gap: 6px;
+    }
+
+    .control.compact-select select {
+      width: 90px;
+      max-width: 100%;
+    }
+
+    .control.compact-select {
+      justify-self: start;
+    }
+
+    .control label,
+    .mini-card .label {
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    select,
+    input[type="range"],
+    button {
+      width: 100%;
+    }
+
+    select,
+    button {
+      border-radius: 12px;
+      border: 1px solid rgba(31, 36, 48, 0.16);
+      background: var(--panel-strong);
+      color: var(--ink);
+      padding: 12px 14px;
+      font-size: 0.98rem;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 160ms ease, background 160ms ease;
+    }
+
+    .icon-button {
+      width: 56px;
+      min-width: 56px;
+      padding: 10px 0;
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      background: #fffdf8;
+    }
+
+    .range-wrap {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="range"] {
+      accent-color: var(--accent);
+    }
+
+    .value-pill {
+      min-width: 66px;
+      text-align: center;
+      border-radius: 999px;
+      background: rgba(161, 92, 56, 0.12);
+      color: var(--accent);
+      font-weight: 700;
+      padding: 9px 10px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .mini-card {
+      background: rgba(255, 250, 242, 0.92);
+      border-radius: 18px;
+      border: 1px solid rgba(31, 36, 48, 0.08);
+      padding: 16px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .mini-card .value {
+      font-size: 1.26rem;
+      font-weight: 800;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.24fr) minmax(0, 1.04fr) 300px;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .control-panel {
+      position: sticky;
+      top: 24px;
+    }
+
+    .control-panel .panel-body {
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      height: 100%;
+      align-content: start;
+    }
+
+    .layout > .panel:first-child,
+    .layout > .panel:last-child {
+      padding-bottom: 28px;
+    }
+
+    .panel h2 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: 0.02em;
+    }
+
+    .panel p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .viz-frame {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.16)),
+        repeating-linear-gradient(90deg, transparent 0 56px, rgba(31,36,48,0.025) 56px 57px);
+      border-radius: 18px;
+      border: 1px solid rgba(31, 36, 48, 0.08);
+      overflow: hidden;
+    }
+
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .layout > .panel:not(.control-panel) {
+      grid-template-rows: auto auto 1fr;
+    }
+
+    .layout > .panel:not(.control-panel) .viz-frame {
+      height: 100%;
+      min-height: 0;
+    }
+
+    .layout > .panel:not(.control-panel) svg {
+      height: 100%;
+    }
+
+    .lower {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+    }
+
+    .transitions-table {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      max-height: 540px;
+      overflow: auto;
+      padding-right: 6px;
+    }
+
+    .transition-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+      background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(31,36,48,0.08);
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+
+    .transition-row.active {
+      border-color: rgba(201, 144, 26, 0.55);
+      box-shadow: inset 0 0 0 1px rgba(201, 144, 26, 0.45);
+      background: rgba(255, 246, 213, 0.9);
+    }
+
+    .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+    }
+
+    .component-name {
+      font-weight: 700;
+    }
+
+    .footer-note {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .geometry-box {
+      background: rgba(255,255,255,0.58);
+      border: 1px solid rgba(31,36,48,0.08);
+      border-radius: 16px;
+      padding: 10px;
+    }
+
+    .geometry-box svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .equation {
+      font-family: "STIX Two Math", "Cambria Math", "Times New Roman", serif;
+      font-size: 1.05rem;
+      color: var(--ink);
+    }
+
+    .math-symbol,
+    .math-var,
+    .math-text {
+      font-family: "STIX Two Math", "Cambria Math", "Noto Sans Math", "Times New Roman", serif;
+    }
+
+    .math-text sub,
+    .component-label sub,
+    .equation sub {
+      font-size: 0.72em;
+      line-height: 0;
+      vertical-align: -0.28em;
+    }
+
+    .math-var {
+      font-style: italic;
+    }
+
+    .math-symbol {
+      font-weight: 600;
+    }
+
+    .svg-math {
+      font-family: "STIX Two Math", "Cambria Math", "Noto Sans Math", "Times New Roman", serif;
+    }
+
+    @media (max-width: 1080px) {
+      .metrics,
+      .layout,
+      .lower {
+        grid-template-columns: 1fr;
+      }
+
+      .control-panel {
+        position: static;
+      }
+    }
+  </style>
+<link rel="stylesheet" href="../nvidia-dev-theme.css?v=bright-20260405">
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <h1>Formation of <span class="math-text" style="color:var(--sigma-blue)">σ<sub>+</sub></span>, <span class="math-text" style="color:var(--pi)">π</span>, and <span class="math-text" style="color:var(--sigma-red)">σ<sub>−</sub></span> Zeeman components</h1>
+      <p>
+        This page shows how one spectral line splits into magnetic sublevels and how the allowed
+        sublevel transitions build the observed wavelength components. The sign convention follows the lecture figure:
+        <strong><span class="math-text">Δm = +1 → σ<sub>+</sub></span></strong>, <strong><span class="math-text">Δm = 0 → π</span></strong>, and <strong><span class="math-text">Δm = -1 → σ<sub>−</sub></span></strong>.
+      </p>
+
+      <div class="metrics">
+        <div class="mini-card">
+          <div class="label">Current line</div>
+          <div id="lineName" class="value">Normal triplet</div>
+          <div id="lineMeta" class="footer-note">J_lower = 0, J_upper = 1</div>
+        </div>
+        <div class="mini-card">
+          <div class="label">Distinct wavelength components</div>
+          <div id="componentCount" class="value">3</div>
+          <div class="footer-note">Transitions with the same shift add together.</div>
+        </div>
+        <div class="mini-card">
+          <div class="label">Highlighted contribution</div>
+          <div id="focusLabel" class="value math-text">σ<sub>+</sub></div>
+          <div id="focusMeta" class="footer-note">m_l = 0 to m_u = +1</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="layout">
+      <section class="panel">
+        <h2>1. Split levels and allowed transitions</h2>
+        <p>
+          Each level with total angular momentum <span class="equation">J</span> splits into
+          <span class="equation">2J + 1</span> magnetic sublevels. A photon can connect only states with
+          <span class="equation">Δm = -1, 0, +1</span>.
+        </p>
+        <div class="viz-frame">
+          <svg id="levelSvg" viewBox="0 0 840 760" aria-label="Zeeman level splitting diagram"></svg>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>2. Spectrum built from those transitions</h2>
+        <p>
+          The wavelength shift of each transition depends on the difference of magnetic energy shifts
+          between the upper and lower sublevels. Transitions landing at the same
+          <span class="equation">Δλ</span> add into one stronger observed component.
+        </p>
+        <div class="viz-frame">
+          <svg id="spectrumSvg" viewBox="0 0 720 760" aria-label="Zeeman component spectrum"></svg>
+        </div>
+      </section>
+
+      <aside class="panel control-panel">
+        <h2>3. Controls</h2>
+        <div class="panel-body">
+          <div class="controls">
+            <div class="control-row example-row">
+              <div class="control">
+                <label for="exampleSelect">Example line</label>
+                <select id="exampleSelect"></select>
+              </div>
+              <div class="control">
+                <label>&nbsp;</label>
+                <button id="playButton" class="icon-button" type="button" aria-label="Pause loop">⏸</button>
+              </div>
+            </div>
+            <div class="control-row two-up">
+              <div class="control">
+                <label for="fieldSlider">|B| scale</label>
+                <div class="range-wrap">
+                  <input id="fieldSlider" type="range" min="0" max="2.4" step="0.02" value="1.2">
+                  <div id="fieldValue" class="value-pill">1.20</div>
+                </div>
+              </div>
+              <div class="control">
+                <label for="widthSlider">Instr. FWHM</label>
+                <div class="range-wrap">
+                  <input id="widthSlider" type="range" min="0.08" max="0.55" step="0.01" value="0.20">
+                  <div id="widthValue" class="value-pill">0.20</div>
+                </div>
+              </div>
+            </div>
+            <div class="control-row two-up">
+              <div class="control">
+                <label for="glSlider"><span class="math-text">g<sub>l</sub></span></label>
+                <div class="range-wrap">
+                  <input id="glSlider" type="range" min="0" max="2.5" step="0.01" value="0.00">
+                  <div id="glValue" class="value-pill">0.00</div>
+                </div>
+              </div>
+              <div class="control">
+                <label for="guSlider"><span class="math-text">g<sub>u</sub></span></label>
+                <div class="range-wrap">
+                  <input id="guSlider" type="range" min="0" max="2.5" step="0.01" value="1.00">
+                  <div id="guValue" class="value-pill">1.00</div>
+                </div>
+              </div>
+            </div>
+            <div class="control-row">
+              <div class="control compact-select">
+                <label for="stokesSelect">Observed Stokes</label>
+                <select id="stokesSelect">
+                  <option value="I">I</option>
+                  <option value="Q">Q</option>
+                  <option value="U">U</option>
+                  <option value="V">V</option>
+                </select>
+              </div>
+              <div class="control">
+                <label for="moSlider">MO mixing</label>
+                <div class="range-wrap">
+                  <input id="moSlider" type="range" min="0" max="1" step="0.01" value="0">
+                  <div id="moValue" class="value-pill">0.00</div>
+                </div>
+              </div>
+            </div>
+            <div class="control">
+              <label for="angleSlider">LOS-B <span class="math-text">θ</span></label>
+              <div class="range-wrap">
+                <input id="angleSlider" type="range" min="0" max="90" step="1" value="0">
+                <div id="angleValue" class="value-pill">0°</div>
+              </div>
+            </div>
+            <div class="control">
+              <label for="azimuthSlider">Azimuth <span class="math-text">φ</span></label>
+              <div class="range-wrap">
+                <input id="azimuthSlider" type="range" min="0" max="360" step="1" value="0">
+                <div id="azimuthValue" class="value-pill">0°</div>
+              </div>
+            </div>
+            <div class="geometry-box">
+              <svg id="geometrySvg" viewBox="0 0 260 220" aria-label="Viewing geometry illustration"></svg>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="lower">
+      <section class="panel">
+        <h2>4. Transition-by-transition buildup</h2>
+        <p>
+          The highlighted row is the transition currently emphasized in the level diagram and the spectrum.
+          The loop steps through every allowed transition and then moves to the next example line.
+        </p>
+        <div id="transitionsTable" class="transitions-table"></div>
+      </section>
+
+      <section class="panel">
+        <h2>5. Reading guide</h2>
+        <p>
+          The component labels follow the common selection-rule notation:
+          <strong class="math-text">σ<sub>+</sub></strong> for <span class="equation">Δm = +1</span>,
+          <strong class="math-text">π</strong> for <span class="equation">Δm = 0</span>,
+          and <strong class="math-text">σ<sub>−</sub></strong> for <span class="equation">Δm = -1</span>.
+        </p>
+        <p>
+          In the wavelength convention used on this page, <strong class="math-text">σ<sub>+</sub></strong> is the
+          blue-shifted component and <strong class="math-text">σ<sub>−</sub></strong> is the red-shifted component.
+          Some books flip this sign labeling depending on whether they emphasize photon angular momentum or wavelength shift,
+          so the important thing is to track the stated <span class="equation">Δm</span> convention.
+        </p>
+        <p>
+          The spectrum panel includes the viewing angle <span class="equation">θ</span> between the line of sight and
+          the magnetic field, plus an azimuth angle <span class="equation">φ</span> for the linear-polarization reference frame. For <span class="equation">θ = 0°</span> only the circularly polarized
+          <strong class="math-text">σ</strong> components are seen and <span class="equation">V</span> is strongest.
+          For <span class="equation">θ = 90°</span> the circular signal vanishes, the
+          <strong class="math-text">π</strong> component appears, and the linear-polarization signal rotates between
+          <span class="equation">Q</span> and <span class="equation">U</span> as <span class="equation">φ</span> changes.
+        </p>
+        <p>
+          The <strong>MO mixing</strong> slider is a toy magneto-optical control. It does not solve the full
+          Unno-Rachkovsky transfer problem; it simply mixes <span class="equation">Q</span> and
+          <span class="equation">U</span> and adds a small dispersive distortion to <span class="equation">V</span>
+          so you can see qualitatively how propagation effects can couple the Stokes parameters.
+        </p>
+        <p>
+          The relative line strengths are computed from the angular-momentum coupling factor
+          <span class="equation">S ∝ (2<span class="math-var">J</span><sub>u</sub> + 1) | (<span class="math-var">J</span><sub>u</sub> 1 <span class="math-var">J</span><sub>l</sub>; -<span class="math-var">m</span><sub>u</sub> <span class="math-var">q</span> <span class="math-var">m</span><sub>l</sub>) |<sup>2</sup></span>,
+          so the anomalous examples naturally produce uneven line amplitudes and more than three components.
+        </p>
+        <p id="exampleNote" class="footer-note"></p>
+        <p class="footer-note">
+          The horizontal axis is shown in arbitrary Lorentz-like wavelength units, so the page emphasizes
+          the pattern formation rather than a specific dimensional calibration.
+        </p>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const examples = [
+      {
+        id: "normal-triplet",
+        name: "Normal Zeeman triplet",
+        lowerLabel: "Lower level",
+        upperLabel: "Upper level",
+        Jl: 0,
+        Ju: 1,
+        gl: 0.0,
+        gu: 1.0,
+        note: "Example 1 is the normal Zeeman triplet: one lower sublevel connects to three upper sublevels, producing exactly three components, σ+, π, and σ−."
+      },
+      {
+        id: "asymmetric-anomalous",
+        name: "Anomalous Zeeman pattern (J = 1 to 2)",
+        lowerLabel: "Lower level",
+        upperLabel: "Upper level",
+        Jl: 1,
+        Ju: 2,
+        gl: 1.20,
+        gu: 1.75,
+        note: "Example 2 is an anomalous Zeeman pattern with J = 1 to J = 2. It shows how sublevel counts and Landé factors produce a set of σ+, π, and σ− contributions."
+      },
+      {
+        id: "fe63015",
+        name: "Fe I 630.15 nm example",
+        lowerLabel: "<tspan baseline-shift=\"super\" font-size=\"13\">5</tspan>P<tspan baseline-shift=\"sub\" font-size=\"13\">2</tspan>-like lower term",
+        upperLabel: "<tspan baseline-shift=\"super\" font-size=\"13\">5</tspan>D<tspan baseline-shift=\"sub\" font-size=\"13\">2</tspan>-like upper term",
+        Jl: 2,
+        Ju: 2,
+        gl: 1.8333,
+        gu: 1.5000,
+        note: "Example 3 is an anomalous J = 2 to J = 2 pattern, similar to Fe I 630.15 nm. Different Landé factors spread the allowed transitions into many unequal σ+, π, and σ− subcomponents."
+      }
+    ];
+
+    const colors = {
+      "sigma_blue": getCss("--sigma-blue"),
+      "pi": getCss("--pi"),
+      "sigma_red": getCss("--sigma-red")
+    };
+
+    const state = {
+      exampleIndex: 0,
+      fieldScale: 1.2,
+      profileWidth: 0.20,
+      gLower: 0,
+      gUpper: 1,
+      highlightedIndex: 0,
+      playing: true,
+      stokes: "I",
+      angleDeg: 0,
+      azimuthDeg: 0,
+      moMix: 0
+    };
+
+    const exampleSelect = document.getElementById("exampleSelect");
+    const fieldSlider = document.getElementById("fieldSlider");
+    const widthSlider = document.getElementById("widthSlider");
+    const stokesSelect = document.getElementById("stokesSelect");
+    const glSlider = document.getElementById("glSlider");
+    const guSlider = document.getElementById("guSlider");
+    const angleSlider = document.getElementById("angleSlider");
+    const azimuthSlider = document.getElementById("azimuthSlider");
+    const moSlider = document.getElementById("moSlider");
+    const fieldValue = document.getElementById("fieldValue");
+    const widthValue = document.getElementById("widthValue");
+    const glValue = document.getElementById("glValue");
+    const guValue = document.getElementById("guValue");
+    const angleValue = document.getElementById("angleValue");
+    const azimuthValue = document.getElementById("azimuthValue");
+    const moValue = document.getElementById("moValue");
+    const playButton = document.getElementById("playButton");
+    const levelSvg = document.getElementById("levelSvg");
+    const spectrumSvg = document.getElementById("spectrumSvg");
+    const geometrySvg = document.getElementById("geometrySvg");
+    const transitionsTable = document.getElementById("transitionsTable");
+    const lineName = document.getElementById("lineName");
+    const lineMeta = document.getElementById("lineMeta");
+    const componentCount = document.getElementById("componentCount");
+    const focusLabel = document.getElementById("focusLabel");
+    const focusMeta = document.getElementById("focusMeta");
+    const exampleNote = document.getElementById("exampleNote");
+
+    let loopTimer = null;
+
+    init();
+
+    function init() {
+      for (const example of examples) {
+        const option = document.createElement("option");
+        option.value = example.id;
+        option.textContent = example.name;
+        exampleSelect.appendChild(option);
+      }
+
+      exampleSelect.addEventListener("change", () => {
+        state.exampleIndex = exampleSelect.selectedIndex;
+        const example = examples[state.exampleIndex];
+        state.gLower = example.gl;
+        state.gUpper = example.gu;
+        state.highlightedIndex = 0;
+        render();
+      });
+
+      fieldSlider.addEventListener("input", () => {
+        state.fieldScale = Number(fieldSlider.value);
+        render();
+      });
+
+      widthSlider.addEventListener("input", () => {
+        state.profileWidth = Number(widthSlider.value);
+        render();
+      });
+
+      glSlider.addEventListener("input", () => {
+        state.gLower = Number(glSlider.value);
+        render();
+      });
+
+      guSlider.addEventListener("input", () => {
+        state.gUpper = Number(guSlider.value);
+        render();
+      });
+
+      stokesSelect.addEventListener("change", () => {
+        state.stokes = stokesSelect.value;
+        render();
+      });
+
+      angleSlider.addEventListener("input", () => {
+        state.angleDeg = Number(angleSlider.value);
+        render();
+      });
+
+      azimuthSlider.addEventListener("input", () => {
+        state.azimuthDeg = Number(azimuthSlider.value);
+        render();
+      });
+
+      moSlider.addEventListener("input", () => {
+        state.moMix = Number(moSlider.value);
+        render();
+      });
+
+      playButton.addEventListener("click", () => {
+        state.playing = !state.playing;
+        syncLoop();
+        render();
+      });
+
+      exampleSelect.selectedIndex = state.exampleIndex;
+      state.gLower = examples[state.exampleIndex].gl;
+      state.gUpper = examples[state.exampleIndex].gu;
+      stokesSelect.value = state.stokes;
+      glSlider.value = state.gLower.toFixed(2);
+      guSlider.value = state.gUpper.toFixed(2);
+      angleSlider.value = String(state.angleDeg);
+      azimuthSlider.value = String(state.azimuthDeg);
+      moSlider.value = String(state.moMix);
+      syncLoop();
+      render();
+    }
+
+    function syncLoop() {
+      if (loopTimer !== null) {
+        clearInterval(loopTimer);
+        loopTimer = null;
+      }
+      if (state.playing) {
+        loopTimer = setInterval(stepLoop, 1350);
+      }
+    }
+
+    function stepLoop() {
+      const model = buildModel(examples[state.exampleIndex], state.fieldScale, state.gLower, state.gUpper);
+      state.highlightedIndex = (state.highlightedIndex + 1) % model.transitions.length;
+      render();
+    }
+
+    function render() {
+      const example = examples[state.exampleIndex];
+      const model = buildModel(example, state.fieldScale, state.gLower, state.gUpper);
+      if (state.highlightedIndex >= model.transitions.length) {
+        state.highlightedIndex = 0;
+      }
+      const focus = model.transitions[state.highlightedIndex];
+
+      fieldValue.textContent = state.fieldScale.toFixed(2);
+      widthValue.textContent = state.profileWidth.toFixed(2);
+      glValue.textContent = state.gLower.toFixed(2);
+      guValue.textContent = state.gUpper.toFixed(2);
+      glSlider.value = state.gLower.toFixed(2);
+      guSlider.value = state.gUpper.toFixed(2);
+      angleValue.textContent = `${Math.round(state.angleDeg)}°`;
+      azimuthValue.textContent = `${Math.round(state.azimuthDeg)}°`;
+      moValue.textContent = state.moMix.toFixed(2);
+      lineName.textContent = example.name;
+      lineMeta.innerHTML = `<span class="math-text">J<sub>l</sub></span> = ${formatNumber(example.Jl)}, <span class="math-text">g<sub>l</sub></span> = ${state.gLower.toFixed(4)}; <span class="math-text">J<sub>u</sub></span> = ${formatNumber(example.Ju)}, <span class="math-text">g<sub>u</sub></span> = ${state.gUpper.toFixed(4)}`;
+      componentCount.textContent = String(model.components.length);
+      focusLabel.innerHTML = componentLabelHTML(focus.component);
+      focusLabel.style.color = colors[focus.component];
+      focusMeta.innerHTML = `<span class="math-text">m<sub>l</sub></span> = ${signed(focus.ml)} to <span class="math-text">m<sub>u</sub></span> = ${signed(focus.mu)}, <span class="math-text">Δm</span> = ${signed(focus.q)}, <span class="math-text">Δλ</span> = ${focus.shift.toFixed(2)}`;
+      exampleNote.textContent = example.note;
+      playButton.textContent = state.playing ? "⏸" : "▶";
+      playButton.setAttribute("aria-label", state.playing ? "Pause loop" : "Resume loop");
+
+      renderLevelDiagram(levelSvg, model, focus, example);
+      renderSpectrum(spectrumSvg, model, focus, state.profileWidth, state.stokes, state.angleDeg, state.azimuthDeg, state.moMix);
+      renderGeometrySketch(geometrySvg, state.angleDeg, state.azimuthDeg);
+      renderTransitionTable(model, state.highlightedIndex);
+    }
+
+    function buildModel(example, B, gLower, gUpper) {
+      const lowerLevels = [];
+      const upperLevels = [];
+      for (let m = -example.Jl; m <= example.Jl + 1e-9; m += 1) {
+        lowerLevels.push({ m, shift: gLower * m * B });
+      }
+      for (let m = -example.Ju; m <= example.Ju + 1e-9; m += 1) {
+        upperLevels.push({ m, shift: gUpper * m * B });
+      }
+
+      const transitions = [];
+      for (const lower of lowerLevels) {
+        for (const q of [-1, 0, 1]) {
+          const mu = lower.m + q;
+          if (Math.abs(mu) > example.Ju + 1e-9) {
+            continue;
+          }
+          const strength = transitionStrength(example.Jl, example.Ju, lower.m, q);
+          if (strength < 1e-8) {
+            continue;
+          }
+          const component = q === 1 ? "sigma_blue" : (q === 0 ? "pi" : "sigma_red");
+          const shift = (gLower * lower.m - gUpper * mu) * B;
+          transitions.push({
+            ml: lower.m,
+            mu,
+            q,
+            component,
+            shift,
+            strength
+          });
+        }
+      }
+
+      const maxStrength = Math.max(...transitions.map((item) => item.strength), 1);
+      for (const item of transitions) {
+        item.normStrength = item.strength / maxStrength;
+      }
+
+      const grouped = new Map();
+      for (const item of transitions) {
+        const key = `${item.component}:${item.shift.toFixed(4)}`;
+        if (!grouped.has(key)) {
+          grouped.set(key, {
+            component: item.component,
+            shift: item.shift,
+            strength: 0,
+            count: 0
+          });
+        }
+        const entry = grouped.get(key);
+        entry.strength += item.strength;
+        entry.count += 1;
+      }
+
+      const components = [...grouped.values()].sort((a, b) => a.shift - b.shift);
+      const maxComponentStrength = Math.max(...components.map((item) => item.strength), 1);
+      for (const item of components) {
+        item.normStrength = item.strength / maxComponentStrength;
+      }
+
+      transitions.sort((a, b) => a.shift - b.shift || a.q - b.q || a.ml - b.ml);
+
+      return { lowerLevels, upperLevels, transitions, components };
+    }
+
+    function renderLevelDiagram(svg, model, focus, example) {
+      const width = 840;
+      const height = 760;
+      const topBase = 150;
+      const bottomBase = 610;
+      const xLeft = 188;
+      const xRight = 632;
+      const lineWidth = 236;
+      const allShifts = model.lowerLevels.concat(model.upperLevels).map((item) => item.shift);
+      const maxShift = Math.max(1.4, ...allShifts.map((value) => Math.abs(value)));
+
+      const lowerMap = new Map();
+      const upperMap = new Map();
+      for (const level of model.lowerLevels) {
+        lowerMap.set(level.m, bottomBase - (level.shift / maxShift) * 128);
+      }
+      for (const level of model.upperLevels) {
+        upperMap.set(level.m, topBase - (level.shift / maxShift) * 128);
+      }
+
+      const groupedTransitions = {
+        sigma_blue: model.transitions.filter((item) => item.component === "sigma_blue"),
+        pi: model.transitions.filter((item) => item.component === "pi"),
+        sigma_red: model.transitions.filter((item) => item.component === "sigma_red")
+      };
+
+      const componentColumns = {
+        sigma_blue: { center: 546, label: svgComponentLabel("sigma_blue"), dm: "+1" },
+        pi: { center: 612, label: svgComponentLabel("pi"), dm: "0" },
+        sigma_red: { center: 678, label: svgComponentLabel("sigma_red"), dm: "-1" }
+      };
+
+      for (const key of Object.keys(groupedTransitions)) {
+        const list = groupedTransitions[key];
+        const center = componentColumns[key].center;
+        const spread = 28;
+        list.forEach((item, index) => {
+          const offset = list.length === 1 ? 0 : ((index / (list.length - 1)) - 0.5) * spread;
+          item.columnX = center + offset;
+        });
+      }
+
+      let content = "";
+      content += `<rect x="0" y="0" width="${width}" height="${height}" fill="transparent"></rect>`;
+      content += `<line x1="70" y1="690" x2="70" y2="82" stroke="#56462d" stroke-width="2"></line>`;
+      content += `<polygon points="70,64 62,82 78,82" fill="#56462d"></polygon>`;
+      content += `<text x="38" y="386" fill="#56462d" transform="rotate(-90 38 386)" font-size="24" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, SF Pro Text, Helvetica Neue, Helvetica, Arial, sans-serif" letter-spacing="2">ENERGY</text>`;
+      content += `<text x="${xLeft - 28}" y="64" font-size="24" font-weight="700" fill="#1f2430">B = 0</text>`;
+      content += `<text x="${xRight}" y="78" text-anchor="middle" font-size="22" font-weight="700" fill="#1f2430">B &gt; 0</text>`;
+
+      content += `<line x1="${xLeft - lineWidth / 2}" y1="${bottomBase}" x2="${xLeft + lineWidth / 2}" y2="${bottomBase}" stroke="#1f2430" stroke-width="4"></line>`;
+      content += `<line x1="${xLeft - lineWidth / 2}" y1="${topBase}" x2="${xLeft + lineWidth / 2}" y2="${topBase}" stroke="#1f2430" stroke-width="4"></line>`;
+      content += `<text x="${xLeft}" y="${bottomBase + 44}" text-anchor="middle" font-size="16" font-weight="700" class="svg-math">${example.lowerLabel}, <tspan class="svg-math">J</tspan> = ${formatNumber(example.Jl)}</text>`;
+      content += `<text x="${xLeft}" y="${topBase - 28}" text-anchor="middle" font-size="16" font-weight="700" class="svg-math">${example.upperLabel}, <tspan class="svg-math">J</tspan> = ${formatNumber(example.Ju)}</text>`;
+
+      content += `<line x1="${xLeft}" y1="${topBase + 10}" x2="${xLeft}" y2="${bottomBase - 10}" stroke="#1f2430" stroke-width="3" marker-end="url(#arrow)"></line>`;
+
+      content += `<defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f2430"></path>
+        </marker>
+      </defs>`;
+
+      for (const level of model.upperLevels) {
+        const y = upperMap.get(level.m);
+        content += `<line x1="${xRight - lineWidth / 2}" y1="${y}" x2="${xRight + lineWidth / 2}" y2="${y}" stroke="#1f2430" stroke-width="4"></line>`;
+        content += `<text x="${xRight + lineWidth / 2 + 12}" y="${y + 6}" font-size="14" font-weight="700"><tspan class="svg-math">m</tspan> = ${signed(level.m)}</text>`;
+      }
+      for (const level of model.lowerLevels) {
+        const y = lowerMap.get(level.m);
+        content += `<line x1="${xRight - lineWidth / 2}" y1="${y}" x2="${xRight + lineWidth / 2}" y2="${y}" stroke="#1f2430" stroke-width="4"></line>`;
+        content += `<text x="${xRight + lineWidth / 2 + 12}" y="${y + 6}" font-size="14" font-weight="700"><tspan class="svg-math">m</tspan> = ${signed(level.m)}</text>`;
+      }
+
+      for (const item of model.transitions) {
+        const x = item.columnX;
+        const y1 = upperMap.get(item.mu);
+        const y2 = lowerMap.get(item.ml);
+        const alpha = item === focus ? 1.0 : 0.82;
+        const widthPx = item === focus ? 7 : 2.6;
+        const lineEndY = item === focus ? y2 - 18 : y2;
+        content += `<line x1="${x}" y1="${y1}" x2="${x}" y2="${lineEndY}" stroke="${colors[item.component]}" stroke-opacity="${alpha}" stroke-width="${widthPx}"></line>`;
+        if (item === focus) {
+          content += `<polygon points="${x - 16},${y2 - 18} ${x + 16},${y2 - 18} ${x},${y2}" fill="#c9901a" opacity="0.98"></polygon>`;
+        }
+      }
+
+      content += `<defs>
+        <marker id="tipStrong" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#c9901a"></path>
+        </marker>
+        <marker id="tipSoft" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(31,36,48,0.45)"></path>
+        </marker>
+      </defs>`;
+
+      for (const key of ["sigma_blue", "pi", "sigma_red"]) {
+        const info = componentColumns[key];
+        content += `<text x="${info.center}" y="668" text-anchor="middle" font-size="16" font-weight="700" fill="${colors[key]}" class="svg-math">${info.label}</text>`;
+      }
+
+      const formulaRows = [
+        { center: componentColumns.sigma_blue.center, color: colors.sigma_blue, dm: "+1" },
+        { center: componentColumns.pi.center, color: colors.pi, dm: "0" },
+        { center: componentColumns.sigma_red.center, color: colors.sigma_red, dm: "-1" }
+      ];
+      for (const row of formulaRows) {
+        const baseY = 704;
+        const eqX = row.center - 2;
+        content += `<text x="${eqX - 8}" y="${baseY}" text-anchor="end" font-size="13" font-weight="700" fill="#1f2430"><tspan class="svg-math">Δm</tspan></text>`;
+        content += `<text x="${eqX}" y="${baseY}" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2430">=</text>`;
+        content += `<text x="${eqX + 10}" y="${baseY}" text-anchor="start" font-size="13" font-weight="700" fill="#1f2430">${row.dm}</text>`;
+      }
+
+      svg.innerHTML = content;
+    }
+
+    function renderSpectrum(svg, model, focus, widthSigma, stokes, angleDeg, azimuthDeg, moMix) {
+      const width = 720;
+      const height = 760;
+      const left = 92;
+      const right = 650;
+      const top = 34;
+      const bottom = 664;
+      const shifts = model.components.map((item) => item.shift);
+      const minShift = Math.min(-1.4, ...shifts) - 0.5;
+      const maxShift = Math.max(1.4, ...shifts) + 0.5;
+      const theta = angleDeg * Math.PI / 180;
+      const chi = azimuthDeg * Math.PI / 180;
+      const sin2 = Math.sin(theta) * Math.sin(theta);
+      const cosTheta = Math.cos(theta);
+      const cos2chi = Math.cos(2 * chi);
+      const sin2chi = Math.sin(2 * chi);
+      const showsSigned = stokes === "V" || stokes === "Q" || stokes === "U";
+      const zeroY = showsSigned ? top + (bottom - top) * 0.5 : bottom;
+
+      function xScale(value) {
+        return left + ((value - minShift) / (maxShift - minShift)) * (right - left);
+      }
+
+      function yScale(value, maxAmp) {
+        const amp = Math.max(maxAmp, 1e-6);
+        const span = showsSigned ? (bottom - top - 28) * 0.5 : (bottom - top - 18);
+        return zeroY - (value / amp) * span;
+      }
+
+      let content = "";
+      content += `<rect x="0" y="0" width="${width}" height="${height}" fill="transparent"></rect>`;
+
+      for (let i = 0; i <= 8; i++) {
+        const t = i / 8;
+        const y = top + t * (bottom - top);
+        content += `<line x1="${left}" y1="${y}" x2="${right}" y2="${y}" stroke="rgba(31,36,48,0.09)" stroke-width="1"></line>`;
+      }
+      for (let tick = Math.ceil(minShift); tick <= Math.floor(maxShift); tick++) {
+        const x = xScale(tick);
+        content += `<line x1="${x}" y1="${top}" x2="${x}" y2="${bottom}" stroke="rgba(31,36,48,0.09)" stroke-width="1"></line>`;
+      }
+
+      content += `<line x1="${left}" y1="${zeroY}" x2="${right}" y2="${zeroY}" stroke="#1f2430" stroke-width="2.5"></line>`;
+      content += `<line x1="${left}" y1="${bottom}" x2="${left}" y2="${top}" stroke="#1f2430" stroke-width="2.5"></line>`;
+      content += `<text x="${right}" y="${bottom + 44}" font-size="17" text-anchor="end">Δλ (arbitrary units)</text>`;
+      content += `<text x="42" y="${(top + bottom) / 2}" font-size="17" text-anchor="middle" transform="rotate(-90 42 ${(top + bottom) / 2})">Stokes ${stokes} amplitude</text>`;
+
+      const profilePoints = [];
+      for (let i = 0; i <= 260; i++) {
+        const value = minShift + (i / 260) * (maxShift - minShift);
+        let rightCirc = 0;
+        let leftCirc = 0;
+        let piComp = 0;
+        for (const item of model.components) {
+          const amp = item.normStrength;
+          const g = amp * Math.exp(-0.5 * Math.pow((value - item.shift) / widthSigma, 2));
+          if (item.component === "sigma_blue") rightCirc += g;
+          if (item.component === "pi") piComp += g;
+          if (item.component === "sigma_red") leftCirc += g;
+        }
+        const sigmaI = 0.5 * (1 + cosTheta * cosTheta) * (rightCirc + leftCirc);
+        const piI = sin2 * piComp;
+        const I = sigmaI + piI;
+        const linearBase = sin2 * (piComp - 0.5 * (rightCirc + leftCirc));
+        const qBase = linearBase * cos2chi;
+        const uBase = linearBase * sin2chi;
+        const vBase = cosTheta * (rightCirc - leftCirc);
+        const Q = (1 - moMix) * qBase - moMix * uBase;
+        const U = (1 - moMix) * uBase + moMix * qBase;
+        const V = vBase + moMix * 0.18 * (uBase - qBase);
+        const sigmaBlueI = 0.5 * (1 + cosTheta * cosTheta) * rightCirc;
+        const sigmaRedI = 0.5 * (1 + cosTheta * cosTheta) * leftCirc;
+        const piIOnly = sin2 * piComp;
+        const sigmaBlueVBase = cosTheta * rightCirc;
+        const sigmaRedVBase = -cosTheta * leftCirc;
+        const sigmaBlueQBase = -0.5 * sin2 * cos2chi * rightCirc;
+        const sigmaRedQBase = -0.5 * sin2 * cos2chi * leftCirc;
+        const piQBase = sin2 * cos2chi * piComp;
+        const sigmaBlueUBase = -0.5 * sin2 * sin2chi * rightCirc;
+        const sigmaRedUBase = -0.5 * sin2 * sin2chi * leftCirc;
+        const piUBase = sin2 * sin2chi * piComp;
+        const sigmaBlueQ = (1 - moMix) * sigmaBlueQBase - moMix * sigmaBlueUBase;
+        const sigmaRedQ = (1 - moMix) * sigmaRedQBase - moMix * sigmaRedUBase;
+        const piQ = (1 - moMix) * piQBase - moMix * piUBase;
+        const sigmaBlueU = (1 - moMix) * sigmaBlueUBase + moMix * sigmaBlueQBase;
+        const sigmaRedU = (1 - moMix) * sigmaRedUBase + moMix * sigmaRedQBase;
+        const piU = (1 - moMix) * piUBase + moMix * piQBase;
+        const sigmaBlueV = sigmaBlueVBase + moMix * 0.18 * (sigmaBlueUBase - sigmaBlueQBase);
+        const sigmaRedV = sigmaRedVBase + moMix * 0.18 * (sigmaRedUBase - sigmaRedQBase);
+        profilePoints.push({
+          x: xScale(value), I, Q, U, V,
+          rightCirc, leftCirc, piComp,
+          sigmaBlueI, sigmaRedI, piIOnly,
+          sigmaBlueV, sigmaRedV, sigmaBlueQ, sigmaRedQ, piQ,
+          sigmaBlueU, sigmaRedU, piU
+        });
+      }
+
+      const stokesValues = profilePoints.map((point) => point[stokes]);
+      const maxAmp = showsSigned
+        ? Math.max(...stokesValues.map((value) => Math.abs(value)), 1)
+        : Math.max(...stokesValues, 1);
+
+      function pathFor(key) {
+        return profilePoints.map((point, index) => {
+          const y = yScale(point[key], maxAmp);
+          return `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${y.toFixed(2)}`;
+        }).join(" ");
+      }
+
+      if (showsSigned) {
+        content += `<line x1="${left}" y1="${zeroY}" x2="${right}" y2="${zeroY}" stroke="rgba(31,36,48,0.35)" stroke-width="1.5" stroke-dasharray="8 8"></line>`;
+      }
+
+      if (stokes === "I") {
+        content += `<path d="${pathFor("sigmaBlueI")}" fill="none" stroke="${colors.sigma_blue}" stroke-width="3" stroke-opacity="0.8"></path>`;
+        content += `<path d="${pathFor("piIOnly")}" fill="none" stroke="${colors.pi}" stroke-width="3" stroke-opacity="0.8"></path>`;
+        content += `<path d="${pathFor("sigmaRedI")}" fill="none" stroke="${colors.sigma_red}" stroke-width="3" stroke-opacity="0.8"></path>`;
+        content += `<path d="${pathFor("I")}" fill="none" stroke="#1f2430" stroke-width="4"></path>`;
+      } else if (stokes === "V") {
+        const vBlueKey = "sigmaBlueV";
+        const vRedPoints = profilePoints.map((point) => ({ ...point, sigmaRedVAlt: point.sigmaRedV }));
+        function pathForAlt(points, key) {
+          return points.map((point, index) => {
+            const y = yScale(point[key], maxAmp);
+            return `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${y.toFixed(2)}`;
+          }).join(" ");
+        }
+        content += `<path d="${pathFor(vBlueKey)}" fill="none" stroke="${colors.sigma_blue}" stroke-width="3" stroke-opacity="0.8"></path>`;
+        content += `<path d="${pathForAlt(vRedPoints, "sigmaRedVAlt")}" fill="none" stroke="${colors.sigma_red}" stroke-width="3" stroke-opacity="0.8"></path>`;
+        content += `<path d="${pathFor("V")}" fill="none" stroke="#1f2430" stroke-width="4"></path>`;
+      } else if (stokes === "Q") {
+        content += `<path d="${pathFor("sigmaBlueQ")}" fill="none" stroke="${colors.sigma_blue}" stroke-width="3" stroke-opacity="0.8"></path>`;
+        content += `<path d="${pathFor("piQ")}" fill="none" stroke="${colors.pi}" stroke-width="3" stroke-opacity="0.8"></path>`;
+        content += `<path d="${pathFor("sigmaRedQ")}" fill="none" stroke="${colors.sigma_red}" stroke-width="3" stroke-opacity="0.8"></path>`;
+        content += `<path d="${pathFor("Q")}" fill="none" stroke="#1f2430" stroke-width="4"></path>`;
+      } else if (stokes === "U") {
+        content += `<path d="${pathFor("sigmaBlueU")}" fill="none" stroke="${colors.sigma_blue}" stroke-width="3" stroke-opacity="0.8"></path>`;
+        content += `<path d="${pathFor("piU")}" fill="none" stroke="${colors.pi}" stroke-width="3" stroke-opacity="0.8"></path>`;
+        content += `<path d="${pathFor("sigmaRedU")}" fill="none" stroke="${colors.sigma_red}" stroke-width="3" stroke-opacity="0.8"></path>`;
+        content += `<path d="${pathFor("U")}" fill="none" stroke="#1f2430" stroke-width="4"></path>`;
+      } else {
+        content += `<path d="${pathFor(stokes)}" fill="none" stroke="#1f2430" stroke-width="4"></path>`;
+      }
+
+      for (const item of model.components) {
+        const x = xScale(item.shift);
+        let componentHeight = item.normStrength;
+        if (stokes === "I") {
+          if (item.component === "sigma_blue" || item.component === "sigma_red") {
+            componentHeight = 0.5 * (1 + cosTheta * cosTheta) * item.normStrength;
+          } else {
+            componentHeight = sin2 * item.normStrength;
+          }
+        } else if (stokes === "V") {
+          if (item.component === "pi") continue;
+          componentHeight = (item.component === "sigma_blue" ? 1 : -1) * cosTheta * item.normStrength;
+        } else if (stokes === "Q") {
+          componentHeight = item.component === "pi"
+            ? sin2 * item.normStrength
+            : -0.5 * sin2 * item.normStrength;
+          componentHeight *= cos2chi;
+        } else if (stokes === "U") {
+          componentHeight = item.component === "pi"
+            ? sin2 * item.normStrength
+            : -0.5 * sin2 * item.normStrength;
+          componentHeight *= sin2chi;
+        }
+        const y = yScale(componentHeight, maxAmp);
+        const isFocusComponent = item.component === focus.component && Math.abs(item.shift - focus.shift) < 1e-4;
+        content += `<line x1="${x}" y1="${zeroY}" x2="${x}" y2="${y}" stroke="${colors[item.component]}" stroke-width="${isFocusComponent ? 7 : 4}" stroke-opacity="${isFocusComponent ? 1 : 0.72}"></line>`;
+      }
+
+      const highlightedX = xScale(focus.shift);
+      content += `<line x1="${highlightedX}" y1="${top}" x2="${highlightedX}" y2="${bottom}" stroke="${colors[focus.component]}" stroke-width="2" stroke-dasharray="8 8" stroke-opacity="0.55"></line>`;
+      content += `<rect x="404" y="48" width="240" height="118" rx="16" fill="rgba(255,250,242,0.92)" stroke="rgba(31,36,48,0.08)"></rect>`;
+      content += `<text x="424" y="74" font-size="18" font-weight="700" fill="#1f2430">Viewing geometry</text>`;
+      content += `<text x="424" y="96" font-size="14" fill="#5f6673" class="svg-math">LOS-B θ = ${Math.round(angleDeg)}°</text>`;
+      content += `<text x="424" y="118" font-size="14" fill="${colors.sigma_blue}" class="svg-math">σ<tspan baseline-shift="sub" font-size="12">+</tspan> = RCP</text>`;
+      content += `<text x="424" y="140" font-size="14" fill="${colors.sigma_red}" class="svg-math">σ<tspan baseline-shift="sub" font-size="12">−</tspan> = LCP</text>`;
+      content += `<text x="424" y="162" font-size="14" fill="${colors.pi}" class="svg-math">φ = ${Math.round(azimuthDeg)}°, MO mix = ${moMix.toFixed(2)}</text>`;
+
+      for (let tick = Math.ceil(minShift); tick <= Math.floor(maxShift); tick++) {
+        const x = xScale(tick);
+        content += `<line x1="${x}" y1="${bottom}" x2="${x}" y2="${bottom + 8}" stroke="#1f2430" stroke-width="2"></line>`;
+        content += `<text x="${x}" y="${bottom + 28}" text-anchor="middle" font-size="18">${tick}</text>`;
+      }
+
+      svg.innerHTML = content;
+    }
+
+    function renderTransitionTable(model, activeIndex) {
+      transitionsTable.innerHTML = "";
+      model.transitions.forEach((item, index) => {
+        const row = document.createElement("div");
+        row.className = "transition-row" + (index === activeIndex ? " active" : "");
+        const swatch = document.createElement("div");
+        swatch.className = "swatch";
+        swatch.style.background = colors[item.component];
+
+        const main = document.createElement("div");
+        main.innerHTML = `<div class="component-name component-label math-text" style="color:${colors[item.component]}">${componentLabelHTML(item.component)}</div>
+          <div><span class="math-text">m<sub>l</sub></span> = ${signed(item.ml)} → <span class="math-text">m<sub>u</sub></span> = ${signed(item.mu)} (<span class="math-text">Δm</span> = ${signed(item.q)})</div>`;
+
+        const shift = document.createElement("div");
+        shift.textContent = `Δλ = ${item.shift.toFixed(2)}`;
+
+        const strength = document.createElement("div");
+        strength.textContent = `S = ${item.normStrength.toFixed(2)}`;
+
+        row.appendChild(swatch);
+        row.appendChild(main);
+        row.appendChild(shift);
+        row.appendChild(strength);
+        row.addEventListener("mouseenter", () => {
+          state.highlightedIndex = index;
+          render();
+        });
+        transitionsTable.appendChild(row);
+      });
+    }
+
+    function renderGeometrySketch(svg, angleDeg, azimuthDeg) {
+      const width = 260;
+      const height = 220;
+      const cx = 78;
+      const cy = 112;
+      const R = 118;
+      const theta = angleDeg * Math.PI / 180;
+      const chi = azimuthDeg * Math.PI / 180;
+      const q = Math.sin(theta) * Math.cos(chi);
+      const u = Math.sin(theta) * Math.sin(chi);
+      const z = Math.cos(theta);
+      const uTiltX = -0.48;
+      const uTiltY = 0.28;
+      const zTiltY = 0.16;
+
+      function project(point) {
+        return {
+          x: cx + R * (point.z + uTiltX * point.u),
+          y: cy - R * (point.q - uTiltY * point.u - zTiltY * point.z),
+        };
+      }
+
+      function sampleCurve(fn, steps = 96) {
+        const pts = [];
+        for (let i = 0; i <= steps; i += 1) {
+          const raw = fn(i / steps);
+          const projected = project(raw);
+          pts.push({ ...projected, raw });
+        }
+        return pts;
+      }
+
+      function pointsToPath(points) {
+        return points.map((pt, index) => `${index === 0 ? "M" : "L"} ${pt.x.toFixed(2)} ${pt.y.toFixed(2)}`).join(" ");
+      }
+
+      function visibleSegments(points, predicate) {
+        const segments = [];
+        let current = [];
+        points.forEach((pt) => {
+          if (predicate(pt.raw)) {
+            current.push(pt);
+          } else if (current.length) {
+            segments.push(current);
+            current = [];
+          }
+        });
+        if (current.length) {
+          segments.push(current);
+        }
+        return segments;
+      }
+
+      const pB = project({ q, u, z });
+      const pLos = project({ q: 0, u: 0, z: 1 });
+      const losDirX = pLos.x - cx;
+      const losDirY = pLos.y - cy;
+      const losDirNorm = Math.hypot(losDirX, losDirY) || 1;
+      const losUx = losDirX / losDirNorm;
+      const losUy = losDirY / losDirNorm;
+      const losStartX = cx - 0.72 * R * losUx;
+      const losStartY = cy - 0.72 * R * losUy;
+      const losEndX = pLos.x + 28 * losUx;
+      const losEndY = pLos.y + 28 * losUy;
+      const arrowBackX = pLos.x + 14 * losUx;
+      const arrowBackY = pLos.y + 14 * losUy;
+      const perpX = -losUy;
+      const perpY = losUx;
+      const latitude = sampleCurve((t) => {
+        const a = t * Math.PI * 2;
+        return { q: Math.sin(theta) * Math.cos(a), u: Math.sin(theta) * Math.sin(a), z: Math.cos(theta) };
+      });
+      const latitudeFront = visibleSegments(latitude, (raw) => raw.z >= -1e-6);
+
+      const thetaArcRadius = 0.34;
+      const thetaSector = [];
+      const thetaArc = sampleCurve((t) => {
+        const a = t * theta;
+        return {
+          q: thetaArcRadius * Math.sin(a) * Math.cos(chi),
+          u: thetaArcRadius * Math.sin(a) * Math.sin(chi),
+          z: thetaArcRadius * Math.cos(a),
+        };
+      }, 36);
+      thetaSector.push({ x: cx, y: cy }, ...thetaArc);
+      const thetaFillPath = `${pointsToPath(thetaSector)} Z`;
+
+      const latCenter = project({ q: 0, u: 0, z: Math.cos(theta) });
+      const chiSector = [];
+      const chiArc = sampleCurve((t) => {
+        const a = t * chi;
+        return {
+          q: Math.sin(theta) * Math.cos(a),
+          u: Math.sin(theta) * Math.sin(a),
+          z: Math.cos(theta),
+        };
+      }, 48);
+      chiSector.push({ x: latCenter.x, y: latCenter.y }, ...chiArc);
+      const chiFillPath = `${pointsToPath(chiSector)} Z`;
+
+      const thetaLabel = project({
+        q: thetaArcRadius * Math.sin(Math.max(theta * 0.55, 0.12)) * Math.cos(chi),
+        u: thetaArcRadius * Math.sin(Math.max(theta * 0.55, 0.12)) * Math.sin(chi),
+        z: thetaArcRadius * Math.cos(Math.max(theta * 0.55, 0.12)),
+      });
+      const chiLabel = project({
+        q: Math.sin(theta) * Math.cos(Math.max(chi * 0.5, 0.2)),
+        u: Math.sin(theta) * Math.sin(Math.max(chi * 0.5, 0.2)),
+        z: Math.cos(theta),
+      });
+
+      let content = "";
+      content += `<rect x="0" y="0" width="${width}" height="${height}" rx="14" fill="transparent"></rect>`;
+      content += `<line x1="${losStartX}" y1="${losStartY}" x2="${losEndX}" y2="${losEndY}" stroke="rgba(31,36,48,0.35)" stroke-width="1.8"></line>`;
+      content += `<polygon points="${losEndX},${losEndY} ${arrowBackX + 6 * perpX},${arrowBackY + 6 * perpY} ${arrowBackX - 6 * perpX},${arrowBackY - 6 * perpY}" fill="rgba(31,36,48,0.55)"></polygon>`;
+      content += `<text x="${losEndX + 8}" y="${losEndY - 8}" font-size="13" fill="#1f2430">LOS</text>`;
+      content += `<path d="${thetaFillPath}" fill="rgba(166, 92, 56, 0.22)" stroke="none"></path>`;
+      if (Math.sin(theta) > 0.02) {
+        content += `<path d="${chiFillPath}" fill="rgba(31, 119, 180, 0.20)" stroke="none"></path>`;
+      }
+      latitudeFront.forEach((segment) => {
+        content += `<path d="${pointsToPath(segment)}" fill="none" stroke="rgba(243,193,75,0.9)" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round"></path>`;
+      });
+      content += `<line x1="${cx}" y1="${cy}" x2="${pB.x}" y2="${pB.y}" stroke="#a15c38" stroke-width="3"></line>`;
+      content += `<circle cx="${pB.x}" cy="${pB.y}" r="4.5" fill="#a15c38"></circle>`;
+      content += `<text x="${pB.x + 8}" y="${pB.y - 6}" font-size="13" class="svg-math" fill="#a15c38">B</text>`;
+      content += `<path d="${pointsToPath(thetaArc)}" fill="none" stroke="#5f6673" stroke-width="1.5"></path>`;
+      content += `<text x="${thetaLabel.x + 4}" y="${thetaLabel.y - 4}" font-size="12" class="svg-math" fill="#5f6673">θ</text>`;
+      if (Math.sin(theta) > 0.02) {
+        content += `<path d="${pointsToPath(chiArc)}" fill="none" stroke="#1f77b4" stroke-width="1.6"></path>`;
+        content += `<text x="${chiLabel.x + 4}" y="${chiLabel.y - 4}" font-size="12" class="svg-math" fill="#1f77b4">φ</text>`;
+      }
+      svg.innerHTML = content;
+    }
+
+    function transitionStrength(Jl, Ju, ml, q) {
+      const mu = ml + q;
+      if (Math.abs(mu) > Ju + 1e-9) {
+        return 0;
+      }
+      const w = wigner3j(Ju, 1, Jl, -mu, q, ml);
+      return (2 * Ju + 1) * w * w;
+    }
+
+    function wigner3j(j1, j2, j3, m1, m2, m3) {
+      const eps = 1e-9;
+      if (Math.abs(m1 + m2 + m3) > eps) {
+        return 0;
+      }
+      if (j3 > j1 + j2 + eps || j3 < Math.abs(j1 - j2) - eps) {
+        return 0;
+      }
+      if (Math.abs(m1) > j1 + eps || Math.abs(m2) > j2 + eps || Math.abs(m3) > j3 + eps) {
+        return 0;
+      }
+
+      const phaseExp = Math.round(j1 - j2 - m3);
+      const phase = phaseExp % 2 === 0 ? 1 : -1;
+      const delta =
+        factorial(j1 + j2 - j3) *
+        factorial(j1 - j2 + j3) *
+        factorial(-j1 + j2 + j3) /
+        factorial(j1 + j2 + j3 + 1);
+
+      const prefactor = phase * Math.sqrt(
+        delta *
+        factorial(j1 + m1) * factorial(j1 - m1) *
+        factorial(j2 + m2) * factorial(j2 - m2) *
+        factorial(j3 + m3) * factorial(j3 - m3)
+      );
+
+      const kMin = Math.ceil(Math.max(
+        0,
+        j2 - j3 - m1,
+        j1 - j3 + m2
+      ) - eps);
+      const kMax = Math.floor(Math.min(
+        j1 + j2 - j3,
+        j1 - m1,
+        j2 + m2
+      ) + eps);
+
+      let sum = 0;
+      for (let k = kMin; k <= kMax; k += 1) {
+        const denom =
+          factorial(k) *
+          factorial(j1 + j2 - j3 - k) *
+          factorial(j1 - m1 - k) *
+          factorial(j2 + m2 - k) *
+          factorial(j3 - j2 + m1 + k) *
+          factorial(j3 - j1 - m2 + k);
+        if (denom <= 0) {
+          continue;
+        }
+        sum += (k % 2 === 0 ? 1 : -1) / denom;
+      }
+      return prefactor * sum;
+    }
+
+    function factorial(value) {
+      if (value < -1e-9) {
+        return 0;
+      }
+      return gamma(value + 1);
+    }
+
+    function gamma(z) {
+      const p = [
+        0.9999999999998099,
+        676.5203681218851,
+        -1259.1392167224028,
+        771.3234287776531,
+        -176.6150291621406,
+        12.507343278686905,
+        -0.13857109526572012,
+        9.984369578019571e-6,
+        1.5056327351493116e-7
+      ];
+      const g = 7;
+      if (z < 0.5) {
+        return Math.PI / (Math.sin(Math.PI * z) * gamma(1 - z));
+      }
+      z -= 1;
+      let x = p[0];
+      for (let i = 1; i < p.length; i += 1) {
+        x += p[i] / (z + i);
+      }
+      const t = z + g + 0.5;
+      return Math.sqrt(2 * Math.PI) * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
+    }
+
+    function formatNumber(value) {
+      return Number.isInteger(value) ? String(value) : value.toFixed(1);
+    }
+
+    function signed(value) {
+      if (Math.abs(value) < 1e-9) {
+        return "0";
+      }
+      return value > 0 ? `+${formatNumber(value)}` : formatNumber(value);
+    }
+
+    function getCss(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function componentLabelHTML(component) {
+      if (component === "sigma_blue") return "σ<sub>+</sub>";
+      if (component === "sigma_red") return "σ<sub>−</sub>";
+      return "π";
+    }
+
+    function svgComponentLabel(component) {
+      if (component === "sigma_blue") return 'σ<tspan baseline-shift="sub" font-size="15">+</tspan>';
+      if (component === "sigma_red") return 'σ<tspan baseline-shift="sub" font-size="15">−</tspan>';
+      return "π";
+    }
+
+    function alignedLegendRow(x, y, color, label, dm) {
+      return `<text x="${x + 44}" y="${y}" text-anchor="end" font-size="17" font-weight="700" fill="${color}" class="svg-math">${label}</text>
+      <text x="${x + 54}" y="${y}" text-anchor="middle" font-size="17" font-weight="700" fill="#1f2430">=</text>
+      <text x="${x + 66}" y="${y}" text-anchor="start" font-size="17" font-weight="700" fill="#1f2430"><tspan class="svg-math">Δm</tspan></text>
+      <text x="${x + 116}" y="${y}" text-anchor="middle" font-size="17" font-weight="700" fill="#1f2430">=</text>
+      <text x="${x + 128}" y="${y}" text-anchor="start" font-size="17" font-weight="700" fill="#1f2430">${dm}</text>`;
+    }
+  </script>
+</body>
+</html>

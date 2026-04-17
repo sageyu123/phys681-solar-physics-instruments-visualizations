@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Radio Transfer Mechanisms Explorer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ui-font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --ui-font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --math-font: "STIX Two Text", "Cambria Math", "STIXGeneral", "Times New Roman", serif;
+      --bg: #edf2f7;
+      --bg-deep: #dde5ef;
+      --panel: rgba(255, 255, 255, 0.92);
+      --panel-strong: rgba(255, 255, 255, 0.98);
+      --line: rgba(30, 41, 59, 0.1);
+      --ink: #0f172a;
+      --muted: #5b677a;
+      --accent: #2563eb;
+      --accent-soft: rgba(37, 99, 235, 0.14);
+      --warm: #ea580c;
+      --warm-soft: rgba(234, 88, 12, 0.12);
+      --cool: #0f766e;
+      --cool-soft: rgba(15, 118, 110, 0.12);
+      --shadow: 0 16px 42px rgba(15, 23, 42, 0.09);
+      --shadow-soft: 0 8px 26px rgba(15, 23, 42, 0.06);
+      --radius: 20px;
+      --radius-sm: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--ui-font-text);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 12%, rgba(255, 255, 255, 0.92), transparent 24%),
+        radial-gradient(circle at 85% 18%, rgba(37, 99, 235, 0.08), transparent 24%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    }
+
+    .page {
+      width: min(1360px, calc(100vw - 28px));
+      margin: 18px auto 28px;
+      display: grid;
+      gap: 20px;
+    }
+
+    .hero,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      backdrop-filter: blur(12px);
+    }
+
+    .hero {
+      padding: 28px 30px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.95fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .eyebrow,
+    .panel-label,
+    .metric-label,
+    .control-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-family: var(--ui-font-display);
+      font-size: clamp(2.4rem, 4vw, 4.1rem);
+      line-height: 0.92;
+      letter-spacing: -0.045em;
+      margin-top: 8px;
+      margin-bottom: 14px;
+    }
+
+    .hero p {
+      color: var(--muted);
+      line-height: 1.52;
+      max-width: 72ch;
+    }
+
+    .formula-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .formula-pill {
+      padding: 12px 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--shadow-soft);
+      font-family: var(--math-font);
+      color: var(--ink);
+      font-size: 1rem;
+    }
+
+    .hero-metrics {
+      display: grid;
+      gap: 12px;
+    }
+
+    .metric {
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(246,248,252,0.94));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-soft);
+      display: grid;
+      gap: 8px;
+    }
+
+    .metric-value {
+      font-family: var(--ui-font-display);
+      font-size: 1.6rem;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .metric-text {
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.95rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(300px, 350px) minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .controls {
+      position: sticky;
+      top: 18px;
+      padding: 22px;
+      display: grid;
+      gap: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.97), rgba(246,248,252,0.93));
+      box-shadow: var(--shadow-soft);
+    }
+
+    .controls h2,
+    .view h2 {
+      font-family: var(--ui-font-display);
+      font-size: 1.35rem;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      margin-top: 6px;
+    }
+
+    .control-block {
+      display: grid;
+      gap: 8px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .control-block:last-child {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    .control-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .control-name {
+      font-weight: 700;
+    }
+
+    .control-units {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 88px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    input[type="number"] {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.92);
+      color: var(--ink);
+      padding: 8px 10px;
+      font: inherit;
+      text-align: right;
+    }
+
+    .toggle-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .toggle-row button {
+      flex: 1 1 130px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.9);
+      color: var(--ink);
+      font: inherit;
+      font-weight: 700;
+      padding: 9px 14px;
+      cursor: pointer;
+      transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+    }
+
+    .toggle-row button.active {
+      background: var(--accent);
+      color: white;
+      border-color: rgba(37, 99, 235, 0.45);
+    }
+
+    .small {
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.94rem;
+    }
+
+    .view {
+      padding: 24px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .plot-card,
+    .diagnostics {
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.92));
+      box-shadow: var(--shadow-soft);
+    }
+
+    .plot-card {
+      padding: 18px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .plot-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .plot-head strong {
+      font-family: var(--ui-font-display);
+      font-size: 1.08rem;
+      letter-spacing: -0.02em;
+    }
+
+    .plot-head span {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .canvas-wrap {
+      position: relative;
+    }
+
+    canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    #spectrumCanvas {
+      aspect-ratio: 16 / 7;
+    }
+
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: minmax(320px, 1.25fr) minmax(270px, 0.9fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    #rayCanvas {
+      aspect-ratio: 7 / 5;
+    }
+
+    .diagnostics {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .diagnostic-card {
+      padding: 14px 15px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.85);
+      display: grid;
+      gap: 6px;
+    }
+
+    .diagnostic-title {
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .diagnostic-value {
+      font-family: var(--ui-font-display);
+      font-size: 1.35rem;
+      letter-spacing: -0.02em;
+    }
+
+    .diagnostic-text {
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.94rem;
+    }
+
+    .legend-row {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+    }
+
+    .caption {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 1100px) {
+      .hero,
+      .layout,
+      .bottom-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        position: static;
+      }
+    }
+
+    @media (max-width: 720px) {
+      body {
+        font-size: 15px;
+      }
+
+      .page {
+        width: min(100vw, calc(100vw - 16px));
+        margin: 8px auto 18px;
+        gap: 12px;
+      }
+
+      .hero,
+      .controls,
+      .view {
+        padding: 18px;
+      }
+
+      .input-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">PHYS 681 · Radio Transfer</div>
+        <h1>Optical Depth Sets the First Read of a Radio Spectrum</h1>
+        <p>
+          This explorer keeps the physics deliberately simple: one emitting slab, one background, and a free-free opacity that falls toward high frequency. Move the controls until the same source changes from optically thick to optically thin, then watch how the spectrum, the line-of-sight cartoon, and the diagnostic summary update together.
+        </p>
+        <div class="formula-row">
+          <div class="formula-pill">dI<sub>&nu;</sub>/dl = j<sub>&nu;</sub> - &kappa;<sub>&nu;</sub>I<sub>&nu;</sub></div>
+          <div class="formula-pill">T<sub>B</sub> = T<sub>bg</sub>e<sup>-&tau;</sup> + T<sub>src</sub>(1 - e<sup>-&tau;</sup>)</div>
+          <div class="formula-pill">&tau;<sub>ff</sub> &prop; EM T<sup>-1.35</sup>&nu;<sup>-2.1</sup></div>
+        </div>
+      </div>
+      <div class="hero-metrics">
+        <div class="metric">
+          <div class="metric-label">Current Regime</div>
+          <div class="metric-value" id="regimeHero">Transitional</div>
+          <div class="metric-text" id="regimeHeroText">The observing frequency is sitting near the turnover where the source changes from thick to thin.</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">What To Notice</div>
+          <div class="metric-text">
+            The low-frequency side tries to flatten toward the source temperature. The high-frequency side drops because the slab becomes transparent and only a fraction of the source function is sampled.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <aside class="panel controls">
+        <div>
+          <div class="panel-label">Controls</div>
+          <h2>Transfer Setup</h2>
+        </div>
+
+        <div class="control-block">
+          <div class="control-label">Background treatment</div>
+          <div class="toggle-row">
+            <button id="withBackgroundBtn" class="active" type="button">Include Background</button>
+            <button id="freeFreeOnlyBtn" type="button">Free-Free Only</button>
+          </div>
+          <div class="small">Use the toggle to show how a cooler or hotter background layer changes the observed brightness once the slab becomes transparent.</div>
+        </div>
+
+        <div class="control-block">
+          <div class="control-top">
+            <div>
+              <div class="control-label">Observing Frequency</div>
+              <div class="control-name">&nu;</div>
+            </div>
+            <div class="control-units">GHz</div>
+          </div>
+          <div class="input-row">
+            <input id="freqRange" type="range" min="1" max="18" step="0.1" value="5.0" />
+            <input id="freqNumber" type="number" min="1" max="18" step="0.1" value="5.0" />
+          </div>
+        </div>
+
+        <div class="control-block">
+          <div class="control-top">
+            <div>
+              <div class="control-label">Emission Measure Proxy</div>
+              <div class="control-name">log EM</div>
+            </div>
+            <div class="control-units">cm<sup>-5</sup></div>
+          </div>
+          <div class="input-row">
+            <input id="emRange" type="range" min="27.5" max="30.2" step="0.05" value="28.6" />
+            <input id="emNumber" type="number" min="27.5" max="30.2" step="0.05" value="28.6" />
+          </div>
+        </div>
+
+        <div class="control-block">
+          <div class="control-top">
+            <div>
+              <div class="control-label">Source Temperature</div>
+              <div class="control-name">T<sub>src</sub></div>
+            </div>
+            <div class="control-units">MK</div>
+          </div>
+          <div class="input-row">
+            <input id="sourceTempRange" type="range" min="0.02" max="3.0" step="0.01" value="1.20" />
+            <input id="sourceTempNumber" type="number" min="0.02" max="3.0" step="0.01" value="1.20" />
+          </div>
+        </div>
+
+        <div class="control-block">
+          <div class="control-top">
+            <div>
+              <div class="control-label">Background Temperature</div>
+              <div class="control-name">T<sub>bg</sub></div>
+            </div>
+            <div class="control-units">K</div>
+          </div>
+          <div class="input-row">
+            <input id="backgroundTempRange" type="range" min="3000" max="20000" step="100" value="10000" />
+            <input id="backgroundTempNumber" type="number" min="3000" max="20000" step="100" value="10000" />
+          </div>
+        </div>
+
+        <div class="control-block">
+          <div class="control-label">Teaching Cue</div>
+          <div class="small">
+            To force a turnover near the current observing frequency, either raise the emission measure or lower the temperature. To make the slab transparent, move to higher frequency or reduce the emission measure.
+          </div>
+        </div>
+      </aside>
+
+      <section class="panel view">
+        <div>
+          <div class="panel-label">Main View</div>
+          <h2>Spectrum and Line of Sight</h2>
+        </div>
+
+        <section class="plot-card">
+          <div class="plot-head">
+            <strong>Brightness Temperature Spectrum</strong>
+            <span id="spectrumSummary">Current frequency: 5.0 GHz</span>
+          </div>
+          <div class="canvas-wrap">
+            <canvas id="spectrumCanvas" width="1100" height="480"></canvas>
+          </div>
+          <div class="legend-row">
+            <div class="legend-item"><span class="swatch" style="background: var(--accent);"></span> total observed brightness temperature</div>
+            <div class="legend-item"><span class="swatch" style="background: var(--warm);"></span> source temperature plateau</div>
+            <div class="legend-item"><span class="swatch" style="background: var(--cool);"></span> background contribution</div>
+          </div>
+        </section>
+
+        <div class="bottom-grid">
+          <section class="plot-card">
+            <div class="plot-head">
+              <strong>Line-of-Sight Cartoon</strong>
+              <span id="raySummary">&tau; is moderate at the selected frequency</span>
+            </div>
+            <div class="canvas-wrap">
+              <canvas id="rayCanvas" width="760" height="540"></canvas>
+            </div>
+            <div class="caption">
+              The slab emits everywhere, but a transparent slab lets you see through it while an opaque slab erases the background and saturates near the source function.
+            </div>
+          </section>
+
+          <aside class="diagnostics">
+            <div class="diagnostic-card">
+              <div class="diagnostic-title">Current Optical Depth</div>
+              <div class="diagnostic-value" id="tauValue">0.00</div>
+              <div class="diagnostic-text" id="tauText">The slab is close to the turnover.</div>
+            </div>
+            <div class="diagnostic-card">
+              <div class="diagnostic-title">Current Brightness Temperature</div>
+              <div class="diagnostic-value" id="tbValue">0.00 MK</div>
+              <div class="diagnostic-text" id="tbText">The observed brightness still remembers both the background and the source.</div>
+            </div>
+            <div class="diagnostic-card">
+              <div class="diagnostic-title">Likely Diagnostic</div>
+              <div class="diagnostic-value" id="diagnosticValue">Turnover</div>
+              <div class="diagnostic-text" id="diagnosticText">The spectrum is most constraining near the frequency where &tau; crosses unity.</div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const uiFont = '-apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif';
+    const state = {
+      includeBackground: true,
+      freqGHz: 5.0,
+      logEM: 28.6,
+      sourceTempMK: 1.2,
+      backgroundTempK: 10000
+    };
+
+    const spectrumCanvas = document.getElementById("spectrumCanvas");
+    const rayCanvas = document.getElementById("rayCanvas");
+    const spectrumCtx = spectrumCanvas.getContext("2d");
+    const rayCtx = rayCanvas.getContext("2d");
+
+    const elements = {
+      withBackgroundBtn: document.getElementById("withBackgroundBtn"),
+      freeFreeOnlyBtn: document.getElementById("freeFreeOnlyBtn"),
+      regimeHero: document.getElementById("regimeHero"),
+      regimeHeroText: document.getElementById("regimeHeroText"),
+      spectrumSummary: document.getElementById("spectrumSummary"),
+      raySummary: document.getElementById("raySummary"),
+      tauValue: document.getElementById("tauValue"),
+      tauText: document.getElementById("tauText"),
+      tbValue: document.getElementById("tbValue"),
+      tbText: document.getElementById("tbText"),
+      diagnosticValue: document.getElementById("diagnosticValue"),
+      diagnosticText: document.getElementById("diagnosticText")
+    };
+
+    const controls = [
+      { key: "freqGHz", range: "freqRange", number: "freqNumber", min: 1, max: 18, step: 0.1 },
+      { key: "logEM", range: "emRange", number: "emNumber", min: 27.5, max: 30.2, step: 0.05 },
+      { key: "sourceTempMK", range: "sourceTempRange", number: "sourceTempNumber", min: 0.02, max: 3.0, step: 0.01 },
+      { key: "backgroundTempK", range: "backgroundTempRange", number: "backgroundTempNumber", min: 3000, max: 20000, step: 100 }
+    ];
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function formatKelvin(valueK) {
+      if (valueK >= 1e6) {
+        return `${(valueK / 1e6).toFixed(2)} MK`;
+      }
+      if (valueK >= 1e3) {
+        return `${(valueK / 1e3).toFixed(1)} kK`;
+      }
+      return `${valueK.toFixed(0)} K`;
+    }
+
+    function computeTau(freqGHz) {
+      const emScale = Math.pow(10, state.logEM - 28.6);
+      const tempScale = Math.pow(state.sourceTempMK / 1.2, -1.35);
+      return 0.95 * emScale * tempScale * Math.pow(freqGHz / 5.0, -2.1);
+    }
+
+    function computeBrightness(freqGHz) {
+      const tau = computeTau(freqGHz);
+      const tSource = state.sourceTempMK * 1e6;
+      const tBackground = state.includeBackground ? state.backgroundTempK : 0;
+      const tb = tBackground * Math.exp(-tau) + tSource * (1 - Math.exp(-tau));
+      return { tau, tb, tSource, tBackground };
+    }
+
+    function evaluateRegime(tau) {
+      if (tau > 3) {
+        return {
+          name: "Optically Thick",
+          text: "The background is mostly erased and the spectrum tries to flatten toward the source temperature."
+        };
+      }
+      if (tau < 0.3) {
+        return {
+          name: "Optically Thin",
+          text: "The slab is transparent, so the observed brightness is only a small fraction of the source function."
+        };
+      }
+      return {
+        name: "Transitional",
+        text: "You are near the turnover where the spectrum is most sensitive to optical depth."
+      };
+    }
+
+    function deriveDiagnostic(tau) {
+      if (tau > 3) {
+        return {
+          title: "Source Temperature",
+          text: "In the thick regime, brightness temperature is telling you more about the local source function than about the total emission measure."
+        };
+      }
+      if (tau < 0.3) {
+        return {
+          title: "Emission Measure",
+          text: "In the thin regime, brightness depends on how much plasma sits along the line of sight and how hot it is."
+        };
+      }
+      return {
+        title: "Turnover",
+        text: "The frequency where the spectrum bends is where free-free opacity, density, temperature, and path length meet most directly."
+      };
+    }
+
+    function getSpectrumSamples() {
+      const samples = [];
+      for (let freq = 1; freq <= 18.0001; freq += 0.12) {
+        samples.push({ freq, ...computeBrightness(freq) });
+      }
+      return samples;
+    }
+
+    function setupControl(control) {
+      const range = document.getElementById(control.range);
+      const number = document.getElementById(control.number);
+
+      function pushValue(rawValue) {
+        const value = clamp(parseFloat(rawValue), control.min, control.max);
+        state[control.key] = value;
+        range.value = value;
+        number.value = value;
+        render();
+      }
+
+      range.addEventListener("input", () => pushValue(range.value));
+      number.addEventListener("input", () => {
+        if (number.value === "") {
+          return;
+        }
+        pushValue(number.value);
+      });
+    }
+
+    controls.forEach(setupControl);
+
+    elements.withBackgroundBtn.addEventListener("click", () => {
+      state.includeBackground = true;
+      elements.withBackgroundBtn.classList.add("active");
+      elements.freeFreeOnlyBtn.classList.remove("active");
+      render();
+    });
+
+    elements.freeFreeOnlyBtn.addEventListener("click", () => {
+      state.includeBackground = false;
+      elements.freeFreeOnlyBtn.classList.add("active");
+      elements.withBackgroundBtn.classList.remove("active");
+      render();
+    });
+
+    function resizeCanvas(canvas, ctx) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const width = Math.max(1, Math.round(rect.width * dpr));
+      const height = Math.max(1, Math.round(rect.height * dpr));
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function drawAxes(ctx, width, height, margin, xTicks, yTicks, yLabelFormatter) {
+      ctx.strokeStyle = "rgba(15, 23, 42, 0.14)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.rect(margin.left, margin.top, width - margin.left - margin.right, height - margin.top - margin.bottom);
+      ctx.stroke();
+
+      ctx.font = `12px ${uiFont}`;
+      ctx.fillStyle = "#5b677a";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      xTicks.forEach((tick) => {
+        ctx.beginPath();
+        ctx.moveTo(tick.x, margin.top);
+        ctx.lineTo(tick.x, height - margin.bottom);
+        ctx.strokeStyle = "rgba(15, 23, 42, 0.08)";
+        ctx.stroke();
+        ctx.fillText(tick.label, tick.x, height - margin.bottom + 10);
+      });
+
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      yTicks.forEach((tick) => {
+        ctx.beginPath();
+        ctx.moveTo(margin.left, tick.y);
+        ctx.lineTo(width - margin.right, tick.y);
+        ctx.strokeStyle = "rgba(15, 23, 42, 0.08)";
+        ctx.stroke();
+        ctx.fillText(yLabelFormatter(tick.value), margin.left - 10, tick.y);
+      });
+    }
+
+    function drawSpectrum(samples) {
+      resizeCanvas(spectrumCanvas, spectrumCtx);
+      const width = spectrumCanvas.getBoundingClientRect().width;
+      const height = spectrumCanvas.getBoundingClientRect().height;
+      const ctx = spectrumCtx;
+      const margin = { top: 16, right: 18, bottom: 48, left: 78 };
+
+      ctx.clearRect(0, 0, width, height);
+
+      const maxTb = Math.max(...samples.map((sample) => sample.tb), state.sourceTempMK * 1e6, state.backgroundTempK * 1.3);
+      const xMin = 1;
+      const xMax = 18;
+      const yMin = 0;
+      const yMax = maxTb * 1.08;
+
+      const plotWidth = width - margin.left - margin.right;
+      const plotHeight = height - margin.top - margin.bottom;
+      const xScale = (freq) => margin.left + ((freq - xMin) / (xMax - xMin)) * plotWidth;
+      const yScale = (tb) => height - margin.bottom - ((tb - yMin) / (yMax - yMin)) * plotHeight;
+
+      drawAxes(
+        ctx,
+        width,
+        height,
+        margin,
+        [1, 3, 5, 8, 12, 16, 18].map((value) => ({ x: xScale(value), label: `${value}` })),
+        [0, 0.25, 0.5, 0.75, 1].map((fraction) => ({ value: yMin + fraction * (yMax - yMin), y: yScale(yMin + fraction * (yMax - yMin)) })),
+        (value) => `${(value / 1e6).toFixed(2)}`
+      );
+
+      ctx.fillStyle = "#5b677a";
+      ctx.font = `12px ${uiFont}`;
+      ctx.textAlign = "center";
+      ctx.fillText("Frequency (GHz)", margin.left + plotWidth / 2, height - 12);
+      ctx.save();
+      ctx.translate(18, margin.top + plotHeight / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText("Brightness Temperature (MK)", 0, 0);
+      ctx.restore();
+
+      ctx.strokeStyle = "rgba(234, 88, 12, 0.9)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(margin.left, yScale(state.sourceTempMK * 1e6));
+      ctx.lineTo(width - margin.right, yScale(state.sourceTempMK * 1e6));
+      ctx.stroke();
+
+      if (state.includeBackground) {
+        ctx.strokeStyle = "rgba(15, 118, 110, 0.9)";
+        ctx.beginPath();
+        ctx.moveTo(margin.left, yScale(state.backgroundTempK));
+        ctx.lineTo(width - margin.right, yScale(state.backgroundTempK));
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+
+      ctx.strokeStyle = "#2563eb";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      samples.forEach((sample, index) => {
+        const x = xScale(sample.freq);
+        const y = yScale(sample.tb);
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+      ctx.stroke();
+
+      const current = computeBrightness(state.freqGHz);
+      const currentX = xScale(state.freqGHz);
+      const currentY = yScale(current.tb);
+
+      ctx.strokeStyle = "rgba(37, 99, 235, 0.38)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(currentX, margin.top);
+      ctx.lineTo(currentX, height - margin.bottom);
+      ctx.stroke();
+
+      ctx.fillStyle = "#2563eb";
+      ctx.beginPath();
+      ctx.arc(currentX, currentY, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawRayCartoon(current) {
+      resizeCanvas(rayCanvas, rayCtx);
+      const width = rayCanvas.getBoundingClientRect().width;
+      const height = rayCanvas.getBoundingClientRect().height;
+      const ctx = rayCtx;
+      ctx.clearRect(0, 0, width, height);
+
+      const slabX = width * 0.28;
+      const slabWidth = width * 0.42;
+      const slabY = height * 0.18;
+      const slabHeight = height * 0.64;
+      const backgroundX = width * 0.08;
+      const observerX = width * 0.88;
+      const centerY = height * 0.5;
+      const opacityAlpha = clamp(0.15 + 0.25 * Math.log10(current.tau + 1) / Math.log10(6), 0.12, 0.55);
+
+      ctx.fillStyle = "rgba(15, 118, 110, 0.12)";
+      ctx.fillRect(backgroundX, slabY, slabX - backgroundX - 8, slabHeight);
+      ctx.strokeStyle = "rgba(15, 118, 110, 0.5)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(backgroundX, slabY, slabX - backgroundX - 8, slabHeight);
+
+      ctx.fillStyle = `rgba(37, 99, 235, ${opacityAlpha})`;
+      ctx.fillRect(slabX, slabY, slabWidth, slabHeight);
+      ctx.strokeStyle = "rgba(37, 99, 235, 0.55)";
+      ctx.strokeRect(slabX, slabY, slabWidth, slabHeight);
+
+      ctx.fillStyle = "#0f172a";
+      ctx.font = `700 13px ${uiFont}`;
+      ctx.textAlign = "center";
+      ctx.fillText("Background layer", backgroundX + (slabX - backgroundX - 8) / 2, slabY - 10);
+      ctx.fillText("Free-free slab", slabX + slabWidth / 2, slabY - 10);
+      ctx.fillText("Observer", observerX, slabY - 10);
+
+      function arrow(x0, y0, x1, y1, color, widthPx, alpha) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = widthPx;
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+        ctx.stroke();
+        const angle = Math.atan2(y1 - y0, x1 - x0);
+        const head = 10;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 - head * Math.cos(angle - 0.35), y1 - head * Math.sin(angle - 0.35));
+        ctx.lineTo(x1 - head * Math.cos(angle + 0.35), y1 - head * Math.sin(angle + 0.35));
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      arrow(backgroundX + 6, centerY, slabX - 10, centerY, "#0f766e", 4, 1);
+      arrow(slabX + 14, centerY - 78, observerX - 18, centerY - 78, "#2563eb", 5, 0.95);
+      arrow(backgroundX + 8, centerY + 72, observerX - 20, centerY + 72, "#0f766e", 3, clamp(Math.exp(-current.tau), 0.08, 1));
+
+      ctx.fillStyle = "#5b677a";
+      ctx.font = `12px ${uiFont}`;
+      ctx.textAlign = "left";
+      ctx.fillText(`Source emission strength ~ ${formatKelvin(current.tSource)}`, slabX + 16, centerY - 88);
+      ctx.fillText(`Transmitted background ~ e^{-tau} = ${Math.exp(-current.tau).toFixed(2)}`, slabX + 16, centerY + 60);
+
+      ctx.fillStyle = "rgba(37, 99, 235, 0.12)";
+      for (let i = 0; i < 12; i += 1) {
+        const localX = slabX + 22 + i * (slabWidth - 44) / 11;
+        const amplitude = 22 + 18 * Math.sin(i * 0.55);
+        ctx.beginPath();
+        ctx.arc(localX, centerY - 12, 6 + amplitude * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = "#0f172a";
+      ctx.font = `700 15px ${uiFont}`;
+      ctx.textAlign = "left";
+      ctx.fillText(`Selected optical depth: tau = ${current.tau.toFixed(2)}`, backgroundX, height - 24);
+    }
+
+    function updateReadout(current, regime, diagnostic) {
+      elements.regimeHero.textContent = regime.name;
+      elements.regimeHeroText.textContent = regime.text;
+      elements.spectrumSummary.textContent = `Current frequency: ${state.freqGHz.toFixed(1)} GHz`;
+      elements.raySummary.textContent = `tau = ${current.tau.toFixed(2)} at ${state.freqGHz.toFixed(1)} GHz`;
+      elements.tauValue.textContent = current.tau.toFixed(2);
+      elements.tauText.textContent = regime.text;
+      elements.tbValue.textContent = formatKelvin(current.tb);
+      elements.tbText.textContent = state.includeBackground
+        ? "Both the source and the background are contributing. The balance depends on optical depth."
+        : "The slab is being treated as the only emitter along the line of sight.";
+      elements.diagnosticValue.textContent = diagnostic.title;
+      elements.diagnosticText.textContent = diagnostic.text;
+    }
+
+    function render() {
+      const samples = getSpectrumSamples();
+      const current = computeBrightness(state.freqGHz);
+      const regime = evaluateRegime(current.tau);
+      const diagnostic = deriveDiagnostic(current.tau);
+      drawSpectrum(samples);
+      drawRayCartoon(current);
+      updateReadout(current, regime, diagnostic);
+    }
+
+    const resizeObserver = new ResizeObserver(() => render());
+    resizeObserver.observe(spectrumCanvas);
+    resizeObserver.observe(rayCanvas);
+
+    render();
+  </script>
+</body>
+</html>
