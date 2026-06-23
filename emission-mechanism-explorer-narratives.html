@@ -1,0 +1,2507 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Sijie Yu">
+<meta name="description" content="Narrative notes connecting Phys 681 radio emission, transfer, propagation, and coherent/incoherent emission mechanism explorers.">
+
+<title>Emission Mechanism Explorer Narratives</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="emission-mechanism-explorer-narratives_files/libs/clipboard/clipboard.min.js"></script>
+<script src="emission-mechanism-explorer-narratives_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="emission-mechanism-explorer-narratives_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="emission-mechanism-explorer-narratives_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="emission-mechanism-explorer-narratives_files/libs/quarto-html/popper.min.js"></script>
+<script src="emission-mechanism-explorer-narratives_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="emission-mechanism-explorer-narratives_files/libs/quarto-html/anchor.min.js"></script>
+<link href="emission-mechanism-explorer-narratives_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="emission-mechanism-explorer-narratives_files/libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="emission-mechanism-explorer-narratives_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="emission-mechanism-explorer-narratives_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="emission-mechanism-explorer-narratives_files/libs/bootstrap/bootstrap-d6a003b94517c951b2d65075d42fb01b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link rel="stylesheet" href="_site-shared.css">
+<script defer="" src="_site-manifest.js"></script>
+<script defer="" src="_site-nav.js"></script>
+<style>
+  .explorer-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.85rem;
+    align-items: start;
+    margin: 1rem 0 1.25rem;
+  }
+  .explorer-gallery figure,
+  .explorer-thumb {
+    margin: 0;
+  }
+  .explorer-gallery img,
+  .explorer-thumb img {
+    width: 100%;
+    height: auto;
+    border: 1px solid #d8dee8;
+    border-radius: 6px;
+    background: #f8fbff;
+  }
+  .explorer-gallery figcaption,
+  .explorer-thumb figcaption {
+    margin-top: 0.25rem;
+    color: #53627a;
+    font-size: 0.82rem;
+    line-height: 1.25;
+  }
+  .explorer-thumb {
+    float: left;
+    width: min(320px, 38%);
+    margin: 0.15rem 1rem 0.7rem 0;
+  }
+  @media (max-width: 760px) {
+    .explorer-thumb {
+      float: none;
+      width: 100%;
+      margin: 1rem 0;
+    }
+    #quarto-document-content {
+      overflow-x: hidden;
+    }
+    span.math {
+      display: inline-block;
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      vertical-align: middle;
+    }
+    mjx-container {
+      max-width: 100%;
+    }
+  }
+</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#learning-goals" id="toc-learning-goals" class="nav-link active" data-scroll-target="#learning-goals">Learning Goals</a></li>
+  <li><a href="#linked-outline" id="toc-linked-outline" class="nav-link" data-scroll-target="#linked-outline">Linked Outline</a></li>
+  <li><a href="#shared-speech-flow" id="toc-shared-speech-flow" class="nav-link" data-scroll-target="#shared-speech-flow">Shared Speech Flow</a></li>
+  <li><a href="#notation-units-and-approximation-policy" id="toc-notation-units-and-approximation-policy" class="nav-link" data-scroll-target="#notation-units-and-approximation-policy">Notation, Units, and Approximation Policy</a></li>
+  <li><a href="#specific-intensity-and-flux-density-explorer" id="toc-specific-intensity-and-flux-density-explorer" class="nav-link" data-scroll-target="#specific-intensity-and-flux-density-explorer">Specific Intensity and Flux Density Explorer</a>
+  <ul class="collapse">
+  <li><a href="#measurement-summary" id="toc-measurement-summary" class="nav-link" data-scroll-target="#measurement-summary">Measurement Summary</a></li>
+  <li><a href="#how-to-use-specific-intensity-flux-density.html" id="toc-how-to-use-specific-intensity-flux-density.html" class="nav-link" data-scroll-target="#how-to-use-specific-intensity-flux-density.html">How to Use <code>specific-intensity-flux-density.html</code></a></li>
+  </ul></li>
+  <li><a href="#radio-transfer-mechanisms-explorer" id="toc-radio-transfer-mechanisms-explorer" class="nav-link" data-scroll-target="#radio-transfer-mechanisms-explorer">Radio Transfer Mechanisms Explorer</a>
+  <ul class="collapse">
+  <li><a href="#transfer-summary" id="toc-transfer-summary" class="nav-link" data-scroll-target="#transfer-summary">Transfer Summary</a></li>
+  <li><a href="#how-to-use-radio-transfer-mechanisms.html" id="toc-how-to-use-radio-transfer-mechanisms.html" class="nav-link" data-scroll-target="#how-to-use-radio-transfer-mechanisms.html">How to Use <code>radio-transfer-mechanisms.html</code></a></li>
+  </ul></li>
+  <li><a href="#magnetoionic-propagation-explorer" id="toc-magnetoionic-propagation-explorer" class="nav-link" data-scroll-target="#magnetoionic-propagation-explorer">Magnetoionic Propagation Explorer</a>
+  <ul class="collapse">
+  <li><a href="#propagation-summary" id="toc-propagation-summary" class="nav-link" data-scroll-target="#propagation-summary">Propagation Summary</a></li>
+  <li><a href="#how-to-use-magnetoionic-propagation.html" id="toc-how-to-use-magnetoionic-propagation.html" class="nav-link" data-scroll-target="#how-to-use-magnetoionic-propagation.html">How to Use <code>magnetoionic-propagation.html</code></a></li>
+  </ul></li>
+  <li><a href="#bremsstrahlung-explorer" id="toc-bremsstrahlung-explorer" class="nav-link" data-scroll-target="#bremsstrahlung-explorer">Bremsstrahlung Explorer</a>
+  <ul class="collapse">
+  <li><a href="#mechanism-summary" id="toc-mechanism-summary" class="nav-link" data-scroll-target="#mechanism-summary">Mechanism Summary</a></li>
+  <li><a href="#section-a-one-close-encounter" id="toc-section-a-one-close-encounter" class="nav-link" data-scroll-target="#section-a-one-close-encounter">Section A: One Close Encounter</a></li>
+  <li><a href="#section-a-spectrum-encounter-time-and-cutoff" id="toc-section-a-spectrum-encounter-time-and-cutoff" class="nav-link" data-scroll-target="#section-a-spectrum-encounter-time-and-cutoff">Section A Spectrum: Encounter Time and Cutoff</a></li>
+  <li><a href="#section-b-thermal-free-free-emissivity" id="toc-section-b-thermal-free-free-emissivity" class="nav-link" data-scroll-target="#section-b-thermal-free-free-emissivity">Section B: Thermal Free-Free Emissivity</a></li>
+  <li><a href="#section-b-thick-thin-radio-transfer" id="toc-section-b-thick-thin-radio-transfer" class="nav-link" data-scroll-target="#section-b-thick-thin-radio-transfer">Section B: Thick-Thin Radio Transfer</a></li>
+  <li><a href="#bremsstrahlung-preset-narratives" id="toc-bremsstrahlung-preset-narratives" class="nav-link" data-scroll-target="#bremsstrahlung-preset-narratives">Bremsstrahlung Preset Narratives</a></li>
+  </ul></li>
+  <li><a href="#gyro-emission-explorer" id="toc-gyro-emission-explorer" class="nav-link" data-scroll-target="#gyro-emission-explorer">Gyro Emission Explorer</a>
+  <ul class="collapse">
+  <li><a href="#mechanism-summary-1" id="toc-mechanism-summary-1" class="nav-link" data-scroll-target="#mechanism-summary-1">Mechanism Summary</a></li>
+  <li><a href="#panel-a-single-electron-in-a-uniform-magnetic-field" id="toc-panel-a-single-electron-in-a-uniform-magnetic-field" class="nav-link" data-scroll-target="#panel-a-single-electron-in-a-uniform-magnetic-field">Panel A: Single Electron in a Uniform Magnetic Field</a></li>
+  <li><a href="#panel-b-observer-light-curve-and-viewing-direction" id="toc-panel-b-observer-light-curve-and-viewing-direction" class="nav-link" data-scroll-target="#panel-b-observer-light-curve-and-viewing-direction">Panel B: Observer Light Curve and Viewing Direction</a></li>
+  <li><a href="#panel-c-single-electron-spectrum" id="toc-panel-c-single-electron-spectrum" class="nav-link" data-scroll-target="#panel-c-single-electron-spectrum">Panel C: Single-Electron Spectrum</a></li>
+  <li><a href="#panel-d-ensemble-spectrum" id="toc-panel-d-ensemble-spectrum" class="nav-link" data-scroll-target="#panel-d-ensemble-spectrum">Panel D: Ensemble Spectrum</a></li>
+  <li><a href="#gyro-preset-narratives" id="toc-gyro-preset-narratives" class="nav-link" data-scroll-target="#gyro-preset-narratives">Gyro Preset Narratives</a></li>
+  </ul></li>
+  <li><a href="#plasma-emission-explorer" id="toc-plasma-emission-explorer" class="nav-link" data-scroll-target="#plasma-emission-explorer">Plasma Emission Explorer</a>
+  <ul class="collapse">
+  <li><a href="#mechanism-summary-2" id="toc-mechanism-summary-2" class="nav-link" data-scroll-target="#mechanism-summary-2">Mechanism Summary</a></li>
+  <li><a href="#panel-a-where-is-the-free-energy" id="toc-panel-a-where-is-the-free-energy" class="nav-link" data-scroll-target="#panel-a-where-is-the-free-energy">Panel A: Where Is the Free Energy?</a></li>
+  <li><a href="#panel-b-field-aligned-beam-geometry" id="toc-panel-b-field-aligned-beam-geometry" class="nav-link" data-scroll-target="#panel-b-field-aligned-beam-geometry">Panel B: Field-Aligned Beam Geometry</a></li>
+  <li><a href="#panel-c-wave-particle-energy-exchange" id="toc-panel-c-wave-particle-energy-exchange" class="nav-link" data-scroll-target="#panel-c-wave-particle-energy-exchange">Panel C: Wave-Particle Energy Exchange</a></li>
+  <li><a href="#panel-d-resonance-on-the-langmuir-branch" id="toc-panel-d-resonance-on-the-langmuir-branch" class="nav-link" data-scroll-target="#panel-d-resonance-on-the-langmuir-branch">Panel D: Resonance on the Langmuir Branch</a></li>
+  </ul></li>
+  <li><a href="#plasma-radiation-conversion-map-and-companion-pages" id="toc-plasma-radiation-conversion-map-and-companion-pages" class="nav-link" data-scroll-target="#plasma-radiation-conversion-map-and-companion-pages">Plasma Radiation Conversion Map and Companion Pages</a>
+  <ul class="collapse">
+  <li><a href="#why-the-conversion-map-is-needed" id="toc-why-the-conversion-map-is-needed" class="nav-link" data-scroll-target="#why-the-conversion-map-is-needed">Why the Conversion Map Is Needed</a></li>
+  <li><a href="#what-the-nonlinear-blocks-mean" id="toc-what-the-nonlinear-blocks-mean" class="nav-link" data-scroll-target="#what-the-nonlinear-blocks-mean">What the Nonlinear Blocks Mean</a></li>
+  </ul></li>
+  <li><a href="#plasma-emission-explorer-density-drift-and-dynamic-spectrum" id="toc-plasma-emission-explorer-density-drift-and-dynamic-spectrum" class="nav-link" data-scroll-target="#plasma-emission-explorer-density-drift-and-dynamic-spectrum">Plasma Emission Explorer: Density Drift and Dynamic Spectrum</a>
+  <ul class="collapse">
+  <li><a href="#panel-e-density-drift" id="toc-panel-e-density-drift" class="nav-link" data-scroll-target="#panel-e-density-drift">Panel E: Density Drift</a></li>
+  <li><a href="#panel-f-observed-signature" id="toc-panel-f-observed-signature" class="nav-link" data-scroll-target="#panel-f-observed-signature">Panel F: Observed Signature</a></li>
+  <li><a href="#plasma-preset-narratives" id="toc-plasma-preset-narratives" class="nav-link" data-scroll-target="#plasma-preset-narratives">Plasma Preset Narratives</a></li>
+  </ul></li>
+  <li><a href="#ecm-emission-explorer" id="toc-ecm-emission-explorer" class="nav-link" data-scroll-target="#ecm-emission-explorer">ECM Emission Explorer</a>
+  <ul class="collapse">
+  <li><a href="#mechanism-summary-3" id="toc-mechanism-summary-3" class="nav-link" data-scroll-target="#mechanism-summary-3">Mechanism Summary</a></li>
+  <li><a href="#panel-a-resonance-in-velocity-space" id="toc-panel-a-resonance-in-velocity-space" class="nav-link" data-scroll-target="#panel-a-resonance-in-velocity-space">Panel A: Resonance in Velocity Space</a></li>
+  <li><a href="#panel-b-geometric-construction" id="toc-panel-b-geometric-construction" class="nav-link" data-scroll-target="#panel-b-geometric-construction">Panel B: Geometric Construction</a></li>
+  <li><a href="#panel-c-beam-cone-geometry" id="toc-panel-c-beam-cone-geometry" class="nav-link" data-scroll-target="#panel-c-beam-cone-geometry">Panel C: Beam Cone Geometry</a></li>
+  <li><a href="#panel-d-regime-and-escape" id="toc-panel-d-regime-and-escape" class="nav-link" data-scroll-target="#panel-d-regime-and-escape">Panel D: Regime and Escape</a></li>
+  <li><a href="#preset-narratives" id="toc-preset-narratives" class="nav-link" data-scroll-target="#preset-narratives">Preset Narratives</a></li>
+  </ul></li>
+  <li><a href="#bridge-across-the-mechanisms" id="toc-bridge-across-the-mechanisms" class="nav-link" data-scroll-target="#bridge-across-the-mechanisms">Bridge Across the Mechanisms</a></li>
+  <li><a href="#references-and-further-reading" id="toc-references-and-further-reading" class="nav-link" data-scroll-target="#references-and-further-reading">References and Further Reading</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="emission-mechanism-explorer-narratives.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+<div id="site-nav-root"></div>
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Emission Mechanism Explorer Narratives</h1>
+</div>
+
+<div>
+  <div class="description">
+    Narrative notes connecting Phys 681 radio emission, transfer, propagation, and coherent/incoherent emission mechanism explorers.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Sijie Yu </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>These notes accompany the <a href="specific-intensity-flux-density.html">specific-intensity and flux-density explorer</a>, the <a href="radio-transfer-mechanisms.html">radio-transfer explorer</a>, the <a href="magnetoionic-propagation.html">magnetoionic propagation explorer</a>, the <a href="plasma-emission-explorer.html">plasma explorer</a>, the plasma-radiation conversion companion pages, the <a href="ecm-emission-explorer.html">ECM explorer</a>, the <a href="gyro-emission-explorer.html">gyro emission explorer</a>, and the <a href="bremsstrahlung-explorer.html">bremsstrahlung explorer</a>. The goal is to turn the interactive illustrations into a graduate-level lecture script: every panel should answer a specific physics question, and every displayed formula should be tied to a derivation or at least to its governing assumptions.</p>
+<p>These notes are part of the Phys 681 Solar Physics and Instruments Teaching Visualizations collection. For citation and release information, use the collection landing page and <code>CITATION.cff</code> in the <code>visualizations/</code> directory. The live HTML pages are the primary teaching artifacts; the PDF is a printable companion.</p>
+<section id="learning-goals" class="level2">
+<h2 class="anchored" data-anchor-id="learning-goals">Learning Goals</h2>
+<p>By the end of these notes, students should be able to:</p>
+<ol type="1">
+<li>Explain why plasma emission is driven by free energy in <span class="math inline">\(v_\parallel\)</span> while ECM is driven by free energy in <span class="math inline">\(v_\perp\)</span>.</li>
+<li>Distinguish specific intensity, flux density, and brightness temperature as radio observables.</li>
+<li>Use optical depth to explain when a source traces its source function, its column density, or a turnover.</li>
+<li>Explain why a wave generated by an emission mechanism may still fail to escape through a magnetized plasma.</li>
+<li>Derive the approximate Langmuir-wave dispersion relation used in the plasma-emission panel.</li>
+<li>Derive the frequency-drift scaling in a stratified corona.</li>
+<li>Derive the ECM resonance condition from Doppler shift plus relativistic gyro-motion.</li>
+<li>Explain why the ratio <span class="math inline">\(\omega_{pe}/\Omega_{ce}\)</span> is a key control parameter for ECM escape and growth.</li>
+<li>Connect each mechanism to its observable radio signature.</li>
+<li>Distinguish cyclotron, gyrosynchrotron, and synchrotron emission as one continuous family controlled mainly by <span class="math inline">\(\gamma\)</span>, pitch angle, and magnetic field.</li>
+<li>Explain why thermal bremsstrahlung is an incoherent free-free continuum with a radio thick-thin turnover rather than a narrow resonant burst.</li>
+</ol>
+</section>
+<section id="linked-outline" class="level2">
+<h2 class="anchored" data-anchor-id="linked-outline">Linked Outline</h2>
+<p>Use the notes in three layers. The first layer defines what a radio telescope measures. The second layer explains how radiation is transferred and propagated after it is produced. The third layer treats the emission mechanisms themselves.</p>
+<p><strong>Measurement and propagation</strong></p>
+<ul>
+<li><a href="#specific-intensity-and-flux-density-explorer">Specific Intensity and Flux Density Explorer</a>: how surface brightness, solid angle, flux density, Jansky units, and brightness temperature fit together.</li>
+<li><a href="#radio-transfer-mechanisms-explorer">Radio Transfer Mechanisms Explorer</a>: how <span class="math inline">\(T_B\)</span>, optical depth, source function, background emission, and the <span class="math inline">\(\tau_\nu\sim 1\)</span> turnover organize a radio spectrum.</li>
+<li><a href="#magnetoionic-propagation-explorer">Magnetoionic Propagation Explorer</a>: how x- and o-mode propagation, stopbands, refractive index, and polarization decide whether a generated wave can escape.</li>
+</ul>
+<p>The mechanism sections start with incoherent baselines and then move to coherent wave-growth mechanisms.</p>
+<p><strong>Incoherent emission</strong></p>
+<ul>
+<li><a href="#bremsstrahlung-explorer">Bremsstrahlung Explorer</a>: free-free radiation from Coulomb acceleration and thermal radio transfer.</li>
+<li><a href="#gyro-emission-explorer">Gyro Emission Explorer</a>: magnetic acceleration radiation from one gyrating electron to an ensemble gyrosynchrotron spectrum.</li>
+</ul>
+<p><strong>Coherent emission</strong></p>
+<ul>
+<li><a href="#plasma-emission-explorer">Plasma Emission Explorer</a>: beam free energy, Langmuir growth, and the primary wave-particle resonance.</li>
+<li><a href="#plasma-radiation-conversion-map-and-companion-pages">Plasma Radiation Conversion Map and Companion Pages</a>: nonlinear conversion from electrostatic Langmuir waves to escaping electromagnetic radiation.</li>
+<li><a href="#plasma-emission-explorer-density-drift-and-dynamic-spectrum">Plasma Emission Explorer: Density Drift and Dynamic Spectrum</a>: density-controlled frequency drift and fundamental/harmonic escape.</li>
+<li><a href="#ecm-emission-explorer">ECM Emission Explorer</a>: anisotropy-driven direct electromagnetic growth near electron-cyclotron harmonics.</li>
+</ul>
+<p><strong>Synthesis</strong></p>
+<ul>
+<li><a href="#bridge-across-the-mechanisms">Bridge Across the Mechanisms</a>: the diagnostic comparison across density-controlled, magnetic, and collision-continuum radiation.</li>
+<li><a href="#summary">Summary</a>: compact mechanism-to-observable map.</li>
+</ul>
+</section>
+<section id="shared-speech-flow" class="level2">
+<h2 class="anchored" data-anchor-id="shared-speech-flow">Shared Speech Flow</h2>
+<p>Start with the common question:</p>
+<blockquote class="blockquote">
+<p>How do charged particles and plasma waves turn source energy into an observable radio spectrum?</p>
+</blockquote>
+<p>Before separating mechanisms, make students separate three questions that are often mixed together:</p>
+<ol type="1">
+<li><strong>Measurement:</strong> what quantity does the telescope report: <span class="math inline">\(I_\nu\)</span>, <span class="math inline">\(S_\nu\)</span>, <span class="math inline">\(T_B\)</span>, or polarization?</li>
+<li><strong>Transfer and propagation:</strong> after radiation is produced, does optical depth, refraction, cutoff, or mode coupling reshape what escapes?</li>
+<li><strong>Emission mechanism:</strong> what physical process generated the wave or photons in the first place?</li>
+</ol>
+<p>Then separate the mechanisms by the physical quantity that controls the emitted frequency:</p>
+<ul>
+<li>Bremsstrahlung is a <strong>collision continuum</strong>, controlled mainly by temperature, ion charge, emission measure, and optical depth.</li>
+<li>Gyro emission follows the <strong>cyclotron/synchrotron magnetic scale</strong>, broadened by the electron energy distribution.</li>
+<li>Plasma emission follows the <strong>plasma frequency</strong>, so the density profile controls the radio frequency and its drift.</li>
+<li>ECM follows the <strong>cyclotron frequency</strong>, so the magnetic field controls the radio frequency, while density mainly decides whether the mode can grow and escape.</li>
+</ul>
+</section>
+<section id="notation-units-and-approximation-policy" class="level2">
+<h2 class="anchored" data-anchor-id="notation-units-and-approximation-policy">Notation, Units, and Approximation Policy</h2>
+<p>The notes mix radiometry, plasma waves, and solar-radio approximations, so the notation is kept explicit:</p>
+<ul>
+<li><span class="math inline">\(\nu\)</span> is ordinary frequency in hertz, while <span class="math inline">\(\omega=2\pi\nu\)</span> is angular frequency.</li>
+<li><span class="math inline">\(\nu_{pe}=\omega_{pe}/2\pi\)</span> is the electron plasma frequency, and <span class="math inline">\(\nu_{ce}=\Omega_{ce}/2\pi\)</span> is the electron gyrofrequency.</li>
+<li>Magnetic field scalings such as <span class="math inline">\(\nu_{ce}\simeq2.8B\)</span> MHz use <span class="math inline">\(B\)</span> in gauss.</li>
+<li><span class="math inline">\(I_\nu\)</span> is specific intensity, <span class="math inline">\(S_\nu\)</span> is flux density, <span class="math inline">\(j_\nu\)</span> is emissivity, <span class="math inline">\(\kappa_\nu\)</span> is absorption coefficient, and <span class="math inline">\(S_\nu^\mathrm{src}=j_\nu/\kappa_\nu\)</span> is the radiative-transfer source function when the notation could be confused with flux density.</li>
+<li><span class="math inline">\(T_B\)</span> is brightness temperature. It is a radiometric brightness scale; it equals the kinetic temperature only for optically thick thermal emission in the Rayleigh–Jeans limit.</li>
+</ul>
+<p>Most displayed formulae are intentionally teaching approximations. They are not replacement formulae for numerical radiative-transfer, kinetic wave-growth, or magnetoionic propagation codes. Each explorer section therefore separates three things:</p>
+<ol type="1">
+<li>the physical mechanism,</li>
+<li>the assumptions behind the formulae shown in the notes, and</li>
+<li>the simplified proxy used by the HTML when the visualization is qualitative.</li>
+</ol>
+</section>
+<section id="specific-intensity-and-flux-density-explorer" class="level2">
+<h2 class="anchored" data-anchor-id="specific-intensity-and-flux-density-explorer">Specific Intensity and Flux Density Explorer</h2>
+<section id="measurement-summary" class="level3">
+<h3 class="anchored" data-anchor-id="measurement-summary">Measurement Summary</h3>
+<p>The <a href="specific-intensity-flux-density.html">specific-intensity and flux-density explorer</a> should come before the emission mechanisms. It answers the observational question: once a source emits radiation, what does a radio telescope actually measure?</p>
+<p><strong>Assumptions and scope.</strong> This explorer uses local Euclidean geometry, a narrow frequency channel, and free-space propagation with no absorption, scattering, refraction, or cosmological redshift. In that limit <span class="math inline">\(I_\nu\)</span> is conserved along a ray, while <span class="math inline">\(S_\nu\)</span> changes because the source solid angle changes. The Planck and Rayleigh–Jeans formulae follow the standard thermal-radiation treatment summarized in Rybicki and Lightman (1979).</p>
+<div class="explorer-gallery">
+  <figure class="figure">
+    <img src="figures/explorer-screenshots/specific-intensity-line-of-sight.png" alt="Line-of-sight geometry" class="figure-img">
+    <figcaption>Line-of-sight geometry</figcaption>
+  </figure>
+  <figure class="figure">
+    <img src="figures/explorer-screenshots/specific-intensity-inu-distance.png" alt="Specific intensity vs. distance" class="figure-img">
+    <figcaption>Specific intensity vs. distance</figcaption>
+  </figure>
+  <figure class="figure">
+    <img src="figures/explorer-screenshots/specific-intensity-snu-distance.png" alt="Flux density vs. distance" class="figure-img">
+    <figcaption>Flux density vs. distance</figcaption>
+  </figure>
+</div>
+<p>The key distinction is between specific intensity and flux density. Specific intensity <span class="math inline">\(I_\nu\)</span> is surface brightness per unit solid angle. In empty space, with no absorption or scattering, it is conserved along a ray. Flux density <span class="math inline">\(S_\nu\)</span> is the integral of specific intensity over the solid angle subtended by the source:</p>
+<p><span class="math display">\[
+S_\nu
+=
+\int I_\nu(\theta,\phi)\cos\theta\,d\Omega .
+\]</span></p>
+<p>For a small resolved source with approximately uniform brightness, this reduces schematically to</p>
+<p><span class="math display">\[
+S_\nu \sim I_\nu \Omega_\mathrm{src}.
+\]</span></p>
+<p>As the source is moved farther away, the same physical area subtends a smaller solid angle, <span class="math inline">\(\Omega_\mathrm{src}\propto r^{-2}\)</span>. The specific intensity along each ray is unchanged, but the telescope receives radiation from a smaller patch of sky. That is why <span class="math inline">\(I_\nu\)</span> is distance-independent while <span class="math inline">\(S_\nu\)</span> falls like an inverse square.</p>
+<p>The radio unit usually reported by observatories is the Jansky:</p>
+<p><span class="math display">\[
+1\ \mathrm{Jy}
+=
+10^{-26}\ \mathrm{W\,m^{-2}\,Hz^{-1}} .
+\]</span></p>
+<p>The blackbody reference intensity is the Planck function,</p>
+<p><span class="math display">\[
+B_\nu(T)
+=
+\frac{2h\nu^3}{c^2}
+\frac{1}{\exp(h\nu/k_B T)-1}.
+\]</span></p>
+<p>This is a specific intensity: it has the same units as <span class="math inline">\(I_\nu\)</span> and describes the surface brightness of an optically thick thermal source at temperature <span class="math inline">\(T\)</span>. In the radio limit,</p>
+<p>The reason the Planck curve has a rising side and a falling side is a physical competition, not just a naming convention. At low frequency, each photon carries little energy, and the electromagnetic field has more available wave modes per unit frequency as <span class="math inline">\(\nu\)</span> increases. Moving to higher <span class="math inline">\(\nu\)</span> therefore opens more ways for the thermal radiation field to store energy, so the intensity rises. At high frequency, each photon costs an energy <span class="math inline">\(h\nu\)</span> that is large compared with the typical thermal energy <span class="math inline">\(k_B T\)</span>. The material can still emit such photons, but only rare high-energy microscopic fluctuations can supply them, so the occupation of those modes falls rapidly. The peak occurs where the growing number of available modes is balanced by the decreasing probability of thermally populating a high-energy photon state.</p>
+<p><span class="math display">\[
+h\nu \ll k_B T,
+\qquad
+\exp(h\nu/k_B T)-1 \approx \frac{h\nu}{k_B T},
+\]</span></p>
+<p>so the Planck function becomes the Rayleigh–Jeans form</p>
+<p><span class="math display">\[
+B_\nu(T)
+\approx
+\frac{2k_B T\nu^2}{c^2}.
+\]</span></p>
+<p>The same explorer also introduces brightness temperature by inverting this Rayleigh–Jeans relation:</p>
+<p><span class="math display">\[
+T_B
+=
+\frac{c^2 I_\nu}{2k_B\nu^2},
+\]</span></p>
+<p>which is the temperature a blackbody would need in the Rayleigh–Jeans limit to have the measured specific intensity. It is a brightness unit, not automatically the kinetic temperature of the plasma. If the radiation is truly optically thick and thermal, then <span class="math inline">\(I_\nu=B_\nu(T)\)</span> and <span class="math inline">\(T_B\simeq T\)</span> in the radio limit. If the source is optically thin, nonthermal, coherent, or strongly beamed, <span class="math inline">\(T_B\)</span> is still useful as a reported brightness scale, but it should not be interpreted directly as a material temperature.</p>
+</section>
+<section id="how-to-use-specific-intensity-flux-density.html" class="level3">
+<h3 class="anchored" data-anchor-id="how-to-use-specific-intensity-flux-density.html">How to Use <code>specific-intensity-flux-density.html</code></h3>
+<p>Start with the default view. Point out the three linked representations: the 3D line-of-sight geometry, the flat <span class="math inline">\(I_\nu\)</span> versus distance plot, and the falling <span class="math inline">\(S_\nu\)</span> versus distance plot.</p>
+<ol type="1">
+<li><strong>Move the distance slider first.</strong> Ask students to predict which curve changes. The intended answer is that <span class="math inline">\(I_\nu\)</span> stays fixed while <span class="math inline">\(S_\nu\)</span> falls because the source occupies a smaller solid angle.</li>
+<li><strong>Change the source radius.</strong> This changes the source solid angle at fixed distance, so the flux density changes even though the surface brightness remains fixed.</li>
+<li><strong>Change the zenith angle.</strong> Use this to motivate the projected-area factor <span class="math inline">\(\cos\theta\)</span> in the flux integral. This is a geometry effect, not an emission mechanism.</li>
+<li><strong>End with brightness temperature.</strong> Emphasize that <span class="math inline">\(T_B\)</span> follows <span class="math inline">\(I_\nu\)</span>, not the total flux. This prepares students for the transfer explorer, where <span class="math inline">\(T_B\)</span> becomes the natural way to discuss optically thick and thin regimes.</li>
+</ol>
+<p>The teaching phrase is: <em>specific intensity tells us how bright each ray is; flux density tells us how much of that brightness the telescope collects over the source’s apparent solid angle.</em></p>
+</section>
+</section>
+<section id="radio-transfer-mechanisms-explorer" class="level2">
+<h2 class="anchored" data-anchor-id="radio-transfer-mechanisms-explorer">Radio Transfer Mechanisms Explorer</h2>
+<section id="transfer-summary" class="level3">
+<h3 class="anchored" data-anchor-id="transfer-summary">Transfer Summary</h3>
+<p>The <a href="radio-transfer-mechanisms.html">radio-transfer explorer</a> comes after the radiometry explorer and before the emission mechanisms. It answers the question: how does a source’s emissivity and opacity become the brightness temperature we observe?</p>
+<p><strong>Assumptions and scope.</strong> The displayed transfer solution is a scalar, one-dimensional, uniform-slab model. It neglects scattering, polarization coupling, spatial gradients inside the slab, and time dependence. Those omissions are deliberate: the panel isolates how <span class="math inline">\(j_\nu\)</span>, <span class="math inline">\(\kappa_\nu\)</span>, source function, background radiation, and optical depth control the observed brightness.</p>
+<div class="explorer-gallery">
+  <figure class="figure">
+    <img src="figures/explorer-screenshots/radio-transfer-line-of-sight.png" alt="Transfer line of sight" class="figure-img">
+    <figcaption>Transfer line of sight</figcaption>
+  </figure>
+  <figure class="figure">
+    <img src="figures/explorer-screenshots/radio-transfer-planck-spectrum.png" alt="Planck/source function" class="figure-img">
+    <figcaption>Planck/source function</figcaption>
+  </figure>
+  <figure class="figure">
+    <img src="figures/explorer-screenshots/radio-transfer-brightness-temperature.png" alt="Brightness temperature turnover" class="figure-img">
+    <figcaption>Brightness temperature turnover</figcaption>
+  </figure>
+</div>
+<p>The starting point is the scalar radiative-transfer equation along a ray,</p>
+<p><span class="math display">\[
+\frac{dI_\nu}{dl}
+=
+j_\nu-\kappa_\nu I_\nu .
+\]</span></p>
+<p>Here <span class="math inline">\(I_\nu\)</span> is specific intensity, <span class="math inline">\(j_\nu\)</span> is the emission coefficient, and <span class="math inline">\(\kappa_\nu\)</span> is the absorption coefficient. The two terms have different meanings. The <span class="math inline">\(j_\nu dl\)</span> term adds locally produced radiation into the beam. The <span class="math inline">\(\kappa_\nu I_\nu dl\)</span> term removes a fraction of the radiation already in the beam. If the slab only absorbed, <span class="math inline">\(j_\nu=0\)</span>, then</p>
+<p><span class="math display">\[
+dI_\nu=-\kappa_\nu I_\nu dl,
+\qquad
+I_\nu(L)=I_\nu(0)e^{-\int_0^L\kappa_\nu dl}.
+\]</span></p>
+<p>This motivates the optical depth</p>
+<p><span class="math display">\[
+\tau_\nu=\int_0^L \kappa_\nu dl .
+\]</span></p>
+<p>For a uniform emitting and absorbing slab, <span class="math inline">\(j_\nu\)</span> and <span class="math inline">\(\kappa_\nu\)</span> are constant. Define the source function</p>
+<p><span class="math display">\[
+S_\nu\equiv \frac{j_\nu}{\kappa_\nu}.
+\]</span></p>
+<p>Then</p>
+<p><span class="math display">\[
+\frac{d}{dl}\left(I_\nu-S_\nu\right)
+=
+-\kappa_\nu\left(I_\nu-S_\nu\right),
+\]</span></p>
+<p>so the difference between the intensity and the source function decays exponentially through the slab:</p>
+<p><span class="math display">\[
+I_{\nu,\mathrm{out}}
+=
+I_{\nu,\mathrm{bg}}e^{-\tau_\nu}
++
+S_\nu\left(1-e^{-\tau_\nu}\right).
+\]</span></p>
+<p>In thermal equilibrium, emission and absorption balance, so <span class="math inline">\(dI_\nu/dl=0\)</span> and <span class="math inline">\(I_\nu=j_\nu/\kappa_\nu=S_\nu\)</span>. Kirchhoff’s law then gives <span class="math inline">\(S_\nu=B_\nu(T_\mathrm{src})\)</span>. In the radio Rayleigh–Jeans limit, <span class="math inline">\(I_\nu=2k_B\nu^2T_B/c^2\)</span> and <span class="math inline">\(B_\nu(T)=2k_B\nu^2T/c^2\)</span>. Dividing the intensity solution by the same Rayleigh–Jeans factor gives the displayed teaching equation for a uniform slab with background brightness temperature <span class="math inline">\(T_\mathrm{bg}\)</span> and source temperature <span class="math inline">\(T_\mathrm{src}\)</span>:</p>
+<p><span class="math display">\[
+T_B
+=
+T_\mathrm{bg}e^{-\tau_\nu}
++
+T_\mathrm{src}\left(1-e^{-\tau_\nu}\right).
+\]</span></p>
+<p>This is the formal transfer solution written in radio language. The first term is the background that survives absorption through the slab. The second term is the slab’s own emission, weighted by how optically thick the slab is.</p>
+<p>For free-free opacity, the explorer uses the scaling</p>
+<p><span class="math display">\[
+\tau_\mathrm{ff}
+\propto
+EM\,T^{-1.35}\nu^{-2.1},
+\]</span></p>
+<p>so low frequencies are more opaque than high frequencies. The turnover frequency where <span class="math inline">\(\tau_\nu\sim 1\)</span> is therefore a diagnostic bridge: below it the source is thick and <span class="math inline">\(T_B\)</span> approaches the source function; above it the source is thin and <span class="math inline">\(T_B\)</span> scales more directly with emission measure.</p>
+<p>The Planck panel is included to keep the source function honest. In the radio limit <span class="math inline">\(h\nu\ll kT\)</span>, the Planck spectrum becomes the Rayleigh–Jeans form, and brightness temperature is a convenient way to report intensity. At higher frequencies the full Planck curvature matters.</p>
+</section>
+<section id="how-to-use-radio-transfer-mechanisms.html" class="level3">
+<h3 class="anchored" data-anchor-id="how-to-use-radio-transfer-mechanisms.html">How to Use <code>radio-transfer-mechanisms.html</code></h3>
+<p>Use this immediately after the flux-density explorer.</p>
+<ol type="1">
+<li><strong>Start with the <span class="math inline">\(\tau\sim 1\)</span> preset.</strong> Show that the selected observing frequency sits near the most diagnostic part of the spectrum, where neither the background nor the source completely dominates.</li>
+<li><strong>Toggle background on and off.</strong> With background included, students can see absorption and emission in one expression. With source-only, the transfer curve is easier to read as <span class="math inline">\(T_\mathrm{src}(1-e^{-\tau})\)</span>.</li>
+<li><strong>Use the thick slab preset.</strong> Point out that increasing optical depth does not let <span class="math inline">\(T_B\)</span> grow without bound. The brightness saturates near the source function.</li>
+<li><strong>Use the thin slab preset.</strong> In the thin regime, <span class="math inline">\(1-e^{-\tau}\approx\tau\)</span>, so the observed brightness is proportional to opacity and emission measure.</li>
+<li><strong>Move frequency.</strong> This makes the low-frequency thick side and high-frequency thin side visually obvious.</li>
+<li><strong>Change EM and <span class="math inline">\(T_\mathrm{src}\)</span>.</strong> EM mainly moves the turnover through opacity; <span class="math inline">\(T_\mathrm{src}\)</span> changes the ceiling that thick emission approaches.</li>
+</ol>
+<p>The teaching phrase is: <em>emission mechanisms tell us what creates radiation; transfer tells us how much of that radiation survives and what brightness temperature the observer reports.</em></p>
+</section>
+</section>
+<section id="magnetoionic-propagation-explorer" class="level2">
+<h2 class="anchored" data-anchor-id="magnetoionic-propagation-explorer">Magnetoionic Propagation Explorer</h2>
+<section id="propagation-summary" class="level3">
+<h3 class="anchored" data-anchor-id="propagation-summary">Propagation Summary</h3>
+<p>The <a href="magnetoionic-propagation.html">magnetoionic propagation explorer</a> comes after radiative transfer and before the emission-mechanism sections. It answers the escape question: even if a mechanism generates an electromagnetic wave, can that wave propagate through the surrounding magnetized plasma?</p>
+<p><strong>Assumptions and scope.</strong> The refractive-index curves use the cold, collisionless, locally homogeneous Appleton–Hartree approximation with immobile ions. This is the right first model for x- and o-mode escape, cutoff, and stopband intuition, but it does not include finite temperature, density gradients, mode coupling through quasi-transverse layers, collisions, or full ray tracing.</p>
+<div class="explorer-gallery">
+  <figure class="figure">
+    <img src="figures/explorer-screenshots/magnetoionic-wave-propagation.png" alt="Magnetoionic wave view" class="figure-img">
+    <figcaption>Magnetoionic wave view</figcaption>
+  </figure>
+  <figure class="figure">
+    <img src="figures/explorer-screenshots/magnetoionic-refractive-index.png" alt="Refractive-index branches" class="figure-img">
+    <figcaption>Refractive-index branches</figcaption>
+  </figure>
+  <figure class="figure">
+    <img src="figures/explorer-screenshots/magnetoionic-polarization-state.png" alt="Polarization state" class="figure-img">
+    <figcaption>Polarization state</figcaption>
+  </figure>
+</div>
+<p>The cold-plasma controls are written in terms of</p>
+<p><span class="math display">\[
+X = \frac{\omega_{pe}^2}{\omega^2},
+\qquad
+Y = \frac{\omega_{ce}}{\omega},
+\qquad
+\theta = \angle(\mathbf{k},\mathbf{B}_0).
+\]</span></p>
+<p>The dispersion relation is usually written through the refractive index,</p>
+<p><span class="math display">\[
+n^2 \equiv \frac{k^2c^2}{\omega^2}.
+\]</span></p>
+<p>For a cold electron plasma with immobile ions, the explorer uses the Appleton–Hartree form</p>
+<p><span class="math display">\[
+n^2
+=
+1 -
+\frac{2X(1-X)}
+{2(1-X)-Y_T^2 \mp D},
+\]</span></p>
+<p>with</p>
+<p><span class="math display">\[
+D
+=
+\left[
+Y_T^4 + 4Y_L^2(1-X)^2
+\right]^{1/2},
+\qquad
+Y_T = Y\sin\theta,
+\qquad
+Y_L = Y\cos\theta.
+\]</span></p>
+<p>The two signs give the two electromagnetic magnetoionic branches. In the convention used by the HTML, the lower-sign denominator,</p>
+<p><span class="math display">\[
+2(1-X)-Y_T^2-D,
+\]</span></p>
+<p>is plotted as the extraordinary or x-mode branch, while the upper-sign denominator,</p>
+<p><span class="math display">\[
+2(1-X)-Y_T^2+D,
+\]</span></p>
+<p>is plotted as the ordinary or o-mode branch. The formula is just the cold-plasma wave equation after the electron current response has been inserted into Maxwell’s equations. The magnetic field makes the dielectric response anisotropic, so the transverse part of the gyro term, <span class="math inline">\(Y_T\)</span>, and the longitudinal part, <span class="math inline">\(Y_L\)</span>, enter differently.</p>
+<p>The explorer emphasizes the physical consequence of the dispersion relation. If <span class="math inline">\(n^2&gt;0\)</span>, then <span class="math inline">\(k\)</span> is real and the wave can propagate. If <span class="math inline">\(n^2&lt;0\)</span>, then <span class="math inline">\(k\)</span> is imaginary and the wave is evanescent:</p>
+<p><span class="math display">\[
+k = i\kappa,
+\qquad
+E \propto e^{-\kappa s}.
+\]</span></p>
+<p>That is the mathematical meaning of a stopband. A mode can be generated locally inside the plasma and still fail to reach the observer if its frequency and propagation angle place it in a region where the Appleton–Hartree expression gives <span class="math inline">\(n^2&lt;0\)</span>.</p>
+<p>The x- and o-modes are the escaping electromagnetic branches most relevant for solar radio observations. Other branches, such as z-mode and whistler-like waves, may exist inside the plasma but are trapped in stopbands or below cutoffs. This distinction is essential for plasma emission and ECM: growth in the source region is not the same as observability at Earth.</p>
+<p>The polarization panel connects propagation to Stokes diagnostics. Changing <span class="math inline">\(\theta_{kB}\)</span> moves the problem between quasi-longitudinal and quasi-transverse limits. The same plasma can produce different polarization states depending on viewing geometry and mode.</p>
+</section>
+<section id="how-to-use-magnetoionic-propagation.html" class="level3">
+<h3 class="anchored" data-anchor-id="how-to-use-magnetoionic-propagation.html">How to Use <code>magnetoionic-propagation.html</code></h3>
+<p>Use this after transfer and before the emission-mechanism sections.</p>
+<ol type="1">
+<li><strong>Begin with the QL propagating preset.</strong> Students should see x- and o-mode waves propagate with distinct polarization states. Connect this to ordinary and extraordinary radio modes.</li>
+<li><strong>Move <span class="math inline">\(\theta_{kB}\)</span>.</strong> Show how polarization changes between more circular in the quasi-longitudinal case and more linear/elliptical near quasi-transverse propagation.</li>
+<li><strong>Increase <span class="math inline">\(X=\omega_{pe}^2/\omega^2\)</span>.</strong> This raises the plasma loading. Watch the refractive-index plot and the regime readout. The conceptual point is that high density pushes waves toward cutoff.</li>
+<li><strong>Change <span class="math inline">\(Y=\omega_{ce}/\omega\)</span>.</strong> This changes the importance of the magnetic field and separates the x- and o-mode behavior.</li>
+<li><strong>Use the z-mode trap preset.</strong> This is the most important escape lesson: a wave can be physically present in the source plasma but still be invisible to a remote observer if it lies in a trapped or evanescent branch.</li>
+<li><strong>Return to ECM or plasma emission.</strong> Ask: does the mechanism make a wave on an escaping branch, or does it first make a trapped electrostatic or magnetoionic mode that needs conversion?</li>
+</ol>
+<p>The teaching phrase is: <em>generation is local, but observation requires escape.</em></p>
+</section>
+</section>
+<section id="bremsstrahlung-explorer" class="level2">
+<h2 class="anchored" data-anchor-id="bremsstrahlung-explorer">Bremsstrahlung Explorer</h2>
+<section id="mechanism-summary" class="level3">
+<h3 class="anchored" data-anchor-id="mechanism-summary">Mechanism Summary</h3>
+<p>Bremsstrahlung is radiation from Coulomb acceleration. An electron passing an ion is deflected by the ion’s electric field, so each encounter emits a small acceleration pulse. A plasma contains many such encounters with many impact parameters and electron speeds, so the summed emission is a continuum. The word “free-free” means that the electron is free before and after the encounter.</p>
+<p>This explorer is the clean non-magnetic contrast case. The magnetic field does not set the frequency. There is no wave-particle resonance analogous to Langmuir growth or ECM. The controls are the ion charge <span class="math inline">\(Z\)</span>, electron speed <span class="math inline">\(v\)</span>, impact parameter <span class="math inline">\(b\)</span>, temperature <span class="math inline">\(T_e\)</span>, and emission measure.</p>
+<p><strong>Assumptions and scope.</strong> The single-encounter picture is classical and nonrelativistic. The thermal emissivity and opacity scalings are radio-limit free-free approximations with the Gaunt factor treated as a slowly varying correction. They are suitable for teaching how continuum emission and optical-depth turnover work; precision modeling should use tabulated or numerically evaluated Gaunt factors and the full plasma composition.</p>
+</section>
+<section id="section-a-one-close-encounter" class="level3">
+<h3 class="anchored" data-anchor-id="section-a-one-close-encounter">Section A: One Close Encounter</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/bremsstrahlung-close-encounter.png" alt="Section A: close encounter" class="figure-img">
+  <figcaption>Section A: close encounter</figcaption>
+</figure>
+<p>The single-encounter panel shows the microscopic event. The ion sits at the origin and the electron arrives with impact parameter <span class="math inline">\(b\)</span>. The Coulomb force bends the trajectory, with a characteristic small-angle deflection</p>
+<p><span class="math display">\[
+\tan\frac{\Theta}{2}
+=
+\frac{Z e^2}{m_e v^2 b}.
+\]</span></p>
+<p>This formula explains the explorer controls directly:</p>
+<p><span class="math display">\[
+\hbox{larger } Z \rightarrow \hbox{stronger deflection},
+\qquad
+\hbox{smaller } b \rightarrow \hbox{stronger deflection},
+\qquad
+\hbox{slower } v \rightarrow \hbox{stronger deflection}.
+\]</span></p>
+<p>The radiation is strongest near closest approach, where the acceleration is largest. The rose two-lobed pattern is the nonrelativistic dipole radiation pattern: the instantaneous radiation is strongest perpendicular to the acceleration.</p>
+</section>
+<section id="section-a-spectrum-encounter-time-and-cutoff" class="level3">
+<h3 class="anchored" data-anchor-id="section-a-spectrum-encounter-time-and-cutoff">Section A Spectrum: Encounter Time and Cutoff</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/bremsstrahlung-encounter-spectrum.png" alt="Section A: encounter spectrum" class="figure-img">
+  <figcaption>Section A: encounter spectrum</figcaption>
+</figure>
+<p>The formula box shows the approximate single-collision spectrum</p>
+<p><span class="math display">\[
+\frac{dW}{d\omega}
+\asymp
+\frac{8 Z^2 e^6}
+{3\pi c^3 m_e^2 v^2 b^2}
+\]</span></p>
+<p>in the low-frequency limit</p>
+<p><span class="math display">\[
+\frac{\omega b}{v}\ll 1.
+\]</span></p>
+<p>The reason is time scale. The acceleration pulse lasts for an encounter time of order</p>
+<p><span class="math display">\[
+\tau_\mathrm{enc} \sim \frac{b}{v}.
+\]</span></p>
+<p>Fourier components with periods long compared with this pulse see the encounter as impulsive and have an approximately flat spectrum. Components with frequencies above the inverse encounter time are suppressed:</p>
+<p><span class="math display">\[
+\omega_{\max}\sim \frac{v}{b}.
+\]</span></p>
+<p>Thus smaller impact parameter does two things at once: it strengthens the acceleration and extends the spectrum to higher frequency.</p>
+</section>
+<section id="section-b-thermal-free-free-emissivity" class="level3">
+<h3 class="anchored" data-anchor-id="section-b-thermal-free-free-emissivity">Section B: Thermal Free-Free Emissivity</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/bremsstrahlung-thermal-emissivity.png" alt="Section B: emissivity" class="figure-img">
+  <figcaption>Section B: emissivity</figcaption>
+</figure>
+<p>For a thermal plasma, one integrates over a Maxwellian velocity distribution and over impact parameters. The standard optically thin scaling is</p>
+<p><span class="math display">\[
+\epsilon_\nu
+\propto
+Z^2 n_e n_i T^{-1/2}
+\exp\left(-\frac{h\nu}{kT}\right)
+g_{ff},
+\]</span></p>
+<p>where <span class="math inline">\(g_{ff}\)</span> is the Gaunt factor. The exponential cutoff is important at photon energies comparable to or above the thermal electron energy. In the radio limit,</p>
+<p><span class="math display">\[
+h\nu \ll kT,
+\]</span></p>
+<p>the exponential is nearly one, so the optically thin emissivity is only weakly frequency dependent apart from the Gaunt factor.</p>
+<p>The emission measure control represents the line-of-sight integral</p>
+<p><span class="math display">\[
+EM = \int n_e n_i\, ds
+\]</span></p>
+<p>up to the conventions used in the radio approximation. Increasing <span class="math inline">\(EM\)</span> increases the opacity and the emitted flux because there are more electron-ion encounters along the line of sight.</p>
+</section>
+<section id="section-b-thick-thin-radio-transfer" class="level3">
+<h3 class="anchored" data-anchor-id="section-b-thick-thin-radio-transfer">Section B: Thick-Thin Radio Transfer</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/bremsstrahlung-thick-thin-transfer.png" alt="Section B: thick-thin transfer" class="figure-img">
+  <figcaption>Section B: thick-thin transfer</figcaption>
+</figure>
+<p>The Dulk-style panel emphasizes radio transfer rather than only local emissivity. The explorer uses the approximate optical-depth scaling</p>
+<p><span class="math display">\[
+\tau_\nu
+\propto
+Z^2\,EM\,T^{-3/2}\,\nu^{-2}\,g_{ff,\mathrm{radio}}.
+\]</span></p>
+<p>Brightness temperature is then plotted as</p>
+<p><span class="math display">\[
+T_b(\nu) = T_e\left(1-e^{-\tau_\nu}\right).
+\]</span></p>
+<p>This produces two simple limits:</p>
+<p><span class="math display">\[
+\tau_\nu \gg 1:
+\quad
+T_b \rightarrow T_e,
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+\tau_\nu \ll 1:
+\quad
+T_b \approx T_e \tau_\nu .
+\]</span></p>
+<p>For a fixed source area, the flux proxy follows the Rayleigh-Jeans scaling</p>
+<p><span class="math display">\[
+S_\nu \propto \nu^2 T_b.
+\]</span></p>
+<p>Therefore the low-frequency optically thick side rises approximately as <span class="math inline">\(\nu^2\)</span>, while the high-frequency optically thin radio side is much flatter. The turnover marker is the frequency where</p>
+<p><span class="math display">\[
+\tau_\nu \approx 1.
+\]</span></p>
+<p>That turnover is a transfer effect. It should not be confused with the cyclotron frequency, plasma frequency, or a maser resonance.</p>
+<section id="free-free-html-narrative-for-bremsstrahlung-explorer.html" class="level4">
+<h4 class="anchored" data-anchor-id="free-free-html-narrative-for-bremsstrahlung-explorer.html">Free-Free HTML Narrative for <code>bremsstrahlung-explorer.html</code></h4>
+<p>Use the free-free explorer as the nonresonant endpoint of the emission-mechanism sequence. The narrative should keep returning to one idea: individual Coulomb encounters make short acceleration pulses, while the source spectrum comes from summing many such pulses through thermal emission and transfer.</p>
+<ol type="1">
+<li><p><strong>Panel A: encounter geometry.</strong> The trajectory is a Coulomb scattering event. The ion charge <span class="math inline">\(Z\)</span> sets the strength of the acceleration, the impact parameter <span class="math inline">\(b\)</span> sets how close and how short the encounter is, and the electron speed <span class="math inline">\(v\)</span> controls both the deflection angle and the encounter time. This panel should be read as a single microscopic event, not as a wave-growth diagram.</p></li>
+<li><p><strong>Panel A spectrum: one pulse in frequency space.</strong> A single encounter has an acceleration pulse of duration <span class="math inline">\(\tau_\mathrm{enc}\sim b/v\)</span>. Fourier components below <span class="math inline">\(\omega\sim v/b\)</span> see a short impulse and give an approximately flat low-frequency spectrum. Higher-frequency components are suppressed because they try to resolve structure shorter than the encounter time. Smaller <span class="math inline">\(b\)</span> therefore makes the pulse both stronger and broader in frequency.</p></li>
+<li><p><strong>Panel B emissivity: many encounters.</strong> Thermal free-free emissivity is obtained by summing the single-encounter radiation over Maxwellian electron speeds and over impact parameters. That is why the formula depends on <span class="math inline">\(Z^2 n_e n_i\)</span>, <span class="math inline">\(T_e\)</span>, and the Gaunt factor rather than on one selected resonance frequency.</p></li>
+<li><p><strong>Panel B transfer: why the radio spectrum turns over.</strong> The displayed radio turnover is caused by absorption and transfer. At low frequency <span class="math inline">\(\tau_\nu\)</span> is large, so <span class="math inline">\(T_b\)</span> approaches <span class="math inline">\(T_e\)</span> and the flux proxy rises roughly like the Rayleigh-Jeans factor <span class="math inline">\(\nu^2\)</span>. At high frequency the source is optically thin, so <span class="math inline">\(T_b\approx T_e\tau_\nu\)</span>.</p></li>
+</ol>
+</section>
+</section>
+<section id="bremsstrahlung-preset-narratives" class="level3">
+<h3 class="anchored" data-anchor-id="bremsstrahlung-preset-narratives">Bremsstrahlung Preset Narratives</h3>
+<p><strong>Ion charge presets.</strong><br>
+Use H, He, C, and Fe to show the <span class="math inline">\(Z^2\)</span> dependence. This is a charge-squared effect in the acceleration, not a change in the electron distribution.</p>
+<p><strong>Temperature sweep.</strong><br>
+Use this to connect thermal speed, high-frequency cutoff, and radio opacity. Higher <span class="math inline">\(T_e\)</span> gives faster electrons and changes both the emissivity scale and the optical-depth normalization.</p>
+<p><strong>Emission-measure sweep.</strong><br>
+Use this to show how density column changes the turnover. Larger <span class="math inline">\(EM\)</span> moves the <span class="math inline">\(\tau_\nu\approx1\)</span> transition to higher frequency and raises the flux proxy.</p>
+</section>
+</section>
+<section id="gyro-emission-explorer" class="level2">
+<h2 class="anchored" data-anchor-id="gyro-emission-explorer">Gyro Emission Explorer</h2>
+<section id="mechanism-summary-1" class="level3">
+<h3 class="anchored" data-anchor-id="mechanism-summary-1">Mechanism Summary</h3>
+<p>The gyro-emission explorer is the incoherent magnetic-emission comparison case. A charged particle moving in a magnetic field accelerates because the Lorentz force bends the perpendicular part of its velocity, and that acceleration radiates. At low energy the emission is cyclotron-like: power appears near the electron cyclotron frequency and its first few harmonics. At mildly relativistic energy the beaming and harmonic structure broaden into gyrosynchrotron emission. At high Lorentz factor the radiation is strongly forward beamed and the many harmonics merge into the familiar synchrotron continuum.</p>
+<ul>
+<li><strong>Gyro emission:</strong> ordinary radiation from accelerated charges.</li>
+<li><strong>ECM:</strong> wave growth from velocity-space free energy.</li>
+</ul>
+<p><strong>Assumptions and scope.</strong> The single-electron panels show vacuum gyro/synchrotron radiation in a uniform magnetic field. The ensemble panel uses simplified thermal or power-law distributions and pedagogical opacity/Razin controls. The synchrotron absorption exponents are exact only in the ideal ultrarelativistic power-law limit; the Dulk–Marsh gyrosynchrotron approximation is empirical and valid only over its stated harmonic, viewing-angle, and electron-index range.</p>
+</section>
+<section id="panel-a-single-electron-in-a-uniform-magnetic-field" class="level3">
+<h3 class="anchored" data-anchor-id="panel-a-single-electron-in-a-uniform-magnetic-field">Panel A: Single Electron in a Uniform Magnetic Field</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/gyro-single-electron-beam.png" alt="Panel A: single electron" class="figure-img">
+  <figcaption>Panel A: single electron</figcaption>
+</figure>
+<p>The top panel answers the most basic question: why does a magnetized electron radiate at all? Split the velocity into components parallel and perpendicular to the magnetic field,</p>
+<p><span class="math display">\[
+v^2 = v_\parallel^2 + v_\perp^2.
+\]</span></p>
+<p>The parallel component streams along the field. The perpendicular component executes circular motion at the relativistic gyrofrequency</p>
+<p><span class="math display">\[
+\Omega_{ce,\mathrm{rel}} = \frac{\Omega_{ce}}{\gamma},
+\qquad
+\Omega_{ce} = \frac{eB}{m_e c},
+\]</span></p>
+<p>so the pitch angle controls the amount of transverse acceleration:</p>
+<p><span class="math display">\[
+v_\perp = v \sin\alpha,
+\qquad
+v_\parallel = v \cos\alpha .
+\]</span></p>
+<p>For nonrelativistic motion, the observer sees a rotating dipole pattern tied to the instantaneous acceleration. As <span class="math inline">\(\gamma\)</span> increases, aberration compresses the apparent radiation into a narrower forward cone around the electron velocity. The explorer’s <span class="math inline">\(\gamma\)</span> slider is therefore not just an energy slider. It changes the emission geometry: cyclotron-like dipole radiation becomes gyrosynchrotron-like beaming, and then synchrotron-like searchlight emission.</p>
+<p>The magnetic-field slider sets the frequency scale:</p>
+<p><span class="math display">\[
+\nu_{ce} = \frac{\Omega_{ce}}{2\pi} \approx 2.8\,B\ \mathrm{MHz}
+\]</span></p>
+<p>when <span class="math inline">\(B\)</span> is measured in gauss. Increasing <span class="math inline">\(B\)</span> moves the same physical pattern to higher frequency.</p>
+</section>
+<section id="panel-b-observer-light-curve-and-viewing-direction" class="level3">
+<h3 class="anchored" data-anchor-id="panel-b-observer-light-curve-and-viewing-direction">Panel B: Observer Light Curve and Viewing Direction</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/gyro-observer-signal.png" alt="Panel B: observer signal" class="figure-img">
+  <figcaption>Panel B: observer signal</figcaption>
+</figure>
+<p>The camera direction in the 3D panel is the far-field line of sight. The light curve below the orbit is the observer’s received power as the beamed pattern sweeps past that line of sight. In the low-<span class="math inline">\(\gamma\)</span> limit the beam is broad, so the modulation is gentle. In the relativistic limit the beam has angular width of order</p>
+<p><span class="math display">\[
+\Delta\theta \sim \frac{1}{\gamma},
+\]</span></p>
+<p>so the observer sees short pulses when the velocity vector points close to the line of sight.</p>
+<p>The pitch angle and viewing angle are different quantities. The pitch angle <span class="math inline">\(\alpha\)</span> is the angle between the electron velocity and <span class="math inline">\(\mathbf{B}\)</span>. The observer angle <span class="math inline">\(\theta_\mathrm{obs}\)</span> is the angle between the line of sight and <span class="math inline">\(\mathbf{B}\)</span>. Emission is strongest when the gyrating velocity cone sweeps across the observer. This is why changing the camera can change the displayed light curve without changing the underlying particle energy or magnetic field.</p>
+</section>
+<section id="panel-c-single-electron-spectrum" class="level3">
+<h3 class="anchored" data-anchor-id="panel-c-single-electron-spectrum">Panel C: Single-Electron Spectrum</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/gyro-single-electron-spectrum.png" alt="Panel C: single-electron spectrum" class="figure-img">
+  <figcaption>Panel C: single-electron spectrum</figcaption>
+</figure>
+<p>The single-electron spectrum panel gives the bridge from orbit geometry to frequency content. The key point is that one electron is not radiating a thermal continuum. It is executing a periodic orbit, so the frequency content comes from the Fourier content of the received acceleration pattern.</p>
+<p>In the nonrelativistic cyclotron limit, the electron acceleration is almost a pure sinusoid at the gyrofrequency. A pure sinusoid has one Fourier frequency, so the spectrum is dominated by the fundamental and the harmonics are absent or extremely weak in the simplified teaching picture. This is why the low-<span class="math inline">\(\gamma\)</span> spectrum can look like one main cyclotron line rather than a comb.</p>
+<p>Harmonics appear when the received signal is no longer a simple sinusoid. Mild relativistic motion changes the radiation pattern through aberration, light-travel-time effects, and beaming. The observer receives a more pulse-like waveform once per gyro-orbit, and a pulse train has Fourier power at integer multiples of the orbital frequency. Schematically,</p>
+<p><span class="math display">\[
+\nu_s \sim s\,\nu_{ce,\mathrm{rel}},
+\qquad
+s = 1,2,3,\ldots .
+\]</span></p>
+<p>Here <span class="math inline">\(\nu_{ce,\mathrm{rel}}=\nu_{ce}/\gamma\)</span> is the relativistic gyrofrequency of the orbit. Increasing <span class="math inline">\(\gamma\)</span> therefore does two things at once. It lowers the spacing of the harmonic ladder through the slower relativistic gyration, but it also makes the radiation much more forward-beamed.</p>
+<p>The reason the envelope peak moves to high harmonic number is that the observer no longer receives a smooth sinusoidal signal over the whole orbit. Relativistic aberration confines most of the radiation to a cone of angular width <span class="math inline">\(\sim 1/\gamma\)</span> around the instantaneous velocity. The observer sees emission only during the short part of the gyro-orbit when that cone sweeps across the line of sight. A narrower pulse in orbital phase requires higher Fourier harmonics to represent it. More detailed synchrotron theory gives a characteristic contributing harmonic of order</p>
+<p><span class="math display">\[
+s_\mathrm{char}\sim \gamma^3\sin\theta_\mathrm{obs},
+\]</span></p>
+<p>up to factors of order unity. Multiplying this harmonic number by the relativistically reduced orbital frequency gives</p>
+<p><span class="math display">\[
+\nu_\mathrm{char}
+\sim
+s_\mathrm{char}\,\nu_{ce,\mathrm{rel}}
+\sim
+\left(\gamma^3\sin\theta_\mathrm{obs}\right)
+\frac{\nu_{ce}}{\gamma}
+\sim
+\gamma^2\nu_{ce}\sin\theta_\mathrm{obs}.
+\]</span></p>
+<p>Thus the harmonic spacing becomes smaller as <span class="math inline">\(1/\gamma\)</span>, but the power shifts to much larger harmonic number, so the observable characteristic frequency grows roughly as</p>
+<p><span class="math display">\[
+\nu_\mathrm{syn} \sim \gamma^2 \nu_B \sin\theta_\mathrm{obs},
+\]</span></p>
+<p>as shown in the explorer. The exact numerical coefficient depends on whether one is quoting the critical frequency, the peak of <span class="math inline">\(\nu P_\nu\)</span>, or a viewing-angle-specific approximation. At high <span class="math inline">\(\gamma\)</span>, so many harmonics contribute that individual lines blur into a synchrotron-like continuum.</p>
+<p>The teaching scalings are:</p>
+<ul>
+<li>higher <span class="math inline">\(B\)</span> moves the whole spectrum to higher frequency because <span class="math inline">\(\nu_{ce}\propto B\)</span>;</li>
+<li>higher <span class="math inline">\(\gamma\)</span> shifts power to many higher harmonics and raises the characteristic synchrotron-like frequency roughly as <span class="math inline">\(\gamma^2\)</span>;</li>
+<li>larger transverse motion gives stronger magnetic radiation because <span class="math inline">\(v_\perp\)</span> sets the curvature acceleration.</li>
+</ul>
+</section>
+<section id="panel-d-ensemble-spectrum" class="level3">
+<h3 class="anchored" data-anchor-id="panel-d-ensemble-spectrum">Panel D: Ensemble Spectrum</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/gyro-ensemble-spectrum-razin.png" alt="Panel D: ensemble spectrum" class="figure-img">
+  <figcaption>Panel D: ensemble spectrum</figcaption>
+</figure>
+<p>The lower spectrum panel answers the question: what changes when the source contains many electrons rather than one? The single-electron spectrum <span class="math inline">\(P_\nu(\gamma,\alpha)\)</span> is the building block. The ensemble emissivity is a weighted sum over electron energy and pitch angle,</p>
+<p><span class="math display">\[
+j_\nu
+\sim
+\int d\gamma\,d\alpha\,
+N(\gamma,\alpha)\,
+P_\nu(\gamma,\alpha;B,\theta_\mathrm{obs}) .
+\]</span></p>
+<p>This integral is why the ensemble spectrum is smoother than the single-electron spectrum. Each value of <span class="math inline">\(\gamma\)</span> and <span class="math inline">\(\alpha\)</span> places the harmonic pattern or synchrotron-like envelope at a slightly different frequency. Adding many electrons smears the individual harmonic features and leaves the broad spectral shape set by the distribution function.</p>
+<ul>
+<li><p><strong>Thermal distribution.</strong> A thermal population has a characteristic dimensionless temperature <span class="math inline">\(\theta_e=kT/(m_e c^2)\)</span> and many more low-energy electrons than high-energy electrons. The resulting spectrum is broad but comparatively soft: low and mildly relativistic electrons dominate, and the high-frequency side drops rapidly because the Maxwellian tail is sparse.</p></li>
+<li><p><strong>Power-law distribution.</strong> A nonthermal population has <span class="math inline">\(N(\gamma)\,d\gamma \propto \gamma^{-\delta}\,d\gamma\)</span> between <span class="math inline">\(\gamma_{\min}\)</span> and <span class="math inline">\(\gamma_{\max}\)</span>. It keeps more high-energy electrons than a thermal distribution, so it produces a broader high-frequency tail. A smaller <span class="math inline">\(\delta\)</span> means a flatter electron spectrum and therefore more high-frequency radiation.</p></li>
+</ul>
+<p>The controls <span class="math inline">\(\gamma_{\min}\)</span>, <span class="math inline">\(\gamma_{\max}\)</span>, and <span class="math inline">\(\delta\)</span> should be interpreted as controls on which Lorentz factors are available to radiate, not as a change in the single-particle radiation law.</p>
+<section id="why-gyrosynchrotron-spectra-have-optically-thick-and-thin-sides" class="level4">
+<h4 class="anchored" data-anchor-id="why-gyrosynchrotron-spectra-have-optically-thick-and-thin-sides">Why Gyrosynchrotron Spectra Have Optically Thick and Thin Sides</h4>
+<p>The broad peak in a gyrosynchrotron spectrum is usually not just the frequency where one electron radiates most strongly. It is also a radiative-transfer turnover. The same magnetized electron population that emits gyrosynchrotron radiation also absorbs it. For a uniform source of depth <span class="math inline">\(L\)</span>,</p>
+<p><span class="math display">\[
+I_\nu
+=
+\frac{j_\nu}{\kappa_\nu}
+\left(1-e^{-\kappa_\nu L}\right)
+=
+S_\nu\left(1-e^{-\tau_\nu}\right),
+\qquad
+\tau_\nu=\kappa_\nu L .
+\]</span></p>
+<p>Here <span class="math inline">\(j_\nu\)</span> is the emissivity, <span class="math inline">\(\kappa_\nu\)</span> is the absorption coefficient, and <span class="math inline">\(S_\nu=j_\nu/\kappa_\nu\)</span> is the source function. The reason <span class="math inline">\(\kappa_\nu\)</span> is largest on the low-frequency side is that absorption is the inverse of emission. A photon can be absorbed only if an electron can take its energy and momentum and move to a slightly higher gyro-orbit or synchrotron-emitting state. Low-frequency photons require only a small energy change, so many low- and mildly relativistic electrons in the distribution can participate. Those same electrons are numerous, so the probability per unit path length for reabsorption is large.</p>
+<p>High-frequency photons are harder to absorb. They correspond to high harmonics or to radiation from higher-<span class="math inline">\(\gamma\)</span> electrons, so an absorbing electron must already be energetic enough to resonate with that part of the spectrum. In a thermal distribution such electrons are exponentially rare; in a power-law distribution they are still much less numerous than low-energy electrons. Thus the absorption coefficient falls with frequency, even while individual high-energy electrons may emit efficiently at high frequency.</p>
+<p>In the ideal ultrarelativistic synchrotron limit, this statement becomes a simple scaling. For a power-law electron distribution</p>
+<p><span class="math display">\[
+N(\gamma)\,d\gamma = K\gamma^{-\delta}\,d\gamma,
+\]</span></p>
+<p>the synchrotron absorption coefficient scales as</p>
+<p><span class="math display">\[
+\kappa_\nu
+\propto
+K\,
+B^{(\delta+2)/2}\,
+\nu^{-(\delta+4)/2}.
+\]</span></p>
+<p>For a common flare value <span class="math inline">\(\delta=3\)</span>, this gives <span class="math inline">\(\kappa_\nu\propto\nu^{-3.5}\)</span>: self-absorption is very strong at low frequency and rapidly weakens at high frequency. The frequency dependence appears because a given observing frequency mainly samples electrons with a characteristic Lorentz factor</p>
+<p><span class="math display">\[
+\gamma_\nu
+\sim
+\left(\frac{\nu}{\nu_B\sin\alpha}\right)^{1/2}.
+\]</span></p>
+<p>Increasing <span class="math inline">\(\nu\)</span> therefore selects larger <span class="math inline">\(\gamma_\nu\)</span>. Since the electron distribution decreases with energy, there are fewer electrons available to absorb those photons. The same expression also explains why the turnover frequency depends on magnetic field. At fixed observing frequency, increasing <span class="math inline">\(B\)</span> increases <span class="math inline">\(\nu_B\)</span> and lowers the required <span class="math inline">\(\gamma_\nu\)</span>. The photon is then coupled to more numerous, lower-energy electrons, and the absorption coefficient at that frequency increases.</p>
+<p>The physical picture is that a radio photon at frequency <span class="math inline">\(\nu\)</span> does not interact equally with all electrons. It mainly interacts with the part of the distribution whose gyro/synchrotron characteristic frequency is near <span class="math inline">\(\nu\)</span>. At low <span class="math inline">\(\nu\)</span>, that selected part of the distribution lies at low <span class="math inline">\(\gamma\)</span>, where there are many electrons, so photons are easily reabsorbed before leaving the source. At high <span class="math inline">\(\nu\)</span>, the selected part lies farther out on the energetic tail, where there are fewer electrons, so the source becomes transparent.</p>
+<p>Changing <span class="math inline">\(B\)</span> moves this selection through the electron distribution. A stronger magnetic field raises the gyrofrequency of every electron. The same observing frequency can then be produced or absorbed by lower-energy electrons, or by a lower effective harmonic number, than it could in a weaker field. Because lower-energy electrons are more abundant, the opacity at that observing frequency increases. A frequency that was optically thin at weak <span class="math inline">\(B\)</span> can therefore become optically thick at stronger <span class="math inline">\(B\)</span>.</p>
+<p>This is the physical reason the turnover is associated with <span class="math inline">\(B\)</span>. The turnover is the frequency where the selected absorbing population has just enough column density to give optical depth of order one. If <span class="math inline">\(B\)</span> is increased, the “many-electron” part of the distribution is shifted to higher radio frequency, so the <span class="math inline">\(\tau_\nu\sim1\)</span> crossing also shifts upward.</p>
+<p>The turnover frequency is defined approximately by</p>
+<p><span class="math display">\[
+\tau_{\nu_t}
+=
+\kappa_{\nu_t}L
+\sim 1 .
+\]</span></p>
+<p>Using the ideal synchrotron scaling above,</p>
+<p><span class="math display">\[
+\nu_t
+\propto
+\left(KL\right)^{2/(\delta+4)}
+B^{(\delta+2)/(\delta+4)} .
+\]</span></p>
+<p>For <span class="math inline">\(\delta=3\)</span>, this gives <span class="math inline">\(\nu_t\propto B^{5/7}\)</span>, apart from pitch-angle and geometry factors. The exact exponent is not the teaching point. The important point is that stronger <span class="math inline">\(B\)</span> both shifts the single-electron frequency scale upward and makes the source more opaque at a fixed low radio frequency, so the <span class="math inline">\(\tau_\nu\sim1\)</span> crossing moves to higher frequency.</p>
+<p>The additional powers of <span class="math inline">\(\nu\)</span> and <span class="math inline">\(B\)</span> come from the synchrotron radiation kernel and from the fact that true absorption is the imbalance between upward photon absorption and downward stimulated emission; that imbalance depends on the slope of the electron distribution, not only on the number of electrons.</p>
+<p>For mildly relativistic gyrosynchrotron emission, the same physical trend holds but the exponent is not universal because the radiation is still organized by finite gyro-harmonics. A commonly used Dulk–Marsh approximation for an isotropic nonthermal power-law distribution, valid roughly for harmonic number <span class="math inline">\(\nu/\nu_B\sim 10\)</span>–<span class="math inline">\(100\)</span>, viewing angle <span class="math inline">\(20^\circ\)</span>–<span class="math inline">\(80^\circ\)</span>, and <span class="math inline">\(\delta\sim 2\)</span>–<span class="math inline">\(7\)</span>, gives</p>
+<p><span class="math display">\[
+\frac{\kappa_\nu B}{N}
+\propto
+\left(\frac{\nu}{\nu_B}\right)^{-(1.30+0.98\delta)},
+\]</span></p>
+<p>or, since <span class="math inline">\(\nu_B\propto B\)</span>,</p>
+<p><span class="math display">\[
+\kappa_\nu
+\propto
+N\,B^{0.30+0.98\delta}\,
+\nu^{-(1.30+0.98\delta)}
+\]</span></p>
+<p>up to factors depending on <span class="math inline">\(\delta\)</span> and viewing angle. For <span class="math inline">\(\delta=3\)</span>, this is approximately <span class="math inline">\(\kappa_\nu\propto\nu^{-4.24}\)</span>, even steeper than the simple ultrarelativistic synchrotron scaling. The exact slope can change near low harmonics, for thermal electrons, for anisotropic pitch-angle distributions, or when Razin/refraction effects matter. The robust point is that increasing frequency corresponds to higher harmonic number and generally higher resonant electron energy; because the available electron population falls with energy, the absorption probability drops rapidly.</p>
+<p>Setting <span class="math inline">\(\kappa_{\nu_t}L\sim1\)</span> in this gyrosynchrotron approximation gives</p>
+<p><span class="math display">\[
+\nu_t
+\propto
+\left(NL\right)^{1/(1.30+0.98\delta)}
+B^{(0.30+0.98\delta)/(1.30+0.98\delta)} ,
+\]</span></p>
+<p>so for <span class="math inline">\(\delta=3\)</span> the magnetic-field exponent is about <span class="math inline">\(0.76\)</span>. This is why a stronger magnetic field tends to move the gyrosynchrotron turnover to higher frequency even if the electron column is unchanged.</p>
+<p>At low radio frequency the absorption coefficient is therefore large, so <span class="math inline">\(\tau_\nu\gg 1\)</span>. The source is optically thick and the observed brightness approaches <span class="math inline">\(S_\nu\)</span>, not the optically thin emissivity times the source depth. In this regime, adding more emitting particles mainly moves the <span class="math inline">\(\tau_\nu\sim 1\)</span> turnover rather than increasing the emergent brightness in direct proportion.</p>
+<p>At high frequency the absorption coefficient becomes small, so <span class="math inline">\(\tau_\nu\ll 1\)</span> and</p>
+<p><span class="math display">\[
+I_\nu \simeq j_\nu L .
+\]</span></p>
+<p>This is the optically thin side. There the spectrum more directly traces the electron energy distribution: a thermal distribution falls rapidly at high frequency, while a power-law distribution leaves a broader high-frequency tail. In the same ideal synchrotron limit, the emissivity scales as <span class="math inline">\(j_\nu\propto\nu^{-(\delta-1)/2}\)</span>. Combining this with the absorption scaling above gives</p>
+<p><span class="math display">\[
+S_\nu=\frac{j_\nu}{\kappa_\nu}\propto \nu^{5/2},
+\]</span></p>
+<p>so the thick side rises approximately as <span class="math inline">\(I_\nu\simeq S_\nu\propto\nu^{5/2}\)</span>, while the thin side falls approximately as <span class="math inline">\(I_\nu\simeq j_\nu L\propto\nu^{-(\delta-1)/2}\)</span>. Mildly relativistic gyrosynchrotron spectra are less clean because low harmonics, viewing angle, pitch-angle distribution, and thermal electrons all matter, but the physical division is the same: low-frequency emission is transfer-limited, high-frequency emission is emissivity-limited, and the turnover sits near <span class="math inline">\(\tau_\nu\sim 1\)</span>.</p>
+</section>
+<section id="razin-suppression-in-dense-plasma" class="level4">
+<h4 class="anchored" data-anchor-id="razin-suppression-in-dense-plasma">Razin Suppression in Dense Plasma</h4>
+<p>The gyro-emission panels mainly show the vacuum single-particle radiation and the ensemble sum. In a real source, however, the wave is formed and then propagates inside a plasma. High density changes the electromagnetic refractive index before the radiation has fully separated from the electron. This is the origin of the Razin effect.</p>
+<p>For a transverse electromagnetic wave above the plasma cutoff, a simple unmagnetized approximation gives</p>
+<p><span class="math display">\[
+n_\mathrm{ref}
+\simeq
+\left(1-\frac{\nu_{pe}^2}{\nu^2}\right)^{1/2},
+\qquad
+\nu_{pe}\approx 9.0\times 10^3\sqrt{n_e}\ \mathrm{Hz},
+\]</span></p>
+<p>with <span class="math inline">\(n_e\)</span> in <span class="math inline">\(\mathrm{cm}^{-3}\)</span>. When <span class="math inline">\(n_e\)</span> is large, <span class="math inline">\(\nu_{pe}\)</span> is large, so <span class="math inline">\(n_\mathrm{ref}\)</span> becomes noticeably smaller than one at low radio frequency. The wave phase speed is then <span class="math inline">\(v_\phi=c/n_\mathrm{ref}&gt;c\)</span>. The electron and the wave slip in phase more quickly than they would in vacuum, so radiation from different parts of the gyro-orbit does not add coherently over the usual formation length.</p>
+<p>For mildly relativistic gyrosynchrotron emission, the important comparison is between two angular scales. Vacuum beaming puts most of the radiation into an angle</p>
+<p><span class="math display">\[
+\Delta\theta_\mathrm{beam}\sim \frac{1}{\gamma}.
+\]</span></p>
+<p>Plasma refraction introduces an effective angular scale of order <span class="math inline">\(\nu_{pe}/\nu\)</span>. Once</p>
+<p><span class="math display">\[
+\frac{\nu_{pe}}{\nu}
+\gtrsim
+\frac{1}{\gamma},
+\]</span></p>
+<p>the plasma strongly alters the beaming geometry and the low-frequency emissivity is suppressed. Using the approximate gyrosynchrotron scaling <span class="math inline">\(\nu\sim\gamma^2\nu_{ce}\)</span> gives the familiar Razin frequency</p>
+<p><span class="math display">\[
+\nu_R
+\sim
+\frac{\nu_{pe}^2}{\nu_{ce}}
+\approx
+20\,\frac{n_e}{B}\ \mathrm{Hz},
+\]</span></p>
+<p>where <span class="math inline">\(B\)</span> is in gauss. Below <span class="math inline">\(\nu_R\)</span>, optically thin gyrosynchrotron radiation can be much weaker than one would predict from the electron distribution alone. This is why a dense flare loop may contain many nonthermal electrons and still show a depressed low-frequency gyrosynchrotron spectrum.</p>
+<p>The phrase “gyrocyclotron emission” can be confusing here because the very low-energy, low-harmonic cyclotron limit is not the usual place where the Razin approximation is most useful. Razin suppression is most often discussed for mildly relativistic gyrosynchrotron and synchrotron-like emission, where relativistic beaming and a long formation length matter. The broader lesson still applies to the gyro-emission family: high density raises <span class="math inline">\(\nu_{pe}\)</span>, strengthens refraction, and makes magnetic radiation at low radio frequency harder to form and escape.</p>
+<p>Do not identify every low-frequency turnover with the Razin effect. There are three related but distinct possibilities:</p>
+<ul>
+<li><strong>Plasma cutoff:</strong> waves with <span class="math inline">\(\nu\lesssim\nu_{pe}\)</span> cannot freely propagate.</li>
+<li><strong>Razin suppression:</strong> refraction reduces the emitted low-frequency gyrosynchrotron power even above the cutoff.</li>
+<li><strong>Self-absorption:</strong> radiation is produced but reabsorbed by the source, so transfer drives <span class="math inline">\(I_\nu\)</span> toward the source function.</li>
+</ul>
+<p>The optical-depth slider represents synchrotron or gyrosynchrotron self-absorption. At low frequency the source can become optically thick, so the observed intensity no longer tracks optically thin emissivity. In transfer language,</p>
+<p><span class="math display">\[
+I_\nu = S_\nu \left(1-e^{-\tau_\nu}\right),
+\]</span></p>
+<p>where <span class="math inline">\(S_\nu = j_\nu/\kappa_\nu\)</span> is the source function. The turnover occurs near <span class="math inline">\(\tau_\nu\sim 1\)</span>. This is a radiative-transfer turnover, not a resonance frequency and not a plasma-emission harmonic.</p>
+</section>
+<section id="visual-script-for-gyro-emission-explorer.html" class="level4">
+<h4 class="anchored" data-anchor-id="visual-script-for-gyro-emission-explorer.html">Visual Script for <code>gyro-emission-explorer.html</code></h4>
+<ol type="1">
+<li><p><strong>Start with the 3D orbit.</strong> Point out that <span class="math inline">\(v_\perp\)</span> makes the electron curve and radiate, while <span class="math inline">\(v_\parallel\)</span> only carries the helix along the magnetic field. Use the pitch slider to show the transition from nearly field-aligned motion to mostly circular motion.</p></li>
+<li><p><strong>Use <span class="math inline">\(\gamma\)</span> to connect geometry to beaming.</strong> At <span class="math inline">\(\gamma\approx 1\)</span> the emission pattern is broad and cyclotron-like. As <span class="math inline">\(\gamma\)</span> increases, the pattern folds forward and the light curve develops sharper pulses. This is the visual meaning of relativistic beaming.</p></li>
+<li><p><strong>Use <span class="math inline">\(B\)</span> as the frequency-scale knob.</strong> The same particle distribution shifts in frequency as <span class="math inline">\(\nu_{ce}\propto B\)</span>. This is the magnetic-field analogue of the plasma-emission statement <span class="math inline">\(\nu_{pe}\propto \sqrt{n_e}\)</span>.</p></li>
+<li><p><strong>Move to the single-electron spectrum.</strong> Explain that the Schott-harmonic plot is the frequency-domain view of the same periodic acceleration. Increasing <span class="math inline">\(\gamma\)</span> populates many harmonics and pushes power to higher characteristic frequency.</p></li>
+<li><p><strong>Finish with the ensemble spectrum.</strong> Thermal and power-law distributions are different weights over many single-electron spectra. Use this panel to separate three low-frequency effects: a plasma cutoff blocks propagation, Razin suppression reduces the emitted gyrosynchrotron power in dense plasma, and the opacity slider demonstrates self-absorption with a <span class="math inline">\(\tau_\nu\sim 1\)</span> turnover.</p></li>
+</ol>
+</section>
+</section>
+<section id="gyro-preset-narratives" class="level3">
+<h3 class="anchored" data-anchor-id="gyro-preset-narratives">Gyro Preset Narratives</h3>
+<p><strong>Thermal distribution.</strong><br>
+Use this to describe hot magnetized plasma whose electrons are not dominated by a nonthermal tail. The spectrum is broad but comparatively soft because the population falls rapidly at high <span class="math inline">\(\gamma\)</span>.</p>
+<p><strong>Power-law distribution.</strong><br>
+Use this for flare-accelerated electrons. The key observable diagnostic is that a flatter power law, smaller <span class="math inline">\(\delta\)</span>, leaves more high-energy electrons and therefore more high-frequency emission.</p>
+</section>
+</section>
+<section id="plasma-emission-explorer" class="level2">
+<h2 class="anchored" data-anchor-id="plasma-emission-explorer">Plasma Emission Explorer</h2>
+<section id="mechanism-summary-2" class="level3">
+<h3 class="anchored" data-anchor-id="mechanism-summary-2">Mechanism Summary</h3>
+<p>A field-aligned electron beam propagates outward through the corona. In reduced velocity space it adds a secondary component on the high-velocity tail of the background electron distribution. If that added component creates a region with <span class="math inline">\(\partial f / \partial v_\parallel &gt; 0\)</span>, then Langmuir waves can grow near the local plasma frequency. Those Langmuir waves are electrostatic, so they do not immediately escape to the observer. Nonlinear wave-wave processes then convert part of the Langmuir energy into electromagnetic radiation near the plasma frequency and its harmonic. Because the coronal density decreases with height, the local plasma frequency decreases with height, so the observed emission drifts downward in frequency as the beam moves outward.</p>
+<p><strong>Assumptions and scope.</strong> The beam-growth panels use a reduced one-dimensional velocity distribution and a warm-fluid Langmuir dispersion relation. This is a controlled teaching model for bump-on-tail resonance and frequency drift, not a quasilinear simulation. Growth rates, saturation, scattering efficiency, and escape probability are represented qualitatively unless explicitly derived.</p>
+</section>
+<section id="panel-a-where-is-the-free-energy" class="level3">
+<h3 class="anchored" data-anchor-id="panel-a-where-is-the-free-energy">Panel A: Where Is the Free Energy?</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/plasma-panel-a-free-energy.png" alt="Panel A: free energy" class="figure-img">
+  <figcaption>Panel A: free energy</figcaption>
+</figure>
+<p>The panel shows a reduced one-dimensional distribution <span class="math inline">\(f(v_\parallel)\)</span> because plasma emission is fundamentally a beam-aligned instability. A minimal model is</p>
+<p><span class="math display">\[
+f(v_\parallel) = f_M(v_\parallel) + f_b(v_\parallel),
+\]</span></p>
+<p>where <span class="math inline">\(f_M\)</span> is the background Maxwellian and <span class="math inline">\(f_b\)</span> is the beam contribution. If the beam is narrow and centered at <span class="math inline">\(v_b &gt; 0\)</span>, then on the low-velocity side of the beam peak the beam contribution rises with <span class="math inline">\(v_\parallel\)</span>, so the total distribution can satisfy</p>
+<p><span class="math display">\[
+\frac{\partial f}{\partial v_\parallel} &gt; 0.
+\]</span></p>
+<p>That positive slope is the source of free energy. Physically, a wave whose phase speed is near the beam speed sees more particles slightly faster than the wave than slightly slower than the wave, so the particles lose energy to the wave rather than Landau damping it.</p>
+</section>
+<section id="panel-b-field-aligned-beam-geometry" class="level3">
+<h3 class="anchored" data-anchor-id="panel-b-field-aligned-beam-geometry">Panel B: Field-Aligned Beam Geometry</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/plasma-panel-b-beam-geometry.png" alt="Panel B: beam geometry" class="figure-img">
+  <figcaption>Panel B: beam geometry</figcaption>
+</figure>
+<p>The small inset in <span class="math inline">\(v_\perp\)</span>-<span class="math inline">\(v_\parallel\)</span> space is only there to remind students that the beam is field aligned. It is not the primary physics plane for plasma emission. The reason is that the beam-driven plasma-emission instability is controlled mainly by the resonance along the magnetic field,</p>
+<p><span class="math display">\[
+\omega - k_\parallel v_\parallel \approx 0,
+\]</span></p>
+<p>for Langmuir-like waves with phase speed close to the beam speed. In this situation, the key comparison is not between different pitch angles, but between electrons that are slightly slower or slightly faster than the resonant phase speed along the field. That is why the sign of the slope in the parallel distribution matters so much.</p>
+<p>If the background is approximately gyrotropic and the beam is confined to a small pitch-angle cone, one can compress the full distribution into a reduced one-dimensional function,</p>
+<p><span class="math display">\[
+F(v_\parallel) = 2\pi \int_0^\infty f(v_\parallel, v_\perp)\, v_\perp\, dv_\perp.
+\]</span></p>
+<p>The instability criterion is then read from the shape of <span class="math inline">\(F(v_\parallel)\)</span> near the resonant phase speed: if</p>
+<p><span class="math display">\[
+\frac{\partial F}{\partial v_\parallel} &gt; 0
+\]</span></p>
+<p>at the resonance, the wave can grow; if the slope is negative, ordinary Landau damping wins. In other words, for plasma emission the essential free energy is a bump-on-tail structure in the distribution.</p>
+<p>This is very different from ECM, where the decisive free energy is often a perpendicular or pitch-angle anisotropy and the full <span class="math inline">\(v_\perp\)</span>-<span class="math inline">\(v_\parallel\)</span> geometry is the main physics space. For plasma emission, the 2D inset is therefore secondary. It gives geometric context by showing that the beam is narrow in pitch angle and sits on the <span class="math inline">\(+v_\parallel\)</span> side, but once that fact is established, the most informative plot is the reduced parallel distribution <span class="math inline">\(F(v_\parallel)\)</span>.</p>
+</section>
+<section id="panel-c-wave-particle-energy-exchange" class="level3">
+<h3 class="anchored" data-anchor-id="panel-c-wave-particle-energy-exchange">Panel C: Wave-Particle Energy Exchange</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/plasma-panel-c-wave-particle.png" alt="Panel C: wave-particle exchange" class="figure-img">
+  <figcaption>Panel C: wave-particle exchange</figcaption>
+</figure>
+<p>Panel C is meant to answer a common student question: <em>how does a bump in a velocity distribution become a wave?</em> The answer is resonant wave-particle interaction. For an electrostatic Langmuir wave with electric field approximately parallel to the beam,</p>
+<p><span class="math display">\[
+E_\parallel(x,t) = E_0 \cos(kx-\omega t),
+\]</span></p>
+<p>the important particles are those that remain nearly in phase with the wave. In the frame moving with the wave phase speed,</p>
+<p><span class="math display">\[
+v_\phi = \frac{\omega}{k},
+\]</span></p>
+<p>those particles see a slowly varying electric field rather than a rapidly oscillating one. The resonance condition is therefore</p>
+<p><span class="math display">\[
+\omega - k v_\parallel \approx 0
+\quad \Longleftrightarrow \quad
+v_\parallel \approx v_\phi .
+\]</span></p>
+<p>Particles slightly slower than the wave tend to be accelerated by the wave and take energy from it. Particles slightly faster than the wave tend to be decelerated by the wave and give energy to it. A Maxwellian tail has fewer fast particles than slow particles near a positive phase speed, so the wave loses energy: this is ordinary Landau damping. A bump-on-tail reverses that local imbalance. When</p>
+<p><span class="math display">\[
+\left. \frac{\partial F}{\partial v_\parallel} \right|_{v_\phi} &gt; 0,
+\]</span></p>
+<p>there are more particles just faster than the wave than just slower than the wave. The net energy flow is then from beam particles into the wave. In the usual Landau-growth sign convention for Langmuir waves one can summarize the result as</p>
+<p><span class="math display">\[
+\gamma_L \propto
+\left. \frac{\partial F}{\partial v_\parallel} \right|_{v_\phi},
+\]</span></p>
+<p>where <span class="math inline">\(\gamma_L&gt;0\)</span> means wave growth and <span class="math inline">\(\gamma_L&lt;0\)</span> means damping. This proportionality is not intended as a complete growth-rate formula in the explorer; it is the sign argument that the illustration is trying to make visible.</p>
+<p>A useful classroom analogy is a surfer on an ocean wave. A surfer moving slightly slower than the wave is picked up and accelerated by it, so the wave does work on the surfer. A surfer moving slightly faster than the wave can push on the wave while being slowed down, so the surfer gives energy to the wave. A thermal distribution has more of the first kind than the second kind, so waves damp. A beam bump supplies an excess of the second kind, so the Langmuir wave grows.</p>
+<p>The updated Panel C separates the wave from the resonant particles. The fixed pale ion markers are the almost stationary ion background. The red electron markers oscillate horizontally about those ions, showing the Langmuir wave as a <strong>longitudinal</strong> electron-density oscillation with <span class="math inline">\(\mathbf{E}_\parallel \parallel \mathbf{k}\)</span>. The brown arrows along the ion row are the local Langmuir electric field; their changing length represents the changing field strength <span class="math inline">\(|E_\parallel|\)</span>, not a particle path.</p>
+<p>The blue and gray dots are the resonant particles near <span class="math inline">\(v_\phi\)</span>. Their faint trail dots mark equal-time positions, so the trail spacing is a speed cue: wider spacing means faster motion and compressed spacing means slower motion. Blue particles start slightly faster than the wave and slow down as they give kinetic energy to the Langmuir field. Gray particles start slightly slower than the wave and speed up as they take energy from the wave. The local work rate is</p>
+<p><span class="math display">\[
+\frac{dK}{dt}
+= q_e v_\parallel E_\parallel,
+\qquad q_e=-e.
+\]</span></p>
+<p>The small arrows attached to the moving particles show this work sign. Teal means <span class="math inline">\(q_e v_\parallel E_\parallel&gt;0\)</span>, so the particle gains kinetic energy from the wave. Amber means <span class="math inline">\(q_e v_\parallel E_\parallel&lt;0\)</span>, so the particle gives kinetic energy to the Langmuir wave. The cartoon deliberately shows more blue fast-side particles than gray slow-side particles, so the net exchange is</p>
+<p><span class="math display">\[
+\text{beam kinetic energy}
+\longrightarrow
+\text{electrostatic Langmuir-wave energy}.
+\]</span></p>
+<p>Only after this particle-to-wave step do the nonlinear wave-wave processes in the conversion map become relevant.</p>
+</section>
+<section id="panel-d-resonance-on-the-langmuir-branch" class="level3">
+<h3 class="anchored" data-anchor-id="panel-d-resonance-on-the-langmuir-branch">Panel D: Resonance on the Langmuir Branch</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/plasma-panel-d-resonance.png" alt="Panel D: Langmuir resonance" class="figure-img">
+  <figcaption>Panel D: Langmuir resonance</figcaption>
+</figure>
+<p>This panel is a resonance sketch in normalized <span class="math inline">\(\omega\)</span>-<span class="math inline">\(k\)</span> space. The vertical axis is <span class="math inline">\(\omega / \omega_{pe}\)</span> and the horizontal axis is <span class="math inline">\(k v_{te} / \omega_{pe}\)</span>. Its job is only to identify which Langmuir wave grows from the beam. The nonlinear conversion of that Langmuir energy into escaping radio emission is handled by the separate conversion-map pages.</p>
+<section id="step-1-beam-resonance-line" class="level4">
+<h4 class="anchored" data-anchor-id="step-1-beam-resonance-line">Step 1: Beam Resonance Line</h4>
+<p>If a wave has phase speed</p>
+<p><span class="math display">\[
+v_\phi = \frac{\omega}{k},
+\]</span></p>
+<p>then resonance with the beam occurs when <span class="math inline">\(v_\phi \approx v_b\)</span>, or equivalently</p>
+<p><span class="math display">\[
+\omega = k v_b.
+\]</span></p>
+<p>This is the dashed blue line. In the normalized coordinates</p>
+<p><span class="math display">\[
+x \equiv \frac{k v_{te}}{\omega_{pe}},
+\qquad
+y \equiv \frac{\omega}{\omega_{pe}},
+\]</span></p>
+<p>the resonance line is simply</p>
+<p><span class="math display">\[
+y = \frac{v_b}{v_{te}}\, x.
+\]</span></p>
+<p>That is why the blue line rotates when <span class="math inline">\(v_b\)</span> changes. In this normalization its slope is the dimensionless ratio <span class="math inline">\(v_b / v_{te}\)</span>.</p>
+<p>The graphical meaning of the line is simple: every point on it has phase speed equal to the beam speed,</p>
+<p><span class="math display">\[
+\frac{\omega}{k}=v_b.
+\]</span></p>
+<p>But not every point on that line is an allowed plasma wave. A real Langmuir wave must also lie on the Langmuir dispersion relation. Therefore the resonant mode is selected by satisfying both conditions at once:</p>
+<p><span class="math display">\[
+\omega = k v_b,
+\qquad
+\omega^2 = \omega_{pe}^2 + 3k^2v_{te}^2.
+\]</span></p>
+<p>In the plot, “satisfying both conditions” is exactly the intersection between the dashed blue beam line and the red Langmuir branch. At that point, the wave is a legitimate Langmuir eigenmode and its phase speed matches the beam, so beam electrons remain in nearly the same phase of the wave long enough to exchange energy coherently. Away from the intersection, either the wave is not on the Langmuir branch, or its phase speed does not match the beam, so the interaction phase-mixes instead of producing strong resonant growth.</p>
+</section>
+<section id="step-2-langmuir-dispersion-relation" class="level4">
+<h4 class="anchored" data-anchor-id="step-2-langmuir-dispersion-relation">Step 2: Langmuir Dispersion Relation</h4>
+<p>The red branch is the warm-plasma Langmuir dispersion relation,</p>
+<p><span class="math display">\[
+\omega^2 = \omega_{pe}^2 + 3 k^2 v_{te}^2.
+\]</span></p>
+<p>This expression can be derived from the linearized electron fluid equations plus Poisson’s equation. Take small perturbations proportional to <span class="math inline">\(\exp(i k x - i \omega t)\)</span>:</p>
+<p><span class="math display">\[
+\frac{\partial n_1}{\partial t} + n_0 \frac{\partial u_1}{\partial x} = 0,
+\]</span></p>
+<p><span class="math display">\[
+\frac{\partial u_1}{\partial t}
+= -\frac{e}{m_e} E_1 - \frac{1}{m_e n_0}\frac{\partial p_1}{\partial x},
+\]</span></p>
+<p><span class="math display">\[
+\frac{\partial E_1}{\partial x} = -4 \pi e n_1.
+\]</span></p>
+<p>For an adiabatic one-dimensional electron pressure response, write</p>
+<p><span class="math display">\[
+p_1 \approx 3 n_1 k_B T_e = 3 m_e v_{te}^2 n_1.
+\]</span></p>
+<p>After Fourier substitution, the continuity equation gives</p>
+<p><span class="math display">\[
+-i \omega n_1 + i k n_0 u_1 = 0
+\quad \Longrightarrow \quad
+u_1 = \frac{\omega}{k n_0} n_1.
+\]</span></p>
+<p>The momentum equation becomes</p>
+<p><span class="math display">\[
+-i \omega u_1
+=
+-\frac{e}{m_e} E_1
+- i k \, 3 v_{te}^2 \frac{n_1}{n_0}.
+\]</span></p>
+<p>From Poisson’s equation,</p>
+<p><span class="math display">\[
+i k E_1 = -4 \pi e n_1
+\quad \Longrightarrow \quad
+E_1 = \frac{4 \pi i e}{k} n_1.
+\]</span></p>
+<p>Substituting both expressions into the momentum equation and eliminating <span class="math inline">\(u_1\)</span> gives</p>
+<p><span class="math display">\[
+\omega^2 = \frac{4 \pi n_0 e^2}{m_e} + 3 k^2 v_{te}^2.
+\]</span></p>
+<p>Recognizing</p>
+<p><span class="math display">\[
+\omega_{pe}^2 = \frac{4 \pi n_0 e^2}{m_e},
+\]</span></p>
+<p>we obtain</p>
+<p><span class="math display">\[
+\omega^2 = \omega_{pe}^2 + 3 k^2 v_{te}^2.
+\]</span></p>
+<p>Now divide by <span class="math inline">\(\omega_{pe}^2\)</span> and use <span class="math inline">\(x = k v_{te} / \omega_{pe}\)</span> to get the normalized red curve:</p>
+<p><span class="math display">\[
+y = \sqrt{1 + 3 \left(\frac{v_{te}}{v_b}\right)^2 x^2 }.
+\]</span></p>
+<p>The reason it looks almost flat in the panel is therefore explicit: in the corona <span class="math inline">\(v_{te} \ll v_b\)</span>, so the correction term proportional to <span class="math inline">\((v_{te}/v_b)^2\)</span> is small.</p>
+</section>
+<section id="step-3-resonance-point" class="level4">
+<h4 class="anchored" data-anchor-id="step-3-resonance-point">Step 3: Resonance Point</h4>
+<p>The orange dot is the intersection of the blue and red curves. Set the two expressions equal:</p>
+<p><span class="math display">\[
+\frac{v_b}{v_{te}} x = \sqrt{1 + 3 x^2 }.
+\]</span></p>
+<p>Squaring both sides,</p>
+<p><span class="math display">\[
+\left(\frac{v_b}{v_{te}}\right)^2 x^2 = 1 + 3 x^2,
+\]</span></p>
+<p>so</p>
+<p><span class="math display">\[
+x^2 \left[\left(\frac{v_b}{v_{te}}\right)^2 - 3 \right] = 1.
+\]</span></p>
+<p>Thus,</p>
+<p><span class="math display">\[
+x_{\mathrm{res}}
+=
+\left[\left(\frac{v_b}{v_{te}}\right)^2 - 3 \right]^{-1/2},
+\]</span></p>
+<p>and therefore</p>
+<p><span class="math display">\[
+y_{\mathrm{res}}
+=
+\frac{v_b}{v_{te}} x_{\mathrm{res}}
+=
+\left[1 - 3 \left(\frac{v_{te}}{v_b}\right)^2 \right]^{-1/2}.
+\]</span></p>
+<p>This expression shows immediately that the resonance point is not exactly at <span class="math inline">\(\omega/\omega_{pe} = 1\)</span> unless one takes the cold-plasma limit <span class="math inline">\(v_{te}/v_b \rightarrow 0\)</span>. For any finite warm-plasma correction,</p>
+<p><span class="math display">\[
+y_{\mathrm{res}} &gt; 1.
+\]</span></p>
+<p>Thus the orange resonance point lies slightly above <span class="math inline">\(\omega=\omega_{pe}\)</span>. In the default solar-coronal parameters used in the explorer, <span class="math inline">\(v_{te} \ll v_b\)</span>, so the excess above unity is small and the dot visually appears almost at <span class="math inline">\(\omega/\omega_{pe}=1\)</span>.</p>
+<p>This only makes sense if</p>
+<p><span class="math display">\[
+1 - 3 \left(\frac{v_{te}}{v_b}\right)^2 &gt; 0,
+\]</span></p>
+<p>or</p>
+<p><span class="math display">\[
+v_b &gt; \sqrt{3}\, v_{te}.
+\]</span></p>
+<p>That is the basic speed threshold implied by the warm-fluid resonance sketch. It is not a full nonlinear instability criterion, but it explains why a sufficiently fast beam is needed.</p>
+</section>
+</section>
+</section>
+<section id="plasma-radiation-conversion-map-and-companion-pages" class="level2">
+<h2 class="anchored" data-anchor-id="plasma-radiation-conversion-map-and-companion-pages">Plasma Radiation Conversion Map and Companion Pages</h2>
+<p>The plasma-emission explorer stops at the point where beam energy has produced electrostatic Langmuir turbulence. The companion conversion pages start from that point. Their purpose is to show how electrostatic Langmuir energy can become transverse electromagnetic radiation.</p>
+<p><strong>Assumptions and scope.</strong> The conversion pages use schematic <span class="math inline">\(\omega\)</span>-<span class="math inline">\(k\)</span> matching for Langmuir, ion-sound, and transverse electromagnetic branches. They teach conservation of frequency and wavevector in common fundamental and harmonic channels. They do not compute conversion efficiency, angular emissivity, saturation, scattering by inhomogeneity, or full kinetic mode coupling.</p>
+<section id="why-the-conversion-map-is-needed" class="level3">
+<h3 class="anchored" data-anchor-id="why-the-conversion-map-is-needed">Why the Conversion Map Is Needed</h3>
+<p>The red curve and orange dot only describe Langmuir-wave growth. Langmuir waves are electrostatic. To get escaping radio emission, a second step is needed. In symbolic form:</p>
+<p><span class="math display">\[
+L \rightarrow T(\omega_{pe}),
+\]</span></p>
+<p>or</p>
+<p><span class="math display">\[
+L + L' \rightarrow T(2\omega_{pe}),
+\]</span></p>
+<p>where <span class="math inline">\(L\)</span> denotes Langmuir waves and <span class="math inline">\(T\)</span> denotes an escaping transverse electromagnetic wave. The panel title therefore combines two linked but distinct pieces of physics:</p>
+<ol type="1">
+<li>resonant beam-driven growth of <span class="math inline">\(L\)</span>,</li>
+<li>nonlinear conversion of <span class="math inline">\(L\)</span> into escaping radio emission.</li>
+</ol>
+<p>For slide use, the wave-conversion chain is shown below as a standalone process diagram:</p>
+<p>How to read the blocks:</p>
+<ul>
+<li><strong>Electron beam.</strong> This is the nonthermal fast-electron population injected by a flare, reconnection site, or shock environment. It supplies the free energy.</li>
+<li><strong>Beam instability.</strong> Once the reduced distribution develops a bump on the tail, the resonance <span class="math inline">\(\omega \approx k_\parallel v_b\)</span> allows the beam to pump electrostatic waves instead of damping them.</li>
+<li><strong>Primary Langmuir waves.</strong> These are the first strong plasma oscillations generated by the beam. They live near the local plasma frequency and are still electrostatic, so they do not yet escape as radio emission.</li>
+<li><strong>Scattering / mode conversion.</strong> Interaction of Langmuir waves with ion-sound waves or low-frequency density fluctuations can convert part of the Langmuir spectrum into an escaping electromagnetic mode near the local plasma frequency. This is the pedagogical fundamental-emission channel.</li>
+<li><strong>Backscattering / decay.</strong> A forward Langmuir wave can decay or scatter into a backward Langmuir wave plus a low-frequency wave. That step builds the counter-propagating Langmuir population needed for efficient harmonic production.</li>
+<li><strong>Backscattered Langmuir waves.</strong> These are the <span class="math inline">\(L'\)</span> waves in the diagram. They are not the observed radio wave; they are the partner population that can coalesce with the original Langmuir waves.</li>
+<li><strong>Langmuir-wave coalescence.</strong> A forward and backward Langmuir pair can merge nonlinearly, producing a transverse electromagnetic wave near <span class="math inline">\(2\omega_{pe}\)</span>.</li>
+<li><strong>Fundamental emission.</strong> Escaping radiation near the plasma frequency. In real plasmas several closely related scattering channels can contribute; the diagram shows the standard pedagogical one.</li>
+<li><strong>Harmonic emission.</strong> Escaping radiation near twice the plasma frequency, usually associated with <span class="math inline">\(L + L' \rightarrow T(2\omega_{pe})\)</span>.</li>
+</ul>
+<p>Here <span class="math inline">\(S\)</span> stands for an ion-sound wave or low-frequency density fluctuation, and <span class="math inline">\(T\)</span> stands for the escaping transverse electromagnetic mode. Read the chart from top to bottom: first the beam pumps Langmuir waves, and then nonlinear wave-wave coupling converts part of that electrostatic energy into radio emission that can escape.</p>
+</section>
+<section id="what-the-nonlinear-blocks-mean" class="level3">
+<h3 class="anchored" data-anchor-id="what-the-nonlinear-blocks-mean">What the Nonlinear Blocks Mean</h3>
+<p>The four nonlinear blocks in the diagram are where the electrostatic Langmuir turbulence is turned into something an observer can actually detect. These steps are often drawn as a compact symbolic chain, but each block encodes a specific frequency-matching and wavevector-matching idea.</p>
+<section id="scattering-mode-conversion" class="level4">
+<h4 class="anchored" data-anchor-id="scattering-mode-conversion">Scattering / Mode Conversion</h4>
+<p>The fundamental branch is often written schematically as</p>
+<p><span class="math display">\[
+L + S \rightarrow T,
+\]</span></p>
+<p>with matching conditions</p>
+<p><span class="math display">\[
+\omega_L + \omega_S = \omega_T,
+\qquad
+\mathbf{k}_L + \mathbf{k}_S = \mathbf{k}_T.
+\]</span></p>
+<p>Here <span class="math inline">\(L\)</span> is a Langmuir wave, <span class="math inline">\(S\)</span> is an ion-sound wave or low-frequency density perturbation, and <span class="math inline">\(T\)</span> is the escaping transverse electromagnetic mode. Because the low-frequency partner satisfies <span class="math inline">\(\omega_S \ll \omega_{pe}\)</span>, the emitted electromagnetic wave lands near the fundamental:</p>
+<p><span class="math display">\[
+\omega_T \approx \omega_L \approx \omega_{pe}.
+\]</span></p>
+<p>The physical order is important. The red point comes first: the electron beam excites a primary Langmuir wave. The blue transverse wave is the later conversion product. Therefore the red point in Panel A is not an arbitrary point on the Langmuir branch; it is selected by the beam-particle resonance,</p>
+<p><span class="math display">\[
+\omega_L \approx k_L v_b,
+\]</span></p>
+<p>and since <span class="math inline">\(\omega_L \approx \omega_{pe}\)</span>,</p>
+<p><span class="math display">\[
+k_L \approx \frac{\omega_{pe}}{v_b}.
+\]</span></p>
+<p>For a nonrelativistic or mildly relativistic electron beam, <span class="math inline">\(v_b \ll c\)</span>. Therefore</p>
+<p><span class="math display">\[
+k_L \approx \frac{\omega_{pe}}{v_b}
+\gg
+\frac{\omega_{pe}}{c}.
+\]</span></p>
+<p>This is the source side of the mismatch: the beam naturally produces an electrostatic Langmuir wave with a relatively large wavenumber.</p>
+<p>The main physical role of the <span class="math inline">\(S\)</span> wave is to help satisfy the momentum mismatch. A pure Langmuir wave is electrostatic and does not simply continue into a freely propagating radio wave. The additional low-frequency fluctuation scatters the Langmuir wave in frequency-wavevector space so that an electromagnetic branch can be accessed. That is why many lecture notes refer to this step as either <em>scattering</em> or <em>mode conversion</em>: the energy remains near the same characteristic frequency, but the wave changes from electrostatic to transverse electromagnetic.</p>
+<p>The phrase “does not propagate” needs one important qualification. A Langmuir wave is not literally motionless; in a warm plasma it has a finite group velocity. What it does <strong>not</strong> do efficiently is propagate as an escaping transverse radio wave. There are two separate reasons.</p>
+<p>First, the Langmuir mode is primarily longitudinal and electrostatic. Its electric field is approximately parallel to the wavevector,</p>
+<p><span class="math display">\[
+\mathbf{E}_L \parallel \mathbf{k}_L,
+\]</span></p>
+<p>and the mode is obtained mainly from charge separation and Poisson’s equation, not from a self-sustaining transverse electromagnetic field. In an ideal electrostatic Langmuir oscillation the perturbed magnetic field is negligible:</p>
+<p><span class="math display">\[
+\mathbf{B}_L \simeq 0.
+\]</span></p>
+<p>Therefore the wave does not carry energy away like a radio wave with transverse <span class="math inline">\(\mathbf{E}\)</span>, transverse <span class="math inline">\(\mathbf{B}\)</span>, and an outward Poynting flux <span class="math inline">\(\mathbf{S}_{\mathrm{Poynting}} \propto \mathbf{E}\times\mathbf{B}\)</span>. It is better to think of the red branch in the figure as plasma sloshing: electrons oscillate against the ion background, storing strong electrostatic energy, but the oscillation is poorly coupled to free-space radiation.</p>
+<p>Second, the red Langmuir branch is almost flat near <span class="math inline">\(\omega_{pe}\)</span>. From</p>
+<p><span class="math display">\[
+\omega_L^2 \approx \omega_{pe}^2 + 3 k_L^2 v_{te}^2,
+\]</span></p>
+<p>the group velocity of Langmuir-wave energy is</p>
+<p><span class="math display">\[
+v_{g,L}
+= \frac{\partial \omega_L}{\partial k_L}
+= \frac{3 k_L v_{te}^2}{\omega_L}.
+\]</span></p>
+<p>For the beam-driven waves in the plasma-emission explorer, the resonance condition gives</p>
+<p><span class="math display">\[
+v_\phi = \frac{\omega_L}{k_L} \approx v_b,
+\]</span></p>
+<p>so the beam selects a resonant wavenumber</p>
+<p><span class="math display">\[
+k_{\mathrm{res}} \approx \frac{\omega_L}{v_b}
+\approx \frac{\omega_{pe}}{v_b}.
+\]</span></p>
+<p>There is a continuum of possible Langmuir modes on the red dispersion branch, each with its own <span class="math inline">\(k_L\)</span> and therefore its own group velocity. The beam does not excite all of them equally. It couples most strongly to the part of the branch whose phase speed matches the beam. Evaluating the Langmuir group velocity at that selected wavenumber gives</p>
+<p><span class="math display">\[
+v_{g,L}
+\approx
+\left.
+\frac{3 k_L v_{te}^2}{\omega_L}
+\right|_{k_L=k_{\mathrm{res}}}
+\approx
+\frac{3v_{te}^2}{v_b}.
+\]</span></p>
+<p>The dependence is therefore inverse in <span class="math inline">\(v_b\)</span>, not inverse in <span class="math inline">\(v_b^2\)</span>. A faster beam resonates with a smaller Langmuir wavenumber and therefore with a smaller Langmuir group velocity. A slower beam would select a larger <span class="math inline">\(k_L\)</span> and a larger <span class="math inline">\(v_{g,L}\)</span>, although if the beam approaches the thermal speed the simple warm-fluid picture becomes less useful because ordinary Landau damping is strong. Since the beam speed is usually much larger than the thermal speed, <span class="math inline">\(v_b \gg v_{te}\)</span>, this group velocity is small compared with both <span class="math inline">\(v_b\)</span> and <span class="math inline">\(c\)</span>. Thus the Langmuir wave energy tends to remain local to the source region or beam-plasma turbulence instead of streaming freely to the observer.</p>
+<p>By contrast, the blue branch is the transverse electromagnetic branch. In the figure, the word “transverse” is not meant to be inferred from the curvature alone. It is a statement about the wave eigenvector. The transverse electromagnetic mode satisfies</p>
+<p><span class="math display">\[
+\mathbf{k}_T \cdot \mathbf{E}_T = 0,
+\qquad
+\mathbf{B}_T = \frac{\mathbf{k}_T \times \mathbf{E}_T}{\omega_T},
+\]</span></p>
+<p>so its electric and magnetic fields are both perpendicular to the propagation direction. That is the field geometry of an escaping radio wave.</p>
+<p>One quick derivation starts from the cold electron response in an unmagnetized plasma. For a plane wave proportional to <span class="math inline">\(\exp(i\mathbf{k}\cdot\mathbf{x}-i\omega t)\)</span>, the linearized electron momentum equation gives</p>
+<p><span class="math display">\[
+-i\omega m_e \mathbf{v}_1 = -e\mathbf{E}_1,
+\]</span></p>
+<p>so the induced current is</p>
+<p><span class="math display">\[
+\mathbf{J}_1
+= -n_0 e\mathbf{v}_1
+= i\frac{n_0e^2}{m_e\omega}\mathbf{E}_1.
+\]</span></p>
+<p>Inserting this current into Maxwell’s equations gives the plasma dielectric response</p>
+<p><span class="math display">\[
+\epsilon(\omega) = 1 - \frac{\omega_{pe}^2}{\omega^2}.
+\]</span></p>
+<p>The electromagnetic wave equation can be written schematically as</p>
+<p><span class="math display">\[
+\mathbf{k}\times(\mathbf{k}\times\mathbf{E})
++ \frac{\omega^2}{c^2}\epsilon(\omega)\mathbf{E}=0.
+\]</span></p>
+<p>For the transverse branch, <span class="math inline">\(\mathbf{k}\cdot\mathbf{E}=0\)</span>, so</p>
+<p><span class="math display">\[
+\mathbf{k}\times(\mathbf{k}\times\mathbf{E})
+= -k^2\mathbf{E}.
+\]</span></p>
+<p>The wave equation then reduces to</p>
+<p><span class="math display">\[
+k_T^2 c^2
+= \omega_T^2\left(1-\frac{\omega_{pe}^2}{\omega_T^2}\right)
+= \omega_T^2-\omega_{pe}^2,
+\]</span></p>
+<p>or</p>
+<p><span class="math display">\[
+\omega_T^2 \approx \omega_{pe}^2 + c^2 k_T^2,
+\]</span></p>
+<p>which is the blue curve in the panel. This is why the blue branch is called <span class="math inline">\(T\)</span>: it is the transverse electromagnetic eigenmode of the plasma. The red Langmuir branch is different not merely because it is flatter, but because it has a longitudinal/electrostatic eigenvector, approximately <span class="math inline">\(\mathbf{E}_L \parallel \mathbf{k}_L\)</span> and <span class="math inline">\(\mathbf{B}_L \simeq 0\)</span>.</p>
+<p>The group velocity of the transverse branch is</p>
+<p><span class="math display">\[
+v_{g,T}
+= \frac{\partial \omega_T}{\partial k_T}
+= \frac{c^2 k_T}{\omega_T}
+= c\sqrt{1-\frac{\omega_{pe}^2}{\omega_T^2}}.
+\]</span></p>
+<p>Just above the local cutoff, <span class="math inline">\(v_{g,T}\)</span> can still be modest, but the wave is already on the transverse electromagnetic branch. As it moves into regions of lower density, the local <span class="math inline">\(\omega_{pe}\)</span> decreases, the ratio <span class="math inline">\(\omega_T/\omega_{pe}\)</span> increases, and the mode escapes more like an ordinary radio wave. The red point in the panel marks the energetic electrostatic Langmuir wave; the blue point marks the transverse branch that can become observable radiation.</p>
+<p>To make that picture less abstract, write the approximate dispersions for the three participating branches:</p>
+<p><span class="math display">\[
+\omega_L^2 \approx \omega_{pe}^2 + 3 k_L^2 v_{te}^2,
+\]</span></p>
+<p><span class="math display">\[
+\omega_T^2 \approx \omega_{pe}^2 + c^2 k_T^2,
+\]</span></p>
+<p>and, for an ion-sound mediator,</p>
+<p><span class="math display">\[
+\omega_S \approx k_S c_s,
+\qquad
+c_s \approx \sqrt{\frac{k_B T_e}{m_i}}
+\quad
+(T_e \gg T_i \text{ limit}).
+\]</span></p>
+<p>Near the fundamental electromagnetic cutoff, the escaping transverse mode has a much smaller wavevector than the electrostatic Langmuir mode. This is the step that is easiest to miss from the plot, so it is worth deriving it.</p>
+<p>For the electromagnetic branch,</p>
+<p><span class="math display">\[
+\omega_T^2 \approx \omega_{pe}^2 + c^2 k_T^2,
+\]</span></p>
+<p>so</p>
+<p><span class="math display">\[
+k_T
+= \frac{1}{c}\sqrt{\omega_T^2-\omega_{pe}^2}.
+\]</span></p>
+<p>At fundamental emission, <span class="math inline">\(\omega_T\)</span> is only slightly above the local cutoff <span class="math inline">\(\omega_{pe}\)</span>. Therefore the square root is small. The EM wave is a real transverse mode, but just above cutoff its wavevector is still small.</p>
+<p>This does <strong>not</strong> contradict the familiar vacuum formula <span class="math inline">\(\lambda_0=2\pi c/\omega_T\)</span>. That formula assumes the wave is already in vacuum, where <span class="math inline">\(k_0=\omega_T/c\)</span>. Inside a plasma the transverse electromagnetic mode has a refractive index</p>
+<p><span class="math display">\[
+n^2
+= \frac{c^2k_T^2}{\omega_T^2}
+= 1-\frac{\omega_{pe}^2}{\omega_T^2}.
+\]</span></p>
+<p>Thus</p>
+<p><span class="math display">\[
+k_T = \frac{n\omega_T}{c},
+\qquad
+\lambda_T = \frac{2\pi}{k_T}
+= \frac{2\pi c}{n\omega_T}
+= \frac{\lambda_0}{n}.
+\]</span></p>
+<p>Near cutoff, <span class="math inline">\(\omega_T\approx\omega_{pe}\)</span> and therefore <span class="math inline">\(n\ll 1\)</span>. The plasma wavelength <span class="math inline">\(\lambda_T\)</span> is then much longer than the vacuum wavelength <span class="math inline">\(\lambda_0\)</span>. The frequency is fixed, but the wavelength is not fixed by the vacuum relation because the wave is propagating in a dispersive medium.</p>
+<p>Small <span class="math inline">\(k_T\)</span> also has a propagation meaning, but this point needs careful wording. A small real <span class="math inline">\(k_T\)</span> is <strong>not</strong> the same thing as “no propagation.” The transverse branch has group velocity</p>
+<p><span class="math display">\[
+v_{g,T}
+= \frac{\partial\omega_T}{\partial k_T}
+= \frac{c^2k_T}{\omega_T}
+= cn.
+\]</span></p>
+<p>There are three distinct cases:</p>
+<ol type="1">
+<li>If <span class="math inline">\(\omega_T&lt;\omega_{pe}\)</span>, then <span class="math inline">\(k_T\)</span> is imaginary. This is evanescent; it does not freely propagate.</li>
+<li>If <span class="math inline">\(\omega_T=\omega_{pe}\)</span>, then <span class="math inline">\(k_T=0\)</span> and <span class="math inline">\(v_{g,T}=0\)</span>. This is the exact cutoff.</li>
+<li>If <span class="math inline">\(\omega_T&gt;\omega_{pe}\)</span>, then <span class="math inline">\(k_T\)</span> is real. Just above cutoff it is small, so the wave is allowed but has long wavelength and small group velocity.</li>
+</ol>
+<p>Efficient escape happens after the wave moves into lower-density plasma, where the local <span class="math inline">\(\omega_{pe}\)</span> decreases, <span class="math inline">\(n\)</span> increases, and <span class="math inline">\(v_{g,T}\)</span> approaches <span class="math inline">\(c\)</span>.</p>
+<p>Mode conversion and propagation play different roles. The scattering step creates a transverse electromagnetic wave on the correct branch. At the source, that transverse wave may still have small <span class="math inline">\(k_T\)</span> and small group velocity. If its frequency is slightly above the local cutoff, it can begin to propagate; as it moves outward into lower density, the same fixed wave frequency sees a smaller local <span class="math inline">\(\omega_{pe}\)</span>, so the dispersion relation gives a larger real <span class="math inline">\(k_T\)</span>:</p>
+<p><span class="math display">\[
+k_T(r)
+= \frac{1}{c}\sqrt{\omega_T^2-\omega_{pe}^2(r)}.
+\]</span></p>
+<p>Thus there are two separate steps. Panel A of the HTML only shows the first one.</p>
+<ol type="1">
+<li><strong>Mode conversion:</strong> <span class="math inline">\(L+S\rightarrow T\)</span> changes the wave from electrostatic to transverse electromagnetic and satisfies local frequency-wavevector matching.</li>
+<li><strong>Propagation through the density gradient:</strong> after conversion, decreasing <span class="math inline">\(\omega_{pe}(r)\)</span> lets the already-created <span class="math inline">\(T\)</span> wave acquire larger <span class="math inline">\(k_T\)</span> and larger group velocity.</li>
+</ol>
+<p>The matching condition therefore moves the energy onto the electromagnetic branch, while the outward density gradient makes that already-created electromagnetic wave increasingly freely propagating.</p>
+<p>Combining the source-side beam-resonance estimate for <span class="math inline">\(k_L\)</span> with the target-side near-cutoff estimate for <span class="math inline">\(k_T\)</span> gives the important ordering</p>
+<p><span class="math display">\[
+k_T \ll k_L.
+\]</span></p>
+<p>Now apply the wavevector matching condition. In a one-dimensional sketch, choose the primary Langmuir wave to travel in the positive direction, so <span class="math inline">\(k_L&gt;0\)</span>. The matching condition is</p>
+<p><span class="math display">\[
+k_L + k_S = k_T,
+\]</span></p>
+<p>or</p>
+<p><span class="math display">\[
+k_S = k_T-k_L.
+\]</span></p>
+<p>Because the newly produced electromagnetic wave is near cutoff, <span class="math inline">\(k_T\)</span> is small compared with <span class="math inline">\(k_L\)</span>. Therefore</p>
+<p><span class="math display">\[
+k_S \approx -k_L.
+\]</span></p>
+<p>The negative sign is essential. In magnitude, <span class="math inline">\(|k_S|\approx |k_L|\)</span>, but the direction is opposite. The low-frequency fluctuation supplies the wavevector needed to move the energy from the large-<span class="math inline">\(k_L\)</span> electrostatic branch onto the small-<span class="math inline">\(k_T\)</span> electromagnetic branch:</p>
+<p><span class="math display">\[
+\underbrace{k_L}_{\text{large, positive}}
++
+\underbrace{k_S}_{\text{large, negative}}
+=
+\underbrace{k_T}_{\text{small, positive}}.
+\]</span></p>
+<p>Most of the Langmuir wavevector is cancelled by the scattering fluctuation. The result is a small-<span class="math inline">\(k_T\)</span> transverse wave near cutoff. Escape then depends on <span class="math inline">\(\omega_T\)</span> being above the local cutoff and on the density gradient outside the source. As the same wave moves outward into lower-density plasma, the decreasing local <span class="math inline">\(\omega_{pe}\)</span> makes the allowed transverse wavenumber grow.</p>
+<p>The same fixed emitted frequency <span class="math inline">\(\omega_T\)</span> therefore has two different transverse wavenumbers at two different places:</p>
+<p><span class="math display">\[
+k_{T,\mathrm{source}}
+= \frac{1}{c}\sqrt{\omega_T^2-\omega_{pe}^2(\mathrm{source})}
+\quad \text{small, near cutoff},
+\]</span></p>
+<p>but farther outward,</p>
+<p><span class="math display">\[
+k_{T,\mathrm{out}}
+= \frac{1}{c}\sqrt{\omega_T^2-\omega_{pe}^2(\mathrm{out})}
+&gt;
+k_{T,\mathrm{source}},
+\]</span></p>
+<p>because <span class="math inline">\(\omega_{pe}(\mathrm{out})&lt;\omega_{pe}(\mathrm{source})\)</span>. That outward increase is a propagation/refraction effect, not the role of <span class="math inline">\(S\)</span>.</p>
+<p>The initial fluctuation <span class="math inline">\(S\)</span> is part of the plasma environment: an ion-sound wave, density ripple, or turbulence component with some wavevector. When a Langmuir wave scatters from that fluctuation, the fluctuation supplies or absorbs the missing spatial momentum, much like a diffraction grating supplies reciprocal-lattice momentum in optics.</p>
+<p>The negative sign is therefore a direction statement: the scattering fluctuation must provide a wavevector mostly opposite to the original Langmuir wave. It does <strong>not</strong> mean that the <span class="math inline">\(S\)</span> wave supplies a comparable amount of energy. For an ion-sound wave,</p>
+<p><span class="math display">\[
+\omega_S \approx |k_S|c_s
+\approx k_L c_s
+\approx \omega_{pe}\frac{c_s}{v_b}.
+\]</span></p>
+<p>Since <span class="math inline">\(c_s \ll v_b\)</span>, the frequency carried by <span class="math inline">\(S\)</span> is still small even though its wavevector can be large:</p>
+<p><span class="math display">\[
+\omega_S \ll \omega_{pe}.
+\]</span></p>
+<p>This is the key point: <span class="math inline">\(S\)</span> is mainly a <strong>wavevector broker</strong>, not an energy source. It changes the spatial scale and direction of the disturbance enough that the energy of an electrostatic Langmuir wave can land on the transverse electromagnetic branch.</p>
+<p>The physical picture is that a Langmuir wave packet encounters an ion-sound wave or a low-frequency density clump and is scattered in <span class="math inline">\((\omega,\mathbf{k})\)</span> space onto the transverse electromagnetic branch. The frequency changes only slightly because <span class="math inline">\(\omega_S \ll \omega_{pe}\)</span>, but the wavevector changes substantially because the Langmuir wave and escaping EM wave occupy very different dispersion surfaces.</p>
+<p>An intuitive analogy is a violin string pressed against the wooden bridge. The string itself stores oscillatory energy, but the air does not hear much until the bridge provides the mechanical coupling that lets the motion shake the body of the violin and launch sound. Here the Langmuir wave is like the string motion: intense, local, and poorly coupled to radiation. The ion-sound fluctuation or density ripple plays the role of the bridge. It does not supply much frequency; instead it supplies the missing spatial coupling that lets electrostatic motion shake the electromagnetic field.</p>
+<p>This channel is efficient only if the plasma provides a usable low-frequency scattering agent. There must be either ion-sound turbulence or sufficiently strong density inhomogeneity, the fluctuation level must be large enough to cause significant scattering, and damping of the low-frequency mode must not be too strong. In the ion-sound version of the mechanism, one usually wants</p>
+<p><span class="math display">\[
+T_e \gtrsim T_i,
+\]</span></p>
+<p>and often more strongly <span class="math inline">\(T_e \gg T_i\)</span>, so that ion-sound waves are not immediately suppressed by ion Landau damping.</p>
+</section>
+<section id="visual-script-for-plasma-fundamental-conversion.html" class="level4">
+<h4 class="anchored" data-anchor-id="visual-script-for-plasma-fundamental-conversion.html">Visual Script for <code>plasma-fundamental-conversion.html</code></h4>
+<div class="explorer-gallery">
+  <figure class="figure">
+    <img src="figures/explorer-screenshots/plasma-conversion-branch-matching.png" alt="Branch matching" class="figure-img">
+    <figcaption>Branch matching</figcaption>
+  </figure>
+  <figure class="figure">
+    <img src="figures/explorer-screenshots/plasma-conversion-mode-conversion.png" alt="Mode conversion" class="figure-img">
+    <figcaption>Mode conversion</figcaption>
+  </figure>
+  <figure class="figure">
+    <img src="figures/explorer-screenshots/plasma-conversion-fundamental-escape.png" alt="Fundamental escape" class="figure-img">
+    <figcaption>Fundamental escape</figcaption>
+  </figure>
+</div>
+<p>Use the dedicated fundamental-conversion page as a three-step frequency-wavevector diagram. The red point is the primary Langmuir wave <span class="math inline">\(L\)</span>: it lives close to <span class="math inline">\(\omega_{pe}\)</span> but is electrostatic, so by itself it is not yet escaping radio emission. The blue transverse branch is the electromagnetic mode <span class="math inline">\(T\)</span> that can propagate away, with a wavevector set by the transverse dispersion relation rather than by the original beam resonance.</p>
+<p>The green dashed arrow represents the low-frequency partner <span class="math inline">\(S\)</span>. Its main job is not to add much energy:</p>
+<p><span class="math display">\[
+\Delta \omega = \omega_S \ll \omega_{pe}.
+\]</span></p>
+<p>Its main job is to supply the missing spatial momentum:</p>
+<p><span class="math display">\[
+\Delta \mathbf{k} = \mathbf{k}_S
+  = \mathbf{k}_T - \mathbf{k}_L.
+\]</span></p>
+<p>That is why the page emphasizes “small <span class="math inline">\(\Delta\omega\)</span>, large <span class="math inline">\(|\Delta k|\)</span>.” In words: the density ripple acts like a moving diffraction grating. It scatters the electrostatic Langmuir oscillation into a transverse electromagnetic oscillation while keeping the frequency close to the local plasma frequency.</p>
+<p>The real-space cartoon on the page is only an analogy for the coupling. A longitudinal electrostatic packet encounters a density ripple or ion-sound compression; after the interaction, part of the energy appears as a transverse packet. The final card marks the observational consequence: the escaped radiation is fundamental plasma emission,</p>
+<p><span class="math display">\[
+\omega_T \gtrsim \omega_{pe},
+\]</span></p>
+<p>so its escape is sensitive to the local cutoff and to propagation through overlying plasma.</p>
+</section>
+<section id="backscattering-decay" class="level4">
+<h4 class="anchored" data-anchor-id="backscattering-decay">Backscattering / Decay</h4>
+<p>The backscattering block is commonly written as</p>
+<p><span class="math display">\[
+L \rightarrow L' + S,
+\]</span></p>
+<p>with matching conditions</p>
+<p><span class="math display">\[
+\omega_L = \omega_{L'} + \omega_S,
+\qquad
+\mathbf{k}_L = \mathbf{k}_{L'} + \mathbf{k}_S.
+\]</span></p>
+<p>Again <span class="math inline">\(\omega_S\)</span> is small compared with <span class="math inline">\(\omega_{pe}\)</span>, so the parent and daughter Langmuir waves both remain close to the plasma frequency. The important change is in the propagation direction: the daughter Langmuir wave <span class="math inline">\(L'\)</span> is typically driven toward the opposite sign of <span class="math inline">\(k_\parallel\)</span>, so it is natural to call it a <em>backscattered</em> Langmuir wave. In words, the beam first pumps a forward Langmuir spectrum, and then nonlinear decay builds the counter-propagating partner population that the harmonic channel needs.</p>
+<p>This step matters because a single one-way Langmuir spectrum is not enough to make the harmonic branch efficient. Harmonic emission needs two Langmuir populations with nearly opposite wavevectors so that their wavevector sum is small enough to match a freely propagating electromagnetic wave.</p>
+<p>The physical picture is parametric decay. Once the forward Langmuir turbulence becomes strong enough, the electrostatic wave can nonlinearly couple to the density field and split into two daughter disturbances: a second Langmuir wave and a low-frequency compressive mode. The sound-like daughter carries away only a small fraction of the energy but a large fraction of the wavevector.</p>
+<p>The everyday analogy is a fast skater pushing off a loose sled on ice. The skater may keep nearly the same kind of motion after the push, but the sled can carry away a large amount of momentum because momentum, unlike energy here, can be rearranged very effectively between the two objects. The ion-sound wave is the sled: it is slow and low frequency, but it can take the recoil needed to turn a forward Langmuir oscillation into a backward one.</p>
+<p>Because the ion-sound speed is much smaller than the Langmuir-wave phase speed,</p>
+<p><span class="math display">\[
+c_s \ll \frac{\omega_L}{k_L},
+\]</span></p>
+<p>the resonance conditions prefer a daughter Langmuir wave with nearly the same <span class="math inline">\(|k|\)</span> as the parent but with the opposite sign. In the simplest backscatter limit this becomes</p>
+<p><span class="math display">\[
+k_{L'} \approx -k_L,
+\qquad
+k_S \approx 2k_L.
+\]</span></p>
+<p>One can understand that result qualitatively from the matching rules alone. Since <span class="math inline">\(\omega_S\)</span> is small, the parent and daughter Langmuir frequencies must be nearly equal:</p>
+<p><span class="math display">\[
+\omega_L(k_L) \approx \omega_{L'}(k_{L'}).
+\]</span></p>
+<p>For the Langmuir branch that usually implies similar magnitudes of wavenumber, and then the momentum condition is easiest to satisfy by reversing the Langmuir direction and letting the low-frequency mode absorb the difference.</p>
+<p>This decay channel needs more than just the existence of a beam. The beam must first build up enough Langmuir intensity that nonlinear coupling outruns linear damping, and the low-frequency daughter mode must survive long enough to participate. Strong damping of ion-sound waves can weaken or suppress the backscattering route.</p>
+</section>
+<section id="backscattered-langmuir-waves" class="level4">
+<h4 class="anchored" data-anchor-id="backscattered-langmuir-waves">Backscattered Langmuir Waves</h4>
+<p>The <span class="math inline">\(L'\)</span> box is therefore not a radio-emission box. It is an intermediate reservoir of electrostatic turbulence. Its importance is geometric: once both <span class="math inline">\(L\)</span> and <span class="math inline">\(L'\)</span> exist, one has the pair of nearly counter-propagating plasma waves needed for coalescence. In many treatments one summarizes this by saying that the decay step populates the backward half of Langmuir-wave phase space.</p>
+<p>There is also a direct kinematic reason <span class="math inline">\(L'\)</span> matters. The harmonic electromagnetic wave must still satisfy the transverse dispersion relation</p>
+<p><span class="math display">\[
+\omega_T^2 = \omega_{pe}^2 + c^2 k_T^2.
+\]</span></p>
+<p>If it is emitted near the second harmonic, <span class="math inline">\(\omega_T \approx 2\omega_{pe}\)</span>, then its allowed wavevector is only</p>
+<p><span class="math display">\[
+k_T \approx \frac{\sqrt{3}\,\omega_{pe}}{c}.
+\]</span></p>
+<p>By contrast, a beam-driven Langmuir wave typically sits near</p>
+<p><span class="math display">\[
+k_L \sim \frac{\omega_{pe}}{v_b},
+\]</span></p>
+<p>so for <span class="math inline">\(v_b \ll c\)</span> one has</p>
+<p><span class="math display">\[
+k_L \gg \frac{\omega_{pe}}{c}.
+\]</span></p>
+<p>That means two forward Langmuir waves would have a total wavevector of order <span class="math inline">\(2k_L\)</span>, which is far too large to match the electromagnetic branch near <span class="math inline">\(2\omega_{pe}\)</span>. The backward Langmuir population <span class="math inline">\(L'\)</span> is therefore not optional bookkeeping. It is the piece that makes wavevector cancellation possible.</p>
+<p>In physical language, <span class="math inline">\(L'\)</span> stores electrostatic energy in the backward half of phase space until a forward-backward pair exists. Only then can the harmonic branch satisfy both frequency addition and near-cancellation of the large Langmuir wavenumbers.</p>
+<p>One way to picture <span class="math inline">\(L'\)</span> is as the return stroke in a two-person saw. If everyone pulls in the same direction, the whole saw moves but does not do the intended alternating work. The backward Langmuir population supplies the opposed motion. It is not the final sound heard by the observer; it is the necessary partner motion that lets the next step produce a wave with a much smaller net wavevector.</p>
+</section>
+<section id="langmuir-wave-coalescence" class="level4">
+<h4 class="anchored" data-anchor-id="langmuir-wave-coalescence">Langmuir-Wave Coalescence</h4>
+<p>The harmonic branch is written as</p>
+<p><span class="math display">\[
+L + L' \rightarrow T,
+\]</span></p>
+<p>with matching conditions</p>
+<p><span class="math display">\[
+\omega_L + \omega_{L'} = \omega_T,
+\qquad
+\mathbf{k}_L + \mathbf{k}_{L'} = \mathbf{k}_T.
+\]</span></p>
+<p>Because both Langmuir waves sit near <span class="math inline">\(\omega_{pe}\)</span>,</p>
+<p><span class="math display">\[
+\omega_T \approx \omega_L + \omega_{L'} \approx 2\omega_{pe},
+\]</span></p>
+<p>so the emitted radiation appears near the harmonic. At the same time, if the two Langmuir waves are nearly oppositely directed, then</p>
+<p><span class="math display">\[
+\mathbf{k}_{L'} \approx -\mathbf{k}_L,
+\]</span></p>
+<p>which makes</p>
+<p><span class="math display">\[
+\mathbf{k}_T \approx \mathbf{0}
+\]</span></p>
+<p>or at least much smaller than the original Langmuir wavenumbers. That is exactly what the electromagnetic branch needs: an escaping transverse wave near <span class="math inline">\(2\omega_{pe}\)</span> with a relatively small net wavevector. This is the clean physical reason the harmonic channel is often drawn as the merger of a forward and backward Langmuir pair.</p>
+<p>The physical picture is therefore a true merger of two electrostatic wave packets. One packet belongs to the original beam-driven forward Langmuir turbulence; the other belongs to the backward Langmuir turbulence created by decay or scattering. When those spectra overlap in both space and wavenumber, their nonlinear current can radiate onto the transverse electromagnetic branch.</p>
+<p>The useful analogy is two people pushing a heavy door from opposite sides with timed, oscillatory pushes. If both pushes were from the same side, the door would be driven along with a large net shove. If the pushes are nearly opposite, the large back-and-forth motions partly cancel as translations, but their combined timing can still drive the door’s flexing mode. In the plasma, the two Langmuir waves cancel most of their large wavevectors while adding their frequencies, leaving a transverse electromagnetic oscillation near twice the plasma frequency.</p>
+<p>The harmonic condition can be written more precisely as</p>
+<p><span class="math display">\[
+\omega_T \approx 2\omega_{pe},
+\qquad
+\mathbf{k}_{L'} \approx -\mathbf{k}_L + \mathbf{k}_T,
+\]</span></p>
+<p>with</p>
+<p><span class="math display">\[
+k_T \approx \frac{\sqrt{3}\,\omega_{pe}}{c}.
+\]</span></p>
+<p>So the two Langmuir waves do not need to cancel <em>exactly</em>; they need to cancel up to the relatively small electromagnetic wavevector that the harmonic branch allows.</p>
+<p>This process is favored when three conditions are met:</p>
+<ol type="1">
+<li>the forward Langmuir turbulence is strong,</li>
+<li>a substantial backward Langmuir population has already been created,</li>
+<li>the spectra are broad enough and overlap enough that the resonance conditions can be met over a finite region of <span class="math inline">\((\omega,\mathbf{k})\)</span> space.</li>
+</ol>
+<p>Harmonic emission is often observationally robust because once it is produced near <span class="math inline">\(2\omega_{pe}\)</span> it lies comfortably above the local plasma cutoff. In that sense the hard part of the harmonic channel is not usually the final escape; it is building the right counter-propagating Langmuir geometry in the first place.</p>
+<p>In classroom language:</p>
+<ol type="1">
+<li>the <strong>fundamental</strong> channel uses a low-frequency fluctuation to scatter an electrostatic Langmuir wave onto an electromagnetic branch near <span class="math inline">\(\omega_{pe}\)</span>;</li>
+<li>the <strong>harmonic</strong> channel first creates a backward Langmuir partner and then merges the forward and backward Langmuir waves into an escaping mode near <span class="math inline">\(2\omega_{pe}\)</span>.</li>
+</ol>
+</section>
+</section>
+</section>
+<section id="plasma-emission-explorer-density-drift-and-dynamic-spectrum" class="level2">
+<h2 class="anchored" data-anchor-id="plasma-emission-explorer-density-drift-and-dynamic-spectrum">Plasma Emission Explorer: Density Drift and Dynamic Spectrum</h2>
+<p>The final two panels return to the original plasma-emission explorer. After Langmuir growth and conversion have produced escaping radiation, the source height and density gradient determine what frequency an observer records as a function of time.</p>
+<section id="panel-e-density-drift" class="level3">
+<h3 class="anchored" data-anchor-id="panel-e-density-drift">Panel E: Density Drift</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/plasma-panel-e-density-drift.png" alt="Panel E: density drift" class="figure-img">
+  <figcaption>Panel E: density drift</figcaption>
+</figure>
+<p>Panel E explains why the local source frequency changes as the beam rises.</p>
+<section id="step-1-exponential-coronal-density-model" class="level4">
+<h4 class="anchored" data-anchor-id="step-1-exponential-coronal-density-model">Step 1: Exponential Coronal Density Model</h4>
+<p>Use the simple stratified model</p>
+<p><span class="math display">\[
+n_e(h) = n_0 e^{-h/H},
+\]</span></p>
+<p>where <span class="math inline">\(H\)</span> is the density scale height. This is not a full hydrostatic derivation, but it is the standard pedagogical approximation when one wants one characteristic stratification length.</p>
+</section>
+<section id="step-2-plasma-frequency-as-a-function-of-height" class="level4">
+<h4 class="anchored" data-anchor-id="step-2-plasma-frequency-as-a-function-of-height">Step 2: Plasma Frequency as a Function of Height</h4>
+<p>The electron plasma frequency is</p>
+<p><span class="math display">\[
+\omega_{pe} = \sqrt{\frac{4 \pi n_e e^2}{m_e}}.
+\]</span></p>
+<p>Substitute the exponential density profile:</p>
+<p><span class="math display">\[
+\omega_{pe}(h)
+=
+\sqrt{\frac{4 \pi e^2}{m_e} n_0 e^{-h/H}}
+=
+\omega_{pe,0} e^{-h/(2H)},
+\]</span></p>
+<p>where</p>
+<p><span class="math display">\[
+\omega_{pe,0} \equiv \sqrt{\frac{4 \pi n_0 e^2}{m_e}}.
+\]</span></p>
+<p>Ordinary frequency is <span class="math inline">\(\nu_{pe} = \omega_{pe}/2\pi\)</span>, so the same exponential dependence holds:</p>
+<p><span class="math display">\[
+\nu_{pe}(h) = \nu_{pe,0} e^{-h/(2H)}.
+\]</span></p>
+<p>That is the origin of the panel-C statement that <span class="math inline">\(f_p\)</span> drops with height.</p>
+</section>
+<section id="step-3-source-motion-in-time" class="level4">
+<h4 class="anchored" data-anchor-id="step-3-source-motion-in-time">Step 3: Source Motion in Time</h4>
+<p>In the explorer the beam packet is approximated as moving at nearly constant speed:</p>
+<p><span class="math display">\[
+h(t) = h_0 + v_b t.
+\]</span></p>
+<p>Insert this into the plasma-frequency profile:</p>
+<p><span class="math display">\[
+\nu_{pe}(t)
+=
+\nu_{pe,0}
+\exp\!\left[-\frac{h_0 + v_b t}{2H}\right].
+\]</span></p>
+<p>More clearly, grouping constants,</p>
+<p><span class="math display">\[
+\nu_{pe}(t)
+=
+\nu_{pe}(h_0)\,
+e^{-v_b t/(2H)}.
+\]</span></p>
+<p>So the local plasma frequency, and therefore the local plasma-emission frequency, decreases exponentially in time for this simple constant-speed, exponential-atmosphere model.</p>
+</section>
+<section id="step-4-drift-rate" class="level4">
+<h4 class="anchored" data-anchor-id="step-4-drift-rate">Step 4: Drift Rate</h4>
+<p>Differentiate <span class="math inline">\(\nu_{pe}(h)\)</span> with respect to time:</p>
+<p><span class="math display">\[
+\frac{d \nu_{pe}}{dt}
+=
+\frac{d \nu_{pe}}{dh}\frac{dh}{dt}.
+\]</span></p>
+<p>From</p>
+<p><span class="math display">\[
+\nu_{pe}(h) = \nu_{pe,0} e^{-h/(2H)},
+\]</span></p>
+<p>we get</p>
+<p><span class="math display">\[
+\frac{d \nu_{pe}}{dh}
+=
+-\frac{1}{2H}\nu_{pe}(h).
+\]</span></p>
+<p>Since <span class="math inline">\(dh/dt = v_b\)</span>,</p>
+<p><span class="math display">\[
+\frac{d \nu_{pe}}{dt}
+=
+-\frac{v_b}{2H}\nu_{pe}(h).
+\]</span></p>
+<p>Thus the magnitude of the drift rate is</p>
+<p><span class="math display">\[
+\left|\frac{d \nu_{pe}}{dt}\right|
+=
+\frac{v_b}{2H}\nu_{pe}(h).
+\]</span></p>
+<p>This explains the main control knobs in the explorer:</p>
+<ul>
+<li>larger <span class="math inline">\(v_b\)</span> gives faster drift,</li>
+<li>smaller <span class="math inline">\(H\)</span> gives faster drift,</li>
+<li>larger local <span class="math inline">\(\nu_{pe}\)</span> gives faster absolute drift.</li>
+</ul>
+</section>
+<section id="step-5-fundamental-and-harmonic-escape" class="level4">
+<h4 class="anchored" data-anchor-id="step-5-fundamental-and-harmonic-escape">Step 5: Fundamental and Harmonic Escape</h4>
+<p>If the escaping radiation is fundamental plasma emission,</p>
+<p><span class="math display">\[
+\nu_F \approx \nu_{pe}.
+\]</span></p>
+<p>If the escaping radiation is harmonic plasma emission,</p>
+<p><span class="math display">\[
+\nu_H \approx 2 \nu_{pe}.
+\]</span></p>
+<p>Therefore,</p>
+<p><span class="math display">\[
+\frac{d \nu_H}{dt} \approx 2 \frac{d \nu_{pe}}{dt}.
+\]</span></p>
+<p>This is why the harmonic track sits above the fundamental track and has a proportionally larger absolute drift rate in frequency units, even though both arise from the same source motion.</p>
+</section>
+</section>
+<section id="panel-f-observed-signature" class="level3">
+<h3 class="anchored" data-anchor-id="panel-f-observed-signature">Panel F: Observed Signature</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/plasma-panel-f-dynamic-spectrum.png" alt="Panel F: dynamic spectrum" class="figure-img">
+  <figcaption>Panel F: dynamic spectrum</figcaption>
+</figure>
+<p>Panel F is intentionally drawn as a <strong>recording</strong> rather than as a precomputed answer. Panel E shows the instantaneous source height <span class="math inline">\(h(t)\)</span> and local escape frequencies; panel F shows the spectrogram that would be accumulated by an observer as time passes. The panel therefore teaches the mapping</p>
+<p><span class="math display">\[
+h(t) \rightarrow n_e(h) \rightarrow \nu_{pe}(h) \rightarrow \nu_{\mathrm{obs}}(t).
+\]</span></p>
+<p>That mapping is the real conceptual bridge between source physics and radio dynamic spectra.</p>
+</section>
+<section id="plasma-preset-narratives" class="level3">
+<h3 class="anchored" data-anchor-id="plasma-preset-narratives">Plasma Preset Narratives</h3>
+<p><strong>Classic Type III.</strong><br>
+Use this as the clean first example. The beam is fast, the source starts low enough that <span class="math inline">\(\nu_{pe}\)</span> is high, and the density gradient is steep enough that the drift is obvious. Tell students: “The slope in velocity space is the engine; the density gradient is the clock.”</p>
+<p><strong>Type II shock-like.</strong><br>
+Use this to separate <em>emission mechanism</em> from <em>exciter speed</em>. The same plasma-emission logic applies, but the source moves more slowly and the scale height is larger, so the drift lane evolves more gradually.</p>
+<p><strong>Weak impulsive.</strong><br>
+Use this to emphasize that unstable free energy does not automatically guarantee a strong observed burst. The beam may be weak, the growth marginal, or the fundamental escape less efficient than the harmonic.</p>
+</section>
+</section>
+<section id="ecm-emission-explorer" class="level2">
+<h2 class="anchored" data-anchor-id="ecm-emission-explorer">ECM Emission Explorer</h2>
+<section id="mechanism-summary-3" class="level3">
+<h3 class="anchored" data-anchor-id="mechanism-summary-3">Mechanism Summary</h3>
+<p>ECM is the direct-emission contrast to plasma emission. The wave is amplified by a velocity-space anisotropy and escapes near an electron-cyclotron harmonic, rather than being produced through an intermediate Langmuir-wave stage. The current explorer follows one chain:</p>
+<p><span class="math display">\[
+\hbox{anisotropic electrons}
+\rightarrow
+\hbox{cyclotron resonance}
+\rightarrow
+\hbox{mode growth and escape}
+\rightarrow
+\hbox{beamed coherent radiation}.
+\]</span></p>
+<p>The four panels now follow that chain in order. Panel A shows where the resonance curve intersects the favorable-gradient source proxy. Panel B explains why that resonance curve is an ellipse. Panel C turns the active overlap patch into an escaping beam cone. Panel D checks whether the plasma conditions and harmonic allow the wave to escape.</p>
+<p>The controls separate the source, plasma, and mode physics. The loss-cone angle <span class="math inline">\(\alpha_{\mathrm{lc}}\)</span> sets the pitch-angle boundary of the source distribution. The anisotropy parameter <span class="math inline">\(\xi\)</span> sets the strength of the positive perpendicular gradient. The ratio <span class="math inline">\(\omega_{pe}/\Omega_{ce}\)</span> sets the plasma loading relative to the gyrofrequency and therefore affects both the refractive geometry and the escape window. The harmonic <span class="math inline">\(s\)</span> and mode choice select which cyclotron branch is being illustrated. The near-harmonic emission-frequency parameter <span class="math inline">\(u_s=\omega/(s\Omega_{ce})\)</span> is kept fixed near unity in the HTML, since the explorer is focused on emission close to the selected cyclotron harmonic. The frequency and brightness cards at the top are illustrative proxy values, not outputs of a full kinetic dispersion calculation.</p>
+<p><strong>Assumptions and scope.</strong> The ECM explorer is a resonance-geometry and escape-regime teaching model. Its source patches, growth factors, selected beam angles, and brightness readouts are proxies, not outputs of a full kinetic dispersion solver. Use the panels to understand which velocity-space region can feed a maser and why the density-to-field ratio controls escape; do not interpret the displayed brightness as a calibrated radiative-transfer prediction.</p>
+</section>
+<section id="panel-a-resonance-in-velocity-space" class="level3">
+<h3 class="anchored" data-anchor-id="panel-a-resonance-in-velocity-space">Panel A: Resonance in Velocity Space</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/ecm-panel-a-resonance-velocity.png" alt="Panel A: velocity-space resonance" class="figure-img">
+  <figcaption>Panel A: velocity-space resonance</figcaption>
+</figure>
+<p>Panel A answers the question: <em>which part of the electron distribution can feed the maser?</em> The free energy is the region where</p>
+<p><span class="math display">\[
+\frac{\partial f}{\partial v_\perp} &gt; 0.
+\]</span></p>
+<p>In that region, wave-driven resonant diffusion can reduce the perpendicular particle energy. The lost particle energy appears as growing electromagnetic wave energy.</p>
+<p>For a loss-cone source, the boundary angle is set by magnetic mirroring. If the magnetic moment</p>
+<p><span class="math display">\[
+\mu = \frac{m_e v_\perp^2}{2B}
+\]</span></p>
+<p>and kinetic energy are approximately conserved, an electron mirrors where <span class="math inline">\(v_\parallel \rightarrow 0\)</span>. With <span class="math inline">\(B_0\)</span> at the source and <span class="math inline">\(B_m\)</span> at the mirror point,</p>
+<p><span class="math display">\[
+\frac{v^2\sin^2\alpha_{\mathrm{lc}}}{B_0}
+=
+\frac{v^2}{B_m},
+\]</span></p>
+<p>so</p>
+<p><span class="math display">\[
+\sin^2\alpha_{\mathrm{lc}} = \frac{B_0}{B_m}.
+\]</span></p>
+<p>Thus <span class="math inline">\(\alpha_{\mathrm{lc}}\)</span> is a source-distribution parameter. Changing it moves the loss-cone boundary and therefore moves the velocity-space region where the shell model supplies favorable perpendicular-gradient free energy.</p>
+<p>The resonance curve comes from the relativistic cyclotron condition</p>
+<p><span class="math display">\[
+\omega-k_\parallel v_\parallel = s\frac{\Omega_{ce}}{\gamma}.
+\]</span></p>
+<p>The left side is the wave frequency Doppler shifted into the electron guiding-center frame. The right side is the relativistically reduced gyrofrequency at harmonic <span class="math inline">\(s\)</span>.</p>
+<p>Use dimensionless coordinates</p>
+<p><span class="math display">\[
+x\equiv \frac{v_\perp}{c},
+\qquad
+y\equiv \frac{v_\parallel}{c},
+\qquad
+u_s\equiv \frac{\omega}{s\Omega_{ce}},
+\qquad
+\alpha_s\equiv \frac{k_\parallel c}{s\Omega_{ce}}.
+\]</span></p>
+<p>With <span class="math inline">\(1/\gamma=\sqrt{1-x^2-y^2}\)</span>, the resonance condition becomes</p>
+<p><span class="math display">\[
+u_s-\alpha_s y = \sqrt{1-x^2-y^2}.
+\]</span></p>
+<p>Squaring and completing the square gives</p>
+<p><span class="math display">\[
+x^2
++
+(1+\alpha_s^2)
+\left(y-\frac{u_s\alpha_s}{1+\alpha_s^2}\right)^2
+=
+\frac{1+\alpha_s^2-u_s^2}{1+\alpha_s^2}.
+\]</span></p>
+<p>This is the ellipse drawn in Panel A. Growth is strongest where this ellipse crosses the favorable-gradient part of the source distribution. The highlighted source patch is therefore not the whole loss cone and not the whole resonance ellipse; it is their useful overlap.</p>
+<p>The wave-normal angle <span class="math inline">\(\theta_{\mathrm{beam}}\)</span> enters only through the wavevector component parallel to the magnetic field:</p>
+<p><span class="math display">\[
+k_\parallel = k\cos\theta_{\mathrm{beam}}.
+\]</span></p>
+<p>Using the refractive-index definition <span class="math inline">\(n_s=kc/\omega\)</span> gives the useful re-parameterization</p>
+<p><span class="math display">\[
+\alpha_s
+=
+\frac{k_\parallel c}{s\Omega_{ce}}
+=
+\frac{k c\cos\theta_{\mathrm{beam}}}{s\Omega_{ce}}
+=
+n_s\frac{\omega}{s\Omega_{ce}}\cos\theta_{\mathrm{beam}}
+=
+n_s u_s\cos\theta_{\mathrm{beam}}.
+\]</span></p>
+<p>This step does not create the ellipse; it only says how the wave propagation angle controls <span class="math inline">\(\alpha_s\)</span>. The ellipse came from squaring the relativistic resonance condition above. In the nearly perpendicular limit <span class="math inline">\(k_\parallel \simeq 0\)</span>, so <span class="math inline">\(\alpha_s\simeq 0\)</span>, and the equation reduces to</p>
+<p><span class="math display">\[
+x^2+y^2=1-u_s^2,
+\]</span></p>
+<p>which is a circle in the <span class="math inline">\((v_\perp,v_\parallel)\)</span> plot. Finite <span class="math inline">\(k_\parallel\)</span> shifts and compresses that circle into the general ellipse.</p>
+<p>This is why both the near-harmonic emission frequency and <span class="math inline">\(\omega_{pe}/\Omega_{ce}\)</span> affect the selected beam angle in the resonance condition. The HTML keeps <span class="math inline">\(u_s=\omega/(s\Omega_{ce})\)</span> fixed near unity and represents the refractive part with a teaching proxy: as <span class="math inline">\(\omega_{pe}/\Omega_{ce}\)</span> increases, the proxy refractive index increases. Together these set <span class="math inline">\(\alpha_s\)</span>, which changes the size and offset of the resonance ellipse. The explorer then scans candidate values of <span class="math inline">\(\theta_{\mathrm{beam}}\)</span> and selects the angle whose ellipse best overlaps the <span class="math inline">\(\alpha_{\mathrm{lc}}\)</span>-controlled shell proxy while remaining in an escape-favored regime.</p>
+</section>
+<section id="panel-b-geometric-construction" class="level3">
+<h3 class="anchored" data-anchor-id="panel-b-geometric-construction">Panel B: Geometric Construction</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/ecm-panel-b-geometric-construction.png" alt="Panel B: geometric construction" class="figure-img">
+  <figcaption>Panel B: geometric construction</figcaption>
+</figure>
+<p>Panel B shows the same resonance curve in a three-dimensional construction. Define</p>
+<p><span class="math display">\[
+z\equiv \frac{1}{\gamma}.
+\]</span></p>
+<p>The Lorentz factor identity becomes</p>
+<p><span class="math display">\[
+z^2 = 1-x^2-y^2,
+\qquad\hbox{or}\qquad
+x^2+y^2+z^2=1.
+\]</span></p>
+<p>Every electron maps to the unit sphere in the rescaled <span class="math inline">\((x,y,z)=(v_\perp/c, v_\parallel/c, 1/\gamma)\)</span> space. The resonance condition adds the plane</p>
+<p><span class="math display">\[
+z=u_s-\alpha_s y.
+\]</span></p>
+<p>Resonant electrons must lie on both surfaces. A plane cuts a sphere in a circle. When that circle is projected back onto the <span class="math inline">\((v_\perp,v_\parallel)\)</span> plane, it appears as the ellipse in Panel A.</p>
+<p>This construction is useful because it separates the two ingredients. The unit sphere comes from relativistic mass-energy geometry. The tilted plane comes from the parallel Doppler term <span class="math inline">\(k_\parallel v_\parallel\)</span>. The current HTML keeps the construction axes at a 1:1:1 scale so the sphere, plane, and projected ellipse are not visually distorted.</p>
+</section>
+<section id="panel-c-beam-cone-geometry" class="level3">
+<h3 class="anchored" data-anchor-id="panel-c-beam-cone-geometry">Panel C: Beam Cone Geometry</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/ecm-panel-c-beam-cone.png" alt="Panel C: beam cone" class="figure-img">
+  <figcaption>Panel C: beam cone</figcaption>
+</figure>
+<p>Panel C translates the active velocity-space patch into the angular pattern of escaping radiation. The amber ring or disk marks the active ECM source region: the resonant-overlap patch where the cyclotron-resonance curve crosses the favorable-gradient part of the modeled source distribution. Wave growth is launched from that source region.</p>
+<p>The translucent green shape is a hollow beam cone around the magnetic-field direction. Its opening angle is <span class="math inline">\(\theta_{\mathrm{beam}}\)</span>, the wave-normal angle selected by the overlap calculation. In the current HTML, the cones begin at the source ring and extend outward along <span class="math inline">\(+\mathbf{B}\)</span> and <span class="math inline">\(-\mathbf{B}\)</span>; the parts that would lie on the wrong side of the source are clipped away. This is why the beam originates from the ring rather than from the axis center.</p>
+<p>The panel uses the following division of roles:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\alpha_{\mathrm{lc}}
+&amp;\;\hbox{sets the loss-cone boundary and source proxy in velocity space},\\
+\frac{\omega_{pe}}{\Omega_{ce}}
+&amp;\;\hbox{sets the refractive and cutoff environment},\\
+\theta_{\mathrm{beam}}
+&amp;\;\hbox{is the selected escaping wave-normal angle}.
+\end{aligned}
+\]</span></p>
+<p>The small amber <span class="math inline">\(\alpha_{\mathrm{lc}}\)</span> cone is an inset reminder of the source pitch-angle boundary. It is drawn with a different shade because it is not the escaping radiation cone. The faint vertical grid is a set of background magnetic field lines; the heavy central arrow names the local <span class="math inline">\(\mathbf{B}\)</span> direction used to define both <span class="math inline">\(\alpha_{\mathrm{lc}}\)</span> and <span class="math inline">\(\theta_{\mathrm{beam}}\)</span>.</p>
+<p>The important reading is that <span class="math inline">\(\alpha_{\mathrm{lc}}\)</span> and <span class="math inline">\(\theta_{\mathrm{beam}}\)</span> live in different spaces, so there is no direct identity such as <span class="math inline">\(\theta_{\mathrm{beam}}=\alpha_{\mathrm{lc}}\)</span>. The loss-cone angle is an electron pitch angle in velocity space:</p>
+<p><span class="math display">\[
+\tan\alpha_{\mathrm{lc}}
+=
+\frac{v_\perp}{|v_\parallel|}.
+\]</span></p>
+<p>It marks where the source distribution has a sharp pitch-angle boundary. In the <span class="math inline">\((x,y)=(v_\perp/c,v_\parallel/c)\)</span> plot, that boundary is approximately a pair of pitch-angle rays,</p>
+<p><span class="math display">\[
+x=|y|\tan\alpha_{\mathrm{lc}}.
+\]</span></p>
+<p>The emitted wave angle <span class="math inline">\(\theta_{\mathrm{beam}}\)</span> enters a different part of the problem. It sets the parallel wave number</p>
+<p><span class="math display">\[
+k_\parallel=k\cos\theta_{\mathrm{beam}},
+\]</span></p>
+<p>and therefore changes the resonance ellipse through</p>
+<p><span class="math display">\[
+\alpha_s=\frac{k_\parallel c}{s\Omega_{ce}}
+\simeq n_s u_s\cos\theta_{\mathrm{beam}}.
+\]</span></p>
+<p>Thus the relation between <span class="math inline">\(\alpha_{\mathrm{lc}}\)</span> and <span class="math inline">\(\theta_{\mathrm{beam}}\)</span> is an overlap condition, not a one-line equality. For a trial <span class="math inline">\(\theta_{\mathrm{beam}}\)</span>, the resonance ellipse is drawn. Growth is strong only where that ellipse crosses the part of the electron distribution controlled by <span class="math inline">\(\alpha_{\mathrm{lc}}\)</span>, especially the region intended to represent <span class="math inline">\(\partial f/\partial v_\perp&gt;0\)</span>.</p>
+<p>The HTML calculation is deliberately simple. It scans trial values</p>
+<p><span class="math display">\[
+15^\circ \leq \theta_{\mathrm{beam}} \leq 90^\circ,
+\]</span></p>
+<p>draws the resonance ellipse for each trial angle, and samples 96 points around that ellipse. A sampled point contributes to the score only if it lies in the upper half of velocity space and inside the favorable-gradient source proxy. The amber shaded region in Panel A is that proxy: it marks the inner flank of the shell model used by the scoring calculation, where the distribution is intended to rise outward in <span class="math inline">\(v_\perp\)</span>. It should not be read as a numerical derivative map of every pixel in the red background cloud. For the loss-cone case, the proxy condition is approximately</p>
+<p><span class="math display">\[
+\hbox{pitch}&gt;\alpha_{\mathrm{lc}},
+\qquad
+v_0-1.1\Delta v &lt; v &lt; v_0-0.1\Delta v,
+\]</span></p>
+<p>with <span class="math inline">\(v_\perp&gt;0\)</span>. Here <span class="math inline">\(v_0\)</span> and <span class="math inline">\(\Delta v\)</span> describe the shell in the pedagogical distribution model. This distinction matters because the current loss-cone background image is drawn as a schematic depleted core, while the amber mask and overlap score use the shell-based model. The small orange segment drawn on the green ellipse is not the whole source patch. It is the subset of the resonance ellipse that lies inside the shell-inner-edge proxy. The white dot marks a representative point on this active overlap.</p>
+<p>For a trial angle, the raw overlap score is essentially</p>
+<p><span class="math display">\[
+S_{\mathrm{raw}}(\theta_{\mathrm{beam}})
+=
+\frac{1}{96}
+\sum_{k\in A(\theta_{\mathrm{beam}})}
+\max\!\left[0.02,\,
+f(v_{\parallel,k},v_{\perp,k})\right],
+\]</span></p>
+<p>where <span class="math inline">\(A(\theta_{\mathrm{beam}})\)</span> is the set of sampled ellipse points that pass the patch test. The small floor value prevents a very faint but valid overlap from scoring as exactly zero. The displayed score is then</p>
+<p><span class="math display">\[
+S(\theta_{\mathrm{beam}})
+=
+S_{\mathrm{raw}}(\theta_{\mathrm{beam}})\,
+W_{\mathrm{mode}}(\theta_{\mathrm{beam}})\,
+W_{\mathrm{esc}}.
+\]</span></p>
+<p>The mode factor is a teaching proxy for the fact that different magnetoionic modes favor different propagation directions. In the HTML it is</p>
+<p><span class="math display">\[
+W_{\mathrm{mode}}(\theta)=
+\begin{cases}
+0.35+0.65\sin^{1.4}\theta, &amp; \hbox{X-mode},\\
+0.70+0.30\cos\theta, &amp; \hbox{O-mode},\\
+0.85+0.15\sin\theta, &amp; \hbox{both modes}.
+\end{cases}
+\]</span></p>
+<p>Thus X-mode is biased toward more perpendicular emission, while O-mode is given a mild bias toward smaller <span class="math inline">\(\theta_{\mathrm{beam}}\)</span>. The escape factor is simpler:</p>
+<p><span class="math display">\[
+W_{\mathrm{esc}}=
+\begin{cases}
+1, &amp; \hbox{escape proxy allows growth},\\
+0.25, &amp; \hbox{escape proxy suppresses growth}.
+\end{cases}
+\]</span></p>
+<p>Here “escape proxy allows growth” means the anisotropy is large enough and <span class="math inline">\(\omega_{pe}/\Omega_{ce}\)</span> is below the harmonic-dependent threshold shown in Panel D.</p>
+<p>The displayed beam angle is a smoothed, score-weighted average of the best-scoring trial angles, not simply the single maximum. Changing <span class="math inline">\(\alpha_{\mathrm{lc}}\)</span> moves the source proxy; changing <span class="math inline">\(\theta_{\mathrm{beam}}\)</span> changes the resonance ellipse through <span class="math inline">\(k_\parallel\)</span>. The selected <span class="math inline">\(\theta_{\mathrm{beam}}\)</span> is therefore the wave angle whose ellipse passes through the strongest usable part of the <span class="math inline">\(\alpha_{\mathrm{lc}}\)</span>-controlled shell model. In Panel C, the orange ring or disk is a schematic source region corresponding to this active overlap patch. It is not a literal copy of the small orange arc in Panel A; it is the 3D beam-cone cartoon’s way of saying “this is where the resonant source patch launches the escaping wave cone.” This is why <span class="math inline">\(\alpha_{\mathrm{lc}}\)</span> can move the selected beam angle, but the mapping is indirect and need not be monotonic.</p>
+</section>
+<section id="panel-d-regime-and-escape" class="level3">
+<h3 class="anchored" data-anchor-id="panel-d-regime-and-escape">Panel D: Regime and Escape</h3>
+<figure class="explorer-thumb figure">
+  <img src="figures/explorer-screenshots/ecm-panel-d-regime-escape.png" alt="Panel D: regime and escape" class="figure-img">
+  <figcaption>Panel D: regime and escape</figcaption>
+</figure>
+<p>Panel D asks whether the wave that grows in the source can propagate out of the plasma. The main scalar control is</p>
+<p><span class="math display">\[
+r\equiv \frac{\omega_{pe}}{\Omega_{ce}}.
+\]</span></p>
+<p>Because</p>
+<p><span class="math display">\[
+\omega_{pe}=\sqrt{\frac{4\pi n_e e^2}{m_e}},
+\qquad
+\Omega_{ce}=\frac{eB}{m_e c},
+\]</span></p>
+<p>the ratio scales as</p>
+<p><span class="math display">\[
+\frac{\omega_{pe}}{\Omega_{ce}}\propto \frac{\sqrt{n_e}}{B}.
+\]</span></p>
+<p>High density raises the plasma cutoff frequencies. Strong magnetic field raises the cyclotron frequency. Escape is favored when the cyclotron-harmonic emission sits on a propagating magnetoionic branch and is not blocked by the local cutoff or upper-hybrid structure.</p>
+<p>A simple transverse-wave example shows the basic idea:</p>
+<p><span class="math display">\[
+k^2c^2=\omega^2-\omega_{pe}^2.
+\]</span></p>
+<p>If <span class="math inline">\(\omega&lt;\omega_{pe}\)</span>, then <span class="math inline">\(k\)</span> is imaginary and the wave is evanescent. In a magnetized plasma, the X and O modes have different cutoffs and resonances, so the exact boundary depends on mode, harmonic, and propagation angle. The explorer keeps this as a qualitative escape map rather than solving the full Appleton-Hartree dispersion relation.</p>
+<p>The current HTML uses a growth-and-escape proxy. Growth requires enough anisotropy, approximately <span class="math inline">\(\xi\gtrsim0.3\)</span>, and a harmonic-dependent density ratio window. The displayed thresholds are</p>
+<p><span class="math display">\[
+\begin{array}{c|c}
+\hbox{harmonic} &amp; \hbox{illustrative escape-favored limit} \\
+\hline
+s=1 &amp; r\lesssim 1.0 \\
+s=2 &amp; r\lesssim 1.25 \\
+s=3 &amp; r\lesssim 1.4
+\end{array}
+\]</span></p>
+<p>Higher harmonics are allowed a somewhat larger ratio in the proxy, but their growth weight is smaller. The brightness-temperature card is derived from the same proxy growth factor, so it should be read as a pedagogical indicator of coherent amplification, not as a radiative-transfer prediction.</p>
+<p>The fundamental and higher harmonics are therefore not just copies of the same burst shifted upward in frequency. The fundamental branch sits closest to the local cyclotron scale, so it usually couples most strongly to the anisotropic electron distribution and can produce the largest maser gain. It is also the branch most vulnerable to local plasma cutoffs, mode coupling, gyroresonant absorption, and competition with nearby electrostatic or upper-hybrid structure. A higher harmonic, such as <span class="math inline">\(s=2\)</span> or <span class="math inline">\(s=3\)</span>, is emitted at a larger absolute frequency for the same magnetic field, so it can lie farther above the local cutoff and escape from somewhat denser plasma. The tradeoff is that the harmonic coupling is weaker and more selective in velocity space, so the same electron anisotropy usually gives less growth. This is why changing <span class="math inline">\(s\)</span> in the explorer can move the beam angle and the escape status while also reducing the brightness proxy.</p>
+<p>The visible jump in the resonance ellipse between <span class="math inline">\(s=1\)</span> and higher harmonics comes from the same resonance geometry, not from a change in the loss-cone distribution. The ellipse center is</p>
+<p><span class="math display">\[
+y_c=\frac{u_s\alpha_s}{1+\alpha_s^2},
+\]</span></p>
+<p>and its squared perpendicular radius is proportional to</p>
+<p><span class="math display">\[
+\frac{1+\alpha_s^2-u_s^2}{1+\alpha_s^2}.
+\]</span></p>
+<p>Thus the curve moves when either the parallel Doppler parameter <span class="math inline">\(\alpha_s\)</span> or the near-harmonic frequency ratio <span class="math inline">\(u_s\)</span> changes. Changing <span class="math inline">\(s\)</span> also changes the auto-selected <span class="math inline">\(\theta_{\mathrm{beam}}\)</span>, and therefore changes <span class="math inline">\(k_\parallel=k\cos\theta_{\mathrm{beam}}\)</span> and <span class="math inline">\(\alpha_s\)</span>. In the HTML proxy, higher harmonics are drawn with <span class="math inline">\(u_s\)</span> closer to unity than the fundamental. That makes the allowed contour smaller and often closer to the origin in <span class="math inline">\((v_\perp,v_\parallel)\)</span> space. This is meant to show that harmonic ECM samples a more selective resonant velocity subset; it should not be read as a full kinetic dispersion calculation for the exact harmonic source location.</p>
+<p>Panel D also shows the upper-hybrid frequency,</p>
+<p><span class="math display">\[
+\omega_{UH}^2=\omega_{pe}^2+\Omega_{ce}^2,
+\]</span></p>
+<p>and the cyclotron harmonic ladder <span class="math inline">\(s\Omega_{ce}\)</span>. This lets students compare the local plasma scale, upper-hybrid scale, and cyclotron-emission scale on the same diagram. The polarization label summarizes which magnetoionic branch is favored in the selected mode setting.</p>
+<section id="visual-script-for-ecm-emission-explorer.html" class="level4">
+<h4 class="anchored" data-anchor-id="visual-script-for-ecm-emission-explorer.html">Visual Script for <code>ecm-emission-explorer.html</code></h4>
+<p>Use this explorer after the plasma-emission sequence as the direct coherent-emission case.</p>
+<ol type="1">
+<li><p><strong>Start with Panel A.</strong> The source needs both perpendicular-gradient free energy and the cyclotron-resonance condition. The amber mask is a proxy for the favorable shell-inner-edge region; the orange segment on the ellipse is the important part because it satisfies both the source-proxy and resonance requirements.</p></li>
+<li><p><strong>Move to Panel B.</strong> The ellipse is not an arbitrary drawing. It is the projection of a circle formed by a plane cutting the relativistic mass-shell sphere.</p></li>
+<li><p><strong>Use Panel C for beaming.</strong> The active overlap patch launches a hollow cone of escaping wave vectors. The source angle <span class="math inline">\(\alpha_{\mathrm{lc}}\)</span> controls the velocity-space source proxy; the selected <span class="math inline">\(\theta_{\mathrm{beam}}\)</span> controls the radiation cone.</p></li>
+<li><p><strong>Finish with Panel D.</strong> The ratio <span class="math inline">\(\omega_{pe}/\Omega_{ce}\)</span> sets the escape environment. A strong source proxy does not guarantee an observed burst if the local cutoff and mode conditions block propagation.</p></li>
+</ol>
+<p>The observed consequence of these four panels is narrow-band coherent emission near <span class="math inline">\(s\Omega_{ce}\)</span>, with polarization set by the escaping magnetoionic mode.</p>
+</section>
+</section>
+<section id="preset-narratives" class="level3">
+<h3 class="anchored" data-anchor-id="preset-narratives">Preset Narratives</h3>
+<p><strong>Solar spike burst.</strong><br>
+Use this as the clean first ECM case: low density, strong field, favorable <span class="math inline">\(\omega_{pe}/\Omega_{ce}\)</span>, and <span class="math inline">\(s=1\)</span> emission.</p>
+<p><strong>AKR-like case.</strong><br>
+Use this to emphasize the extreme low-density, strong-field limit where plasma effects interfere less with the cyclotron maser.</p>
+<p><strong>Stellar flare.</strong><br>
+Use this to connect the same basic mechanism to stronger magnetic environments and to harmonic ECM.</p>
+</section>
+</section>
+<section id="bridge-across-the-mechanisms" class="level2">
+<h2 class="anchored" data-anchor-id="bridge-across-the-mechanisms">Bridge Across the Mechanisms</h2>
+<p>The most useful lecture transition is:</p>
+<blockquote class="blockquote">
+<p>Bremsstrahlung and gyro emission are the incoherent baselines: individual acceleration events radiate, and the observed spectrum is the sum over many particles. Bremsstrahlung is electric-Coulomb acceleration, while gyro emission is magnetic curvature acceleration. Plasma emission and ECM are the coherent cases: a nonthermal distribution first amplifies a wave, so the brightness can exceed thermal limits by a large factor.</p>
+</blockquote>
+<p>Within the coherent pair, plasma emission is a beam-driven two-step route: particles first excite Langmuir waves near the plasma frequency, and nonlinear conversion then produces escaping radio waves. ECM is a direct maser route: an anisotropic distribution drives electromagnetic waves near the cyclotron frequency. So the first diagnostic question for a coherent burst is: does the characteristic frequency behave like density, or like magnetic field?</p>
+</section>
+<section id="references-and-further-reading" class="level2">
+<h2 class="anchored" data-anchor-id="references-and-further-reading">References and Further Reading</h2>
+<p>The notes are written as teaching material rather than as a literature review, but the main formulae and approximations follow these standard sources:</p>
+<ul>
+<li>Rybicki, G. B., and Lightman, A. P. 1979, <em>Radiative Processes in Astrophysics</em>. Standard reference for specific intensity, Planck radiation, radiative transfer, synchrotron emissivity, and synchrotron self-absorption.</li>
+<li>Dulk, G. A. 1985, “Radio emission from the Sun and stars,” <em>Annual Review of Astronomy and Astrophysics</em>, 23, 169. Practical review of solar and stellar radio emission mechanisms, including free-free, gyrosynchrotron, plasma emission, and coherent bursts.</li>
+<li>Dulk, G. A., and Marsh, K. A. 1982, “Simplified expressions for the gyrosynchrotron radiation from mildly relativistic, nonthermal and thermal electrons,” <em>Astrophysical Journal</em>, 259, 350. Source for the commonly used mildly relativistic gyrosynchrotron fitting formulae and their validity ranges.</li>
+<li>Stix, T. H. 1992, <em>Waves in Plasmas</em>. Standard reference for cold-plasma dielectric response and magnetoionic wave propagation.</li>
+<li>Melrose, D. B. 1980, <em>Plasma Astrophysics</em>, Vols. 1–2. Detailed treatment of plasma emission, wave-particle interactions, and coherent radio processes.</li>
+<li>Benz, A. O. 2002, <em>Plasma Astrophysics: Kinetic Processes in Solar and Stellar Coronae</em>. Useful reference for solar radio bursts, beam-driven Langmuir waves, plasma emission, and electron-cyclotron maser contexts.</li>
+<li>Wilson, T. L., Rohlfs, K., and Hüttemeister, S. 2013, <em>Tools of Radio Astronomy</em>. Practical reference for radio observables, brightness temperature, antenna temperature, and radiative transfer conventions.</li>
+</ul>
+</section>
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
+<ul>
+<li>Bremsstrahlung is incoherent free-free radiation from Coulomb acceleration; <span class="math inline">\(Z\)</span>, <span class="math inline">\(T_e\)</span>, emission measure, and optical depth set the continuum and turnover.</li>
+<li>Gyro emission is incoherent magnetic radiation from gyrating electrons; <span class="math inline">\(\gamma\)</span>, pitch angle, <span class="math inline">\(B\)</span>, and opacity set the observed spectrum.</li>
+<li>Plasma emission is controlled by a beam in <span class="math inline">\(v_\parallel\)</span>, Langmuir growth, and a density-gradient-controlled frequency drift.</li>
+<li>ECM is controlled by anisotropy in <span class="math inline">\(v_\perp\)</span>, cyclotron resonance geometry, and the low-density/high-field ratio <span class="math inline">\(\omega_{pe}/\Omega_{ce}\)</span>.</li>
+<li>The most important bridge from source physics to observation is:</li>
+</ul>
+<p><span class="math display">\[
+\text{particle distribution}
+\rightarrow
+\text{emission process}
+\rightarrow
+\text{transfer or escape}
+\rightarrow
+\text{observed spectrum}.
+\]</span></p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<div id="site-footer-root"></div>
+
+
+
+
+</body></html>

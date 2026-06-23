@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="description" content="Explore antenna layout, shadowing, and coupling diagnostics for FASR-style arrays." />
+  <meta name="author" content="Sijie Yu" />
+  <meta name="application-name" content="Phys 681 Solar Physics and Instruments Teaching Visualizations" />
 <title>FASR Shadowing &amp; Coupling Diagnostics</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
@@ -95,11 +98,13 @@ canvas, input, button { max-width: 100%; }
   grid-template-columns: minmax(340px, 400px) minmax(0, 1fr);
   gap: var(--gap);
   align-items: start;
+  min-width: 0;
 }
 @media (max-width: 1080px) {
-  .layout { grid-template-columns: 1fr; }
+  .layout { grid-template-columns: minmax(0, 1fr); }
 }
 .controls {
+  min-width: 0;
   padding: 20px 18px;
   display: grid;
   gap: 16px;
@@ -119,7 +124,7 @@ canvas, input, button { max-width: 100%; }
     overflow: visible;
   }
 }
-.ctrl-section { display: grid; gap: 10px; }
+.ctrl-section { display: grid; min-width: 0; gap: 10px; }
 .ctrl-section-title {
   font-family: var(--ui-font-display);
   font-size: 0.78rem;
@@ -135,6 +140,13 @@ canvas, input, button { max-width: 100%; }
   grid-template-columns: minmax(96px, max-content) minmax(120px, 1fr) 78px minmax(30px, max-content);
   gap: 8px;
   align-items: center;
+}
+@media (max-width: 480px) {
+  .controls { padding: 16px 12px; }
+  .ctrl-row {
+    grid-template-columns: minmax(78px, max-content) minmax(90px, 1fr) 64px minmax(24px, max-content);
+    gap: 6px;
+  }
 }
 .ctrl-row label {
   font-size: 0.82rem;
@@ -487,8 +499,12 @@ button.warn {
 .status-line strong { color: var(--ink); }
 .hidden { display: none !important; }
 </style>
+  <link rel="stylesheet" href="_site-shared.css" />
+  <script defer src="_site-manifest.js"></script>
+  <script defer src="_site-nav.js"></script>
 </head>
 <body>
+  <div id="site-nav-root"></div>
 <div class="page">
   <section class="panel hero">
     <div class="hero-main">
@@ -4182,5 +4198,6 @@ updateReadouts();
 updateInspector();
 requestCompute('full');
 </script>
+  <div id="site-footer-root"></div>
 </body>
 </html>

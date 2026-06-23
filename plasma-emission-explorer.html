@@ -1,0 +1,2821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Show beam free energy, Langmuir growth, density drift, and dynamic spectral signatures." />
+  <meta name="author" content="Sijie Yu" />
+  <meta name="application-name" content="Phys 681 Solar Physics and Instruments Teaching Visualizations" />
+<title>Plasma Emission Explorer — Phys 681</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: "STIX Two Math";
+      src: local("STIX Two Math"), local("STIX Two Math Regular"), local("STIXTwoMath-Regular");
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+    }
+
+    :root {
+      --ui-font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --ui-font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --math-font: "STIX Two Math", "STIX Two Text", "Cambria Math", "Latin Modern Math", "STIXGeneral", "Times New Roman", serif;
+      --mono-font: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+
+      /* Rail — frosted navy */
+      --rail-bg-top: #1a2a40;
+      --rail-bg-bot: #0f1a2a;
+      --rail-ink: #e2e8f0;
+      --rail-ink-bright: #f8fbff;
+      --rail-muted: #9db0c5;
+      --rail-border: rgba(148, 163, 184, 0.18);
+      --rail-fill: rgba(255, 255, 255, 0.05);
+      --rail-fill-strong: rgba(255, 255, 255, 0.09);
+
+      /* Main area — gallery light */
+      --gallery-bg: #f4f6f9;
+      --card-bg: #ffffff;
+      --card-border: rgba(15, 23, 42, 0.06);
+      --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 14px 34px -14px rgba(20, 40, 80, 0.14);
+      --card-radius: 16px;
+
+      --ink: #0f172a;
+      --ink-soft: #334155;
+      --muted: #667085;
+      --rule: rgba(15, 23, 42, 0.08);
+
+      /* Palette (restrained) */
+      --cloud-thermal-core: rgba(220, 55, 60, 0.82);
+      --cloud-thermal-mid:  rgba(220, 55, 60, 0.45);
+      --cloud-thermal-fade: rgba(220, 55, 60, 0.00);
+      --cloud-beam-core:    rgba(60, 135, 235, 0.88);
+      --cloud-beam-mid:     rgba(60, 135, 235, 0.48);
+      --cloud-beam-fade:    rgba(60, 135, 235, 0.00);
+      --accent:             #60a5fa;     /* plasma page rail accent */
+      --accent-warm:        #f59e0b;     /* free-energy callout */
+      --chip-ok:            #10b981;
+      --chip-bad:           #ef4444;
+      --chip-warn:          #f59e0b;
+
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: var(--ui-font-text);
+      color: var(--ink);
+      background: var(--gallery-bg);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    body { font-size: 14px; }
+
+    /* ------------------------------------------------------------------ */
+    /* Layout                                                              */
+    /* ------------------------------------------------------------------ */
+
+    .app {
+      display: flex;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .rail {
+      width: 340px;
+      min-width: 320px;
+      flex-shrink: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 22px 20px 26px;
+      background: linear-gradient(180deg, var(--rail-bg-top) 0%, var(--rail-bg-bot) 100%);
+      color: var(--rail-ink);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148, 163, 184, 0.32) transparent;
+    }
+    .rail::-webkit-scrollbar { width: 6px; }
+    .rail::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.32); border-radius: 4px; }
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 14px;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      grid-template-rows: minmax(0, 1.02fr) minmax(0, 0.98fr);
+      gap: 14px;
+      min-height: 0;
+      min-width: 0;
+    }
+    .panel-a { grid-column: 1 / span 3; grid-row: 1; }
+    .panel-b { grid-column: 4 / span 3; grid-row: 1; }
+    .panel-c { grid-column: 7 / span 6; grid-row: 1; }
+    .panel-d { grid-column: 1 / span 4; grid-row: 2; }
+    .panel-e { grid-column: 5 / span 4; grid-row: 2; }
+    .panel-f { grid-column: 9 / span 4; grid-row: 2; }
+
+    /* ------------------------------------------------------------------ */
+    /* Rail — typography + sections                                        */
+    /* ------------------------------------------------------------------ */
+
+    .eyebrow {
+      font-size: 10.5px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--rail-muted);
+      margin-bottom: 9px;
+    }
+    .rail-title {
+      font-family: var(--ui-font-display);
+      font-size: 29px;
+      line-height: 1.04;
+      letter-spacing: -0.03em;
+      color: var(--rail-ink-bright);
+      margin-bottom: 10px;
+    }
+    .rail-lede {
+      font-size: 13.5px;
+      color: var(--rail-muted);
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .rail-section { margin-bottom: 18px; }
+    .rail-section-head {
+      font-size: 10.5px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--rail-muted);
+      margin-bottom: 10px;
+    }
+    .story-card {
+      display: grid;
+      gap: 8px;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--rail-border);
+      background: var(--rail-fill);
+    }
+    .story-step {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+    }
+    .story-step + .story-step {
+      padding-top: 8px;
+      border-top: 1px solid rgba(148, 163, 184, 0.14);
+    }
+    .story-key {
+      font-family: var(--mono-font);
+      font-size: 12px;
+      font-weight: 700;
+      color: #93c5fd;
+      line-height: 1.45;
+    }
+    .story-text {
+      font-size: 11.5px;
+      line-height: 1.45;
+      color: var(--rail-ink);
+    }
+    .math-i,
+    .math-r {
+      font-family: var(--math-font);
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .math-i { font-style: italic; }
+    .math-r { font-style: normal; }
+    .math-i sub, .math-i sup,
+    .math-r sub, .math-r sup {
+      font-style: normal;
+    }
+    .math-i sub, .math-r sub {
+      font-size: 0.68em;
+      vertical-align: -0.28em;
+    }
+    .math-i sup, .math-r sup {
+      font-size: 0.68em;
+      vertical-align: 0.42em;
+    }
+
+    /* Presets — primary interaction */
+    .preset-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 7px;
+    }
+    .preset-btn {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--rail-border);
+      background: var(--rail-fill);
+      color: var(--rail-ink);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.18s var(--ease-out), border-color 0.18s var(--ease-out), transform 0.18s var(--ease-out);
+    }
+    .preset-btn:hover { background: var(--rail-fill-strong); transform: translateY(-1px); }
+    .preset-btn.active {
+      background: rgba(96, 165, 250, 0.13);
+      border-color: rgba(96, 165, 250, 0.55);
+      color: #d7e7ff;
+    }
+    .preset-icon {
+      width: 28px; height: 28px;
+      display: grid; place-items: center;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+    }
+    .preset-btn.active .preset-icon {
+      background: rgba(96, 165, 250, 0.2);
+      color: #bfdbfe;
+    }
+    .preset-label {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+    .preset-name {
+      font-family: var(--ui-font-display);
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: -0.01em;
+      color: var(--rail-ink-bright);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .preset-desc {
+      font-size: 12px;
+      color: var(--rail-muted);
+      line-height: 1.3;
+    }
+
+    /* Sliders */
+    .slider-row { margin-bottom: 13px; }
+    .slider-row:last-child { margin-bottom: 0; }
+
+    .slider-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+    .slider-name {
+      font-family: var(--math-font);
+      font-size: 14.5px;
+      color: var(--rail-ink-bright);
+    }
+    .slider-desc {
+      font-size: 12px;
+      color: var(--rail-muted);
+      line-height: 1.3;
+      margin-top: 2px;
+    }
+
+    .slider-line {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 74px;
+      gap: 10px;
+      align-items: center;
+    }
+    input[type="range"] {
+      width: 100%;
+      height: 4px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 7px;
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--rail-ink-bright);
+      font: inherit;
+      font-family: var(--mono-font);
+      font-size: 13.5px;
+      text-align: right;
+      outline: none;
+    }
+    input[type="number"]:focus { border-color: rgba(96, 165, 250, 0.55); }
+
+    /* Advanced disclosure */
+    details.advanced {
+      border-top: 1px solid var(--rail-border);
+      padding-top: 14px;
+      margin-top: 2px;
+    }
+    details.advanced > summary {
+      font-size: 10.5px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--rail-muted);
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    details.advanced > summary::-webkit-details-marker { display: none; }
+    details.advanced > summary::before {
+      content: "+";
+      font-family: var(--mono-font);
+      font-size: 15px;
+      line-height: 1;
+      color: var(--rail-ink-bright);
+      width: 16px; height: 16px;
+      display: grid; place-items: center;
+      border: 1px solid var(--rail-border);
+      border-radius: 4px;
+    }
+    details.advanced[open] > summary::before { content: "−"; }
+    details.advanced .adv-body { padding-top: 4px; }
+
+    /* Segment buttons inside advanced */
+    .segment-row {
+      display: flex;
+      gap: 5px;
+      margin-top: 4px;
+    }
+    .seg-btn {
+      flex: 1;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      background: var(--rail-fill);
+      color: var(--rail-ink);
+      font: inherit;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 7px 6px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.16s var(--ease-out), border-color 0.16s var(--ease-out), color 0.16s var(--ease-out);
+    }
+    .seg-btn.active {
+      background: rgba(96, 165, 250, 0.18);
+      border-color: rgba(96, 165, 250, 0.55);
+      color: #bfdbfe;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 0;
+    }
+    .toggle-row label { font-size: 13px; color: var(--rail-ink); }
+
+    .switch {
+      position: relative;
+      width: 34px; height: 18px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      border: 1px solid var(--rail-border);
+      cursor: pointer;
+      transition: background 0.18s var(--ease-out), border-color 0.18s var(--ease-out);
+    }
+    .switch::after {
+      content: "";
+      position: absolute;
+      top: 1px; left: 1px;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      transition: transform 0.2s var(--ease-out), background 0.2s var(--ease-out);
+    }
+    .switch.on { background: rgba(96, 165, 250, 0.35); border-color: rgba(96, 165, 250, 0.55); }
+    .switch.on::after { transform: translateX(16px); background: #f8fbff; }
+
+    /* Playback */
+    .playback-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 14px;
+    }
+    .play-btn {
+      flex: 1;
+      border: 1px solid rgba(148, 163, 184, 0.26);
+      background: var(--rail-fill);
+      color: var(--rail-ink-bright);
+      font: inherit;
+      font-weight: 600;
+      padding: 9px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.18s var(--ease-out), transform 0.18s var(--ease-out);
+    }
+    .play-btn:hover { background: var(--rail-fill-strong); }
+    .play-btn.primary {
+      background: rgba(96, 165, 250, 0.22);
+      border-color: rgba(96, 165, 250, 0.6);
+      color: #dbeafe;
+    }
+
+    .rail-link {
+      display: block;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--rail-border);
+      background: var(--rail-fill);
+      color: var(--rail-ink-bright);
+      font-size: 12.5px;
+      line-height: 1.35;
+      text-decoration: none;
+      transition: background 0.18s var(--ease-out), border-color 0.18s var(--ease-out), transform 0.18s var(--ease-out);
+    }
+    .rail-link:hover {
+      background: var(--rail-fill-strong);
+      border-color: rgba(96, 165, 250, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .rail-note {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--rail-border);
+      color: var(--rail-muted);
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+    .rail-note a { color: #bfdbfe; }
+
+    /* ------------------------------------------------------------------ */
+    /* Top bar                                                             */
+    /* ------------------------------------------------------------------ */
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.2fr);
+      gap: 14px;
+      padding: 14px 18px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      min-height: 0;
+      align-items: start;
+      min-width: 0;
+    }
+    .topbar-title { display: grid; gap: 4px; min-width: 0; }
+    .topbar-title h1 {
+      font-family: var(--ui-font-display);
+      font-size: 24px;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+    }
+    .topbar-title p {
+      color: var(--muted);
+      font-size: 13.5px;
+      line-height: 1.4;
+      max-width: 64ch;
+      overflow-wrap: anywhere;
+    }
+
+    .pill-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      align-self: center;
+    }
+    .pill {
+      border-radius: 10px;
+      border: 1px solid var(--rule);
+      background: #fafbfd;
+      padding: 8px 10px;
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+    .pill-label {
+      font-size: 10.5px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .pill-value {
+      font-family: var(--mono-font);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+    .pill.chip {
+      display: grid;
+      grid-template-columns: 8px 1fr;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 10px;
+    }
+    .chip-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--chip-ok);
+      transition: background 0.25s var(--ease-out);
+    }
+    .chip-dot.bad { background: var(--chip-bad); }
+    .chip-dot.warn { background: var(--chip-warn); }
+    .chip-body { display: grid; gap: 2px; min-width: 0; }
+
+    .proxy-note {
+      grid-column: 1 / -1;
+      font-size: 10.5px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 4px 2px 0;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Cards                                                               */
+    /* ------------------------------------------------------------------ */
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      overflow: hidden;
+      min-height: 0;
+      min-width: 0;
+    }
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 14px 18px 4px;
+      gap: 10px;
+    }
+    .card-head > :first-child { min-width: 0; }
+    .card-head > .card-sub:last-child {
+      max-width: 240px;
+      margin-left: auto;
+      text-align: right;
+      line-height: 1.3;
+    }
+    .card-inline-control {
+      min-width: 150px;
+      margin-left: auto;
+      display: grid;
+      gap: 3px;
+      justify-items: end;
+    }
+    .card-inline-control label {
+      font-size: 10.4px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .card-inline-control .mini-slider {
+      display: grid;
+      grid-template-columns: minmax(84px, 1fr) 34px;
+      align-items: center;
+      gap: 7px;
+      width: 100%;
+    }
+    .card-inline-control input[type="range"] {
+      width: 100%;
+      min-width: 0;
+    }
+    .card-inline-control span {
+      font-family: var(--mono-font);
+      font-size: 10.4px;
+      font-weight: 700;
+      color: var(--ink-soft);
+      text-align: right;
+    }
+    .card-inline-control.readout-only {
+      min-width: 104px;
+      gap: 2px;
+    }
+    .card-inline-control.readout-only .readout-label {
+      font-family: var(--math-font);
+      font-size: 12.5px;
+      font-style: italic;
+      font-weight: 650;
+      color: var(--muted);
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .card-inline-control.readout-only .readout-value {
+      font-family: var(--mono-font);
+      font-size: 11px;
+      font-weight: 750;
+      color: var(--ink);
+    }
+    .card-title {
+      font-family: var(--ui-font-display);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+    .card-sub {
+      font-size: 12.8px;
+      color: var(--muted);
+      letter-spacing: 0.01em;
+      overflow-wrap: anywhere;
+    }
+    .card-body {
+      position: relative;
+      padding: 4px 10px 12px;
+      min-height: 0;
+    }
+    .card-body canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Responsive                                                          */
+    /* ------------------------------------------------------------------ */
+
+    @media (max-width: 1240px) {
+      .topbar { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 1180px) {
+      .pill-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 980px) {
+      html, body { overflow: hidden; height: 100%; }
+      .app { flex-direction: row; height: 100%; overflow: hidden; }
+      .app, .analysis-grid, .topbar, .card { width: 100%; max-width: 100%; }
+      .rail {
+        width: clamp(250px, 34vw, 300px);
+        min-width: 240px;
+        height: 100%;
+        max-height: 100%;
+        overflow-y: auto;
+      }
+      .main {
+        display: block;
+        height: 100%;
+        padding: 14px;
+        overflow-y: auto;
+      }
+      .topbar { grid-template-columns: 1fr; margin-bottom: 14px; }
+      .topbar-title h1 { font-size: 19px; }
+      .topbar-title p { font-size: 12.5px; max-width: none; }
+      .analysis-grid { grid-template-columns: 1fr; grid-template-rows: repeat(6, auto); }
+      .analysis-grid > .card { grid-column: auto !important; grid-row: auto !important; }
+      .card { grid-template-rows: auto auto; }
+      .card-head { flex-direction: column; align-items: flex-start; }
+      .card-head > .card-sub:last-child { max-width: none; text-align: left !important; margin-left: 0; }
+      .card-inline-control { width: 100%; min-width: 0; margin-left: 0; justify-items: stretch; }
+      .card-inline-control .mini-slider { width: min(100%, 280px); }
+      .card-body { height: clamp(280px, 54vw, 520px); min-height: 0; padding: 4px 8px 10px; }
+    }
+  </style>
+  <link rel="stylesheet" href="_site-shared.css" />
+  <script defer src="_site-manifest.js"></script>
+  <script defer src="_site-nav.js"></script>
+</head>
+<body>
+  <div id="site-nav-root"></div>
+  <div class="app">
+    <!-- ============================================================== -->
+    <!-- Rail                                                             -->
+    <!-- ============================================================== -->
+    <aside class="rail">
+      <div class="eyebrow">Coherent emission · Plasma radiation</div>
+      <h2 class="rail-title">Plasma Emission Explorer</h2>
+      <p class="rail-lede">
+        A fast electron beam carves a bump on the tail of the distribution in
+        <span class="math-i">v∥</span>.
+        The unstable slope drives Langmuir waves near
+        <span class="math-i">ω<sub>pe</sub></span>,
+        a fraction escapes as EM radiation at the fundamental and second harmonic,
+        and the descending frequency draws a Type III lane on the dynamic spectrum.
+      </p>
+
+      <section class="rail-section">
+        <div class="rail-section-head">Narrative</div>
+        <div class="story-card">
+          <div class="story-step">
+            <div class="story-key">1</div>
+            <div class="story-text">A field-aligned beam creates a bump on the tail of <span class="math-i">f(v∥)</span>.</div>
+          </div>
+          <div class="story-step">
+            <div class="story-key">2</div>
+            <div class="story-text">Where <span class="math-i">∂f/∂v∥ &gt; 0</span>, Langmuir waves grow near the local plasma frequency.</div>
+          </div>
+          <div class="story-step">
+            <div class="story-key">3</div>
+            <div class="story-text">Nonlinear conversion lets some of that electrostatic energy escape at <span class="math-i">f<sub>p</sub></span> and <span class="math-i">2f<sub>p</sub></span>.</div>
+          </div>
+          <div class="story-step">
+            <div class="story-key">4</div>
+            <div class="story-text">Because density decreases outward, <span class="math-i">f<sub>p</sub></span> falls with height, so the radio lane drifts downward in <span class="math-i">ν–t</span> space.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="rail-section">
+        <div class="rail-section-head">Presets</div>
+        <div class="preset-grid" id="presets">
+          <button class="preset-btn active" data-preset="typeIII">
+            <span class="preset-icon">III</span>
+            <span class="preset-label">
+              <span class="preset-name">Classic Type III</span>
+              <span class="preset-desc">fast drift, strong beam, low corona</span>
+            </span>
+          </button>
+          <button class="preset-btn" data-preset="typeII">
+            <span class="preset-icon">II</span>
+            <span class="preset-label">
+              <span class="preset-name">Type II shock-like</span>
+              <span class="preset-desc">slow drift, larger scale height</span>
+            </span>
+          </button>
+          <button class="preset-btn" data-preset="weak">
+            <span class="preset-icon">·</span>
+            <span class="preset-label">
+              <span class="preset-name">Weak impulsive</span>
+              <span class="preset-desc">modest beam, harmonic dominates</span>
+            </span>
+          </button>
+        </div>
+      </section>
+
+      <section class="rail-section">
+        <div class="rail-section-head">Tuning</div>
+
+        <div class="slider-row">
+          <div class="slider-head">
+            <span class="slider-name">v<sub>b</sub> / c</span>
+            <span class="slider-desc">beam speed</span>
+          </div>
+          <div class="slider-line">
+            <input type="range" id="s_vb" min="0.08" max="0.5" step="0.005" value="0.30" />
+            <input type="number" id="n_vb" min="0.08" max="0.5" step="0.005" value="0.300" />
+          </div>
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-head">
+            <span class="slider-name">log<sub>10</sub>(n<sub>b</sub>/n<sub>e</sub>)</span>
+            <span class="slider-desc">beam density ratio</span>
+          </div>
+          <div class="slider-line">
+            <input type="range" id="s_nratio" min="-6" max="-3" step="0.05" value="-4.2" />
+            <input type="number" id="n_nratio" min="-6" max="-3" step="0.05" value="-4.20" />
+          </div>
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-head">
+            <span class="slider-name">h<sub>0</sub> / R<sub>☉</sub></span>
+            <span class="slider-desc">starting height above photosphere</span>
+          </div>
+          <div class="slider-line">
+            <input type="range" id="s_h0" min="0.02" max="0.80" step="0.01" value="0.08" />
+            <input type="number" id="n_h0" min="0.02" max="0.80" step="0.01" value="0.08" />
+          </div>
+        </div>
+
+      </section>
+
+      <div class="playback-row">
+        <button class="play-btn primary" id="btn_release">Release beam</button>
+        <button class="play-btn" id="btn_reset">Reset</button>
+      </div>
+
+      <details class="advanced" id="advanced">
+        <summary>Advanced</summary>
+        <div class="adv-body">
+          <div class="slider-row">
+            <div class="slider-head">
+              <span class="slider-name">H / R<sub>☉</sub></span>
+              <span class="slider-desc">atmospheric scale height</span>
+            </div>
+            <div class="slider-line">
+              <input type="range" id="s_H" min="0.03" max="0.40" step="0.005" value="0.10" />
+              <input type="number" id="n_H" min="0.03" max="0.40" step="0.005" value="0.100" />
+            </div>
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-head">
+              <span class="slider-name">n<sub>0</sub> (×10<sup>9</sup> cm<sup>−3</sup>)</span>
+              <span class="slider-desc">base density at photosphere</span>
+            </div>
+            <div class="slider-line">
+              <input type="range" id="s_n0" min="0.1" max="5.0" step="0.05" value="1.0" />
+              <input type="number" id="n_n0" min="0.1" max="5.0" step="0.05" value="1.00" />
+            </div>
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-head">
+              <span class="slider-name">τ / s</span>
+              <span class="slider-desc">burst duration</span>
+            </div>
+            <div class="slider-line">
+              <input type="range" id="s_tau" min="0.3" max="6.0" step="0.1" value="1.8" />
+              <input type="number" id="n_tau" min="0.3" max="6.0" step="0.1" value="1.8" />
+            </div>
+          </div>
+
+          <div class="rail-section" style="margin-top: 10px; margin-bottom: 4px;">
+            <div class="rail-section-head">Emission channel</div>
+            <div class="segment-row" id="seg_mode">
+              <button class="seg-btn" data-mode="F">Fundamental</button>
+              <button class="seg-btn" data-mode="H">Harmonic</button>
+              <button class="seg-btn active" data-mode="B">Both</button>
+            </div>
+          </div>
+
+          <div class="toggle-row">
+            <label for="tog_escape">Mark escape cutoff</label>
+            <div class="switch on" id="tog_escape" role="switch" aria-checked="true"></div>
+          </div>
+        </div>
+      </details>
+
+      <p class="rail-note">
+        Growth rates and brightness temperatures are illustrative proxies — the
+        formulas here are pedagogical scalings, not a dispersion solver.
+        Polarization of <span class="math-i">f<sub>p</sub></span> vs <span class="math-i">2f<sub>p</sub></span> is qualitative; the real split depends on
+        regime, geometry, and the density-gradient environment.
+      </p>
+
+      <section class="rail-section" style="margin-top: 16px;">
+        <div class="rail-section-head">Next step</div>
+        <a class="rail-link" href="plasma-radiation-conversion-map.html">
+          Open the plasma radiation conversion diagram →
+        </a>
+      </section>
+    </aside>
+
+    <!-- ============================================================== -->
+    <!-- Main area                                                        -->
+    <!-- ============================================================== -->
+    <main class="main">
+      <!-- Top bar: title + proxy pills -->
+      <section class="topbar">
+        <div class="topbar-title">
+          <h1>Plasma radiation — beam-driven Langmuir emission</h1>
+          <p>
+            Beam bump → Langmuir waves → escaping
+            <span class="math-i">f<sub>p</sub></span> and
+            <span class="math-i">2f<sub>p</sub></span> lanes.
+          </p>
+        </div>
+        <div class="pill-row" id="pills">
+          <div class="pill">
+            <span class="pill-label"><span class="math-i">ν<sub>pe</sub></span> <span class="math-r">(h<sub>now</sub>)</span></span>
+            <span class="pill-value" id="pill_nupe">—</span>
+          </div>
+          <div class="pill">
+            <span class="pill-label"><span class="math-i">|dν/dt|</span></span>
+            <span class="pill-value" id="pill_drift">—</span>
+          </div>
+          <div class="pill chip">
+            <span class="chip-dot" id="pill_growth_dot"></span>
+            <span class="chip-body">
+              <span class="pill-label">Growth</span>
+              <span class="pill-value" id="pill_growth">—</span>
+            </span>
+          </div>
+          <div class="pill">
+            <span class="pill-label"><span class="math-r">T<sub>B,obs</sub> / T<sub>B,RJ</sub></span></span>
+            <span class="pill-value" id="pill_tb">—</span>
+          </div>
+          <span class="proxy-note">illustrative proxy values</span>
+        </div>
+      </section>
+
+      <!-- Analysis grid: row 1 = 3 panels, row 2 = 3 panels -->
+      <section class="analysis-grid">
+        <div class="card panel-a">
+          <div class="card-head">
+            <div>
+              <div class="card-title">A · Free energy</div>
+              <div class="card-sub">bump on <span class="math-i">f(v∥)</span></div>
+            </div>
+            <div class="card-sub" style="text-align: right;"><span class="math-i">∂f/∂v∥ &gt; 0</span></div>
+          </div>
+          <div class="card-body"><canvas id="hero"></canvas></div>
+        </div>
+        <div class="card panel-b">
+          <div class="card-head">
+            <div>
+              <div class="card-title">B · Beam geometry</div>
+              <div class="card-sub"><span class="math-i">v<sub>⊥</sub>–v<sub>∥</sub></span> context</div>
+            </div>
+          </div>
+          <div class="card-body"><canvas id="velocity"></canvas></div>
+        </div>
+        <div class="card panel-c">
+          <div class="card-head">
+            <div>
+              <div class="card-title">C · Particle → wave</div>
+              <div class="card-sub">resonant exchange near <span class="math-i">v<sub>φ</sub> ≈ v<sub>b</sub></span></div>
+            </div>
+            <div class="card-inline-control readout-only">
+              <span class="readout-label">v<sub>φ</sub> from v<sub>b</sub></span>
+              <span class="readout-value" id="phase_display_val">0.30 c</span>
+            </div>
+          </div>
+          <div class="card-body"><canvas id="waveParticle"></canvas></div>
+        </div>
+        <div class="card panel-d">
+          <div class="card-head">
+            <div>
+              <div class="card-title">D · Resonance</div>
+              <div class="card-sub"><span class="math-i">ω ≈ k v∥</span> on Langmuir branch</div>
+            </div>
+          </div>
+          <div class="card-body"><canvas id="growth"></canvas></div>
+        </div>
+        <div class="card panel-e">
+          <div class="card-head">
+            <div>
+              <div class="card-title">E · Density drift</div>
+              <div class="card-sub">source rises; <span class="math-i">f<sub>p</sub></span> falls</div>
+            </div>
+          </div>
+          <div class="card-body"><canvas id="escape"></canvas></div>
+        </div>
+        <div class="card panel-f">
+          <div class="card-head">
+            <div>
+              <div class="card-title">F · Dynamic spectrum</div>
+              <div class="card-sub">drifting <span class="math-i">ν–t</span> lanes</div>
+            </div>
+          </div>
+          <div class="card-body"><canvas id="spectrum"></canvas></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+/* ==================================================================== */
+/* Plasma Emission Explorer — rendering + physics proxies                */
+/* ==================================================================== */
+
+(() => {
+'use strict';
+
+const LABEL_SCALE = 1.14;
+const scalePx = size => Math.round(size * LABEL_SCALE * 10) / 10;
+
+/* ------------------------------------------------------------------ */
+/* Constants                                                           */
+/* ------------------------------------------------------------------ */
+const C_CGS        = 2.9979e10;       // cm/s
+const R_SUN_CM     = 6.957e10;        // cm
+const V_TE_SOLAR   = 0.018;           // v_te/c at T_e ~ 1 MK
+const T_E_SOLAR_K  = 1.0e6;           // K, thermal electron temperature
+const K_COEFF_NUPE = 8.98e-3;         // ν_pe [MHz] = K √(n_e/cm^-3)
+// (ν_pe ≈ 8.98e-3 √n_e MHz, equivalent to ≈ 9 √n_e kHz)
+
+/* ------------------------------------------------------------------ */
+/* State                                                               */
+/* ------------------------------------------------------------------ */
+const state = {
+  // user controls — current (tweened) values
+  vb: 0.30,
+  logN: -4.2,
+  h0: 0.08,
+  H: 0.10,
+  n0e9: 1.0,     // n_0 in units of 1e9 cm^-3
+  tau: 1.8,
+  mode: 'B',     // 'F', 'H', 'B'
+  escapeCutoff: true,
+
+  // user targets (what slider committed) — we tween current -> target
+  target: null,
+
+  // animation
+  released: false,
+  beamTime: 0,   // seconds since release, clamped to tau
+  startedAt: 0,
+  lastFrameT: 0,
+  panelCParticles: null,
+
+  // idle "breathing" phase
+  breathPhase: 0,
+};
+state.target = { vb: state.vb, logN: state.logN, h0: state.h0, H: state.H, n0e9: state.n0e9, tau: state.tau };
+
+const PANEL_C_TRAIL_SAMPLE_DT = 0.08;       // seconds between equal-time trail dots; same clock for fast/slow
+const PANEL_C_TRAIL_MAX_DOTS = 7;           // larger = longer remembered trail
+const PANEL_C_TRAIL_ALPHA_BASE = 0.07;
+const PANEL_C_TRAIL_ALPHA_STEP = 0.045;
+const PANEL_C_TRACK_TRAIL_ALPHA_BASE = 0.12;
+const PANEL_C_TRACK_TRAIL_ALPHA_STEP = 0.055;
+
+const PANEL_C_PARTICLE_SEEDS = [
+  { x: 0.02, dy: -3, kind: 'slow', entryRel: 0.42, exitRel: 1.00 },
+  { x: 0.14, dy: 7, kind: 'fast', entryRel: 1.72, exitRel: 1.00, track: true },
+  { x: 0.27, dy: -6, kind: 'fast', entryRel: 1.60, exitRel: 1.00 },
+  { x: 0.40, dy: 7, kind: 'fast', entryRel: 1.66, exitRel: 1.00 },
+  { x: 0.54, dy: 3, kind: 'slow', entryRel: 0.38, exitRel: 1.00 },
+  { x: 0.67, dy: 6, kind: 'fast', entryRel: 1.62, exitRel: 1.00 },
+  { x: 0.79, dy: -8, kind: 'fast', entryRel: 1.70, exitRel: 1.00 },
+  { x: 0.91, dy: 7, kind: 'fast', entryRel: 1.60, exitRel: 1.00 }
+];
+state.panelCParticles = PANEL_C_PARTICLE_SEEDS.map(p => ({ ...p, v: 0, history: [], sampleT: 0 }));
+
+const PRESETS = {
+  typeIII: { vb: 0.30, logN: -4.2, h0: 0.08, H: 0.10, n0e9: 1.0, tau: 1.8, mode: 'B', escapeCutoff: true },
+  typeII:  { vb: 0.10, logN: -3.5, h0: 0.30, H: 0.25, n0e9: 0.5, tau: 5.0, mode: 'F', escapeCutoff: true },
+  weak:    { vb: 0.18, logN: -5.5, h0: 0.12, H: 0.12, n0e9: 0.6, tau: 1.2, mode: 'H', escapeCutoff: false },
+};
+
+const PRESET_COMPARE_HMAX = 0.60;   // common height window so presets keep visible speed differences
+const SPECTRUM_TMAX = 6.0;          // common time window so burst duration is comparable across presets
+
+/* ------------------------------------------------------------------ */
+/* Physics proxies                                                     */
+/* ------------------------------------------------------------------ */
+function neAt(h_Rsun) {           // [cm^-3]
+  return state.n0e9 * 1e9 * Math.exp(-h_Rsun / state.H);
+}
+function nupeAt_MHz(h_Rsun) {     // [MHz]
+  return K_COEFF_NUPE * Math.sqrt(neAt(h_Rsun));
+}
+function beamHeight_Rsun(t_seconds) {
+  const dh_cm = state.vb * C_CGS * t_seconds;
+  return state.h0 + dh_cm / R_SUN_CM;
+}
+
+// dν_pe/dt at height h: = -(ν_pe/2)(v_b/H)   ; units: MHz / s
+function driftRate_MHzPerSec(h_Rsun) {
+  const nupe = nupeAt_MHz(h_Rsun);
+  const vcm = state.vb * C_CGS;
+  const Hcm = state.H * R_SUN_CM;
+  return nupe / 2 * vcm / Hcm;    // magnitude
+}
+
+// Langmuir growth-rate proxy (qualitative):
+// γ_L / ω_pe ~ (n_b/n_e) * (v_b / Δv)^2 where Δv is beam width
+function growthProxy() {
+  const nratio = Math.pow(10, state.logN);
+  const vb = state.vb;
+  const dv = Math.max(0.02, 0.25 * vb);          // assume relative width
+  const x = nratio * Math.pow(vb / dv, 2);
+  return x;
+}
+
+// Growth "allowed" when bump-on-tail distinctly exceeds thermal
+// Criterion: v_b > ~3 v_te AND n_b/n_e above floor
+function growthAllowed() {
+  return (state.vb > 3.0 * V_TE_SOLAR) && (state.logN > -5.7);
+}
+
+// Illustrative TB ratio: coherent TB relative to RJ thermal limit
+// Simplified scaling: saturation TB ~ T_e × (v_b/v_te)^2 × n_e/n_b
+function tbRatio() {
+  const vte = V_TE_SOLAR;
+  const nratio = Math.pow(10, state.logN);
+  const coherent = Math.pow(state.vb / vte, 2) / Math.max(1e-7, nratio);
+  const modeFactor = state.mode === 'F' ? 1.0 : (state.mode === 'H' ? 0.3 : 1.0);
+  return Math.max(1, coherent * modeFactor);
+}
+
+/* ------------------------------------------------------------------ */
+/* Canvas setup (DPR-aware)                                            */
+/* ------------------------------------------------------------------ */
+function sizeCanvas(canvas) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(1, Math.floor(rect.width));
+  const h = Math.max(1, Math.floor(rect.height));
+  if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w, h };
+}
+
+function mathFont(size, opts = {}) {
+  const italic = opts.italic === false ? '' : 'italic ';
+  const weight = opts.weight ? opts.weight + ' ' : '';
+  return `${weight}${italic}${scalePx(size)}px "STIX Two Math", "STIX Two Text", "Cambria Math", "Latin Modern Math", "STIXGeneral", serif`;
+}
+
+function uiFont(size, weight = '') {
+  return `${weight ? weight + ' ' : ''}${scalePx(size)}px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif`;
+}
+
+function monoFont(size, weight = '') {
+  return `${weight ? weight + ' ' : ''}${scalePx(size)}px "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace`;
+}
+
+function mathRun(text, size, opts = {}) {
+  return {
+    text,
+    font: mathFont(size, opts),
+    dy: opts.dy || 0,
+    color: opts.color
+  };
+}
+
+function varSubRuns(base, sub, size, opts = {}) {
+  const subSize = opts.subSize || Math.max(8, size * 0.72);
+  const subDy = opts.subDy || Math.max(2, size * 0.22);
+  return [
+    mathRun(base, size, {
+      italic: opts.italicBase !== false,
+      weight: opts.weight,
+      color: opts.color
+    }),
+    mathRun(sub, subSize, {
+      italic: !!opts.italicSub,
+      weight: opts.weight,
+      dy: subDy,
+      color: opts.color
+    })
+  ];
+}
+
+function drawTextRuns(ctx, runs, x, y, opts = {}) {
+  const align = opts.align || 'left';
+  const widths = runs.map(run => {
+    ctx.font = run.font;
+    return ctx.measureText(run.text).width;
+  });
+  const total = widths.reduce((a, b) => a + b, 0);
+  let cursor = x;
+  if (align === 'center') cursor -= total / 2;
+  else if (align === 'right') cursor -= total;
+
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  const baseColor = opts.color || ctx.fillStyle;
+  runs.forEach((run, i) => {
+    ctx.font = run.font;
+    ctx.fillStyle = run.color || baseColor;
+    ctx.fillText(run.text, cursor, y + (run.dy || 0));
+    cursor += widths[i];
+  });
+  ctx.restore();
+  return total;
+}
+
+function drawVarSub(ctx, base, sub, x, y, size, opts = {}) {
+  return drawTextRuns(ctx, varSubRuns(base, sub, size, opts), x, y, opts);
+}
+
+function drawArrowLine(ctx, x1, y1, x2, y2, color, width = 1.4, head = 7) {
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - head * Math.cos(a - 0.45), y2 - head * Math.sin(a - 0.45));
+  ctx.lineTo(x2 - head * Math.cos(a + 0.45), y2 - head * Math.sin(a + 0.45));
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+/* ------------------------------------------------------------------ */
+/* Hero: 1D f(v∥) with 2D context inset                                */
+/* ------------------------------------------------------------------ */
+const hero = document.getElementById('hero');
+const velocityC = document.getElementById('velocity');
+
+function drawHero() {
+  const { ctx, w, h } = sizeCanvas(hero);
+  ctx.clearRect(0, 0, w, h);
+
+  // white background with soft vignette
+  const grad = ctx.createRadialGradient(w * 0.5, h * 0.55, h * 0.15, w * 0.5, h * 0.55, Math.max(w, h) * 0.8);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(1, '#f4f6fa');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  // axes: centered on y = heroY (below center), spanning the canvas in v∥
+  const padL = 34, padR = 16, padT = 20, padB = 56;
+  const compact = w < 620;
+  const axisY = h - padB;
+  const xRight = w - padR;
+  const xLeft  = padL;
+  const originX = padL + (xRight - xLeft) * (compact ? 0.32 : 0.34);
+  const vMax = 0.55;                                 // v∥ range: -0.15c to +0.55c
+  const vMin = -0.15;
+  const xOfV = v => originX + (xRight - originX) * (v / vMax);
+  // bonus: left side goes up to xLeft, but mapped linearly via min
+  function xOfV2(v) {
+    if (v >= 0) return originX + (xRight - originX) * (v / vMax);
+    else return originX + (originX - xLeft) * (v / Math.abs(vMin));
+  }
+
+  // compute reduced distribution samples
+  const N = 420;
+  const samples = new Float32Array(N);
+  const derivs  = new Float32Array(N);
+  const vs      = new Float32Array(N);
+  const vte = V_TE_SOLAR;
+  const vbCur = state.vb;
+  const nratio = Math.pow(10, state.logN);
+  const sigmaB = Math.max(0.016, 0.22 * vbCur);
+  const vHalfMax = Math.sqrt(2 * Math.log(2)) * vte;
+  // idle breathing modulates beam amplitude slightly when not released
+  const breath = 0.06 * Math.sin(state.breathPhase);
+  const beamScale = (1 + breath);
+  // normalized Maxwellian amplitude 1, beam amplitude relative to n_b/n_e × √(2π) correction
+  // For display: scale beam so it's visually readable in linear plot
+  const beamVis = Math.min(1.0, 2.2 * Math.pow(nratio, 0.35));  // visual compression
+  for (let i = 0; i < N; i++) {
+    const v = vMin + (vMax - vMin) * (i / (N - 1));
+    vs[i] = v;
+    const fM = Math.exp(-0.5 * (v / vte) * (v / vte));
+    const fB = beamVis * beamScale * Math.exp(-0.5 * Math.pow((v - vbCur) / sigmaB, 2));
+    samples[i] = fM + fB;
+  }
+  for (let i = 1; i < N - 1; i++) {
+    derivs[i] = (samples[i + 1] - samples[i - 1]) / (vs[i + 1] - vs[i - 1]);
+  }
+  derivs[0] = derivs[1]; derivs[N - 1] = derivs[N - 2];
+
+  // fMax for vertical scaling
+  let fMax = 0;
+  for (let i = 0; i < N; i++) if (samples[i] > fMax) fMax = samples[i];
+  const plotH = h - padT - padB;
+  const yOfF = f => axisY - (f / fMax) * plotH * 0.97;
+
+  // --- draw filled glow for Maxwellian ---
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(xOfV2(vs[0]), axisY);
+  for (let i = 0; i < N; i++) {
+    const v = vs[i];
+    const fM = Math.exp(-0.5 * (v / vte) * (v / vte));
+    ctx.lineTo(xOfV2(v), yOfF(fM));
+  }
+  ctx.lineTo(xOfV2(vs[N - 1]), axisY);
+  ctx.closePath();
+  const thermalGrad = ctx.createLinearGradient(0, padT, 0, axisY);
+  thermalGrad.addColorStop(0, 'rgba(220, 55, 60, 0.02)');
+  thermalGrad.addColorStop(1, 'rgba(220, 55, 60, 0.55)');
+  ctx.fillStyle = thermalGrad;
+  ctx.fill();
+  ctx.restore();
+
+  // --- draw filled glow for beam bump only ---
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(xOfV2(vs[0]), axisY);
+  for (let i = 0; i < N; i++) {
+    const v = vs[i];
+    const fB = beamVis * beamScale * Math.exp(-0.5 * Math.pow((v - vbCur) / sigmaB, 2));
+    ctx.lineTo(xOfV2(v), yOfF(fB));
+  }
+  ctx.lineTo(xOfV2(vs[N - 1]), axisY);
+  ctx.closePath();
+  const beamGrad = ctx.createLinearGradient(0, padT, 0, axisY);
+  beamGrad.addColorStop(0, 'rgba(60, 135, 235, 0.08)');
+  beamGrad.addColorStop(1, 'rgba(60, 135, 235, 0.55)');
+  ctx.fillStyle = beamGrad;
+  ctx.fill();
+  ctx.restore();
+
+  // --- total f(v) curve, subtly ---
+  ctx.save();
+  ctx.beginPath();
+  for (let i = 0; i < N; i++) {
+    const x = xOfV2(vs[i]);
+    const y = yOfF(samples[i]);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.35)';
+  ctx.stroke();
+  ctx.restore();
+
+  // --- shade ∂f/∂v∥ > 0 region ---
+  // find contiguous [i1, i2] where derivs[i] > 0 (excluding close to v = 0 to avoid nitpicks)
+  let regionStart = -1, regionEnd = -1;
+  for (let i = 0; i < N; i++) {
+    if (vs[i] < 0.01) continue;
+    if (derivs[i] > 1e-3) {
+      if (regionStart < 0) regionStart = i;
+      regionEnd = i;
+    } else if (regionStart >= 0 && vs[i] > vbCur * 0.5) {
+      // end first growing region
+      if (derivs[i] < 0) break;
+    }
+  }
+  if (regionStart >= 0 && regionEnd > regionStart && growthAllowed()) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(xOfV2(vs[regionStart]), axisY);
+    for (let i = regionStart; i <= regionEnd; i++) {
+      ctx.lineTo(xOfV2(vs[i]), yOfF(samples[i]));
+    }
+    ctx.lineTo(xOfV2(vs[regionEnd]), axisY);
+    ctx.closePath();
+    const fxGrad = ctx.createLinearGradient(0, padT, 0, axisY);
+    fxGrad.addColorStop(0, 'rgba(245, 158, 11, 0.14)');
+    fxGrad.addColorStop(1, 'rgba(245, 158, 11, 0.38)');
+    ctx.fillStyle = fxGrad;
+    ctx.fill();
+
+    // callout arrow + label
+    const midI = Math.round((regionStart + regionEnd) * 0.5);
+    const arrowX1 = xOfV2(vs[regionStart]);
+    const arrowX2 = xOfV2(vs[regionEnd]);
+    const arrowY = yOfF(samples[midI]) - 24;
+    ctx.strokeStyle = 'rgba(180, 83, 9, 0.85)';
+    ctx.fillStyle = 'rgba(180, 83, 9, 0.85)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(arrowX1, arrowY);
+    ctx.lineTo(arrowX2, arrowY);
+    ctx.stroke();
+    // arrowhead right
+    ctx.beginPath();
+    ctx.moveTo(arrowX2, arrowY);
+    ctx.lineTo(arrowX2 - 8, arrowY - 4);
+    ctx.lineTo(arrowX2 - 8, arrowY + 4);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.font = mathFont(15);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = 'rgba(146, 64, 14, 0.95)';
+    ctx.fillText('∂f / ∂v∥  >  0', (arrowX1 + arrowX2) * 0.5, arrowY - 6);
+    ctx.restore();
+  }
+
+  // --- axis ---
+  ctx.save();
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 1.6;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(xLeft, axisY);
+  ctx.lineTo(xRight - 4, axisY);
+  ctx.stroke();
+  // arrowhead
+  ctx.beginPath();
+  ctx.moveTo(xRight, axisY);
+  ctx.lineTo(xRight - 10, axisY - 5);
+  ctx.lineTo(xRight - 10, axisY + 5);
+  ctx.closePath();
+  ctx.fillStyle = '#0f172a';
+  ctx.fill();
+
+  // y-axis (short, at origin)
+  const yTop = padT + 12;
+  ctx.beginPath();
+  ctx.moveTo(originX, axisY);
+  ctx.lineTo(originX, yTop + 4);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(originX, yTop);
+  ctx.lineTo(originX - 5, yTop + 10);
+  ctx.lineTo(originX + 5, yTop + 10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // axis labels
+  ctx.save();
+  ctx.font = mathFont(20);
+  ctx.fillStyle = '#0f172a';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('v∥', xRight - 2, axisY - 18);
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('f(v∥)', originX - 6, yTop + 4);
+  ctx.restore();
+
+  // v_b tick
+  ctx.save();
+  ctx.strokeStyle = 'rgba(60, 135, 235, 0.6)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.moveTo(xOfV2(vbCur), axisY);
+  ctx.lineTo(xOfV2(vbCur), axisY + 10);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(37, 99, 235, 0.85)';
+  drawTextRuns(ctx, [
+    ...varSubRuns('v', 'b', 11, { weight: '600', subSize: 7.8, subDy: 2 }),
+    mathRun(' = ' + vbCur.toFixed(2) + ' ', 11, { italic: false, weight: '600' }),
+    mathRun('c', 11, { weight: '600' })
+  ], xOfV2(vbCur), axisY + 25, { align: 'center', color: 'rgba(37, 99, 235, 0.85)' });
+  ctx.restore();
+
+  // Thermal-width cue: show the full width at half maximum of the background
+  // Maxwellian rather than a single +v_te tick, which reads like a location.
+  ctx.save();
+  const xHalfL = xOfV2(-vHalfMax);
+  const xHalfR = xOfV2(vHalfMax);
+  const yHalf = yOfF(0.5);
+  ctx.textBaseline = 'middle';
+  ctx.strokeStyle = 'rgba(220, 55, 60, 0.44)';
+  ctx.lineWidth = 1.0;
+  ctx.beginPath();
+  ctx.moveTo(xHalfL, yHalf);
+  ctx.lineTo(xHalfR, yHalf);
+  ctx.stroke();
+  drawTextRuns(ctx, [
+    mathRun('2.35 ', 11.2, { italic: false, weight: '600' }),
+    ...varSubRuns('v', 'te', 11.2, { subSize: 7.9, subDy: 2.0, weight: '600' })
+  ], xHalfR + 10, yHalf - 2, { align: 'left', color: 'rgba(220, 55, 60, 0.76)' });
+  ctx.restore();
+
+}
+
+function drawVelocityInset(ctx, x, y, w, h, params) {
+  const {
+    vbCur, vte, sigmaB, beamVis, beamScale,
+    bumpX = null, bumpY = null,
+    framed = true, connector = false, showTitle = true
+  } = params;
+  const compact = w < 118;
+
+  if (framed) {
+    ctx.save();
+    ctx.shadowColor = 'rgba(15, 23, 42, 0.08)';
+    ctx.shadowBlur = 18;
+    ctx.shadowOffsetY = 6;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
+    ctx.lineWidth = 1;
+    if (typeof ctx.roundRect === 'function') {
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, 14);
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.stroke();
+    } else {
+      ctx.fillRect(x, y, w, h);
+      ctx.shadowColor = 'transparent';
+      ctx.strokeRect(x, y, w, h);
+    }
+    ctx.restore();
+  }
+
+  const headerH = showTitle ? (compact ? 12 : 18) : 0;
+  const padL = compact ? 10 : 12;
+  const padR = compact ? 10 : 12;
+  const padT = headerH + (compact ? 8 : 10);
+  const padB = compact ? 10 : 12;
+  const px0 = x + padL;
+  const px1 = x + w - padR;
+  const py0 = y + padT;
+  const py1 = y + h - padB;
+  const axW = px1 - px0;
+  const axH = py1 - py0;
+  const originX = px0 + axW * 0.34;
+  const originY = py0 + axH * 0.72;
+  const vparMax = 0.55;
+  const vparMin = -0.12;
+  const vperpMax = 0.18;
+  const xOfV = (v) => v >= 0
+    ? originX + (px1 - originX) * (v / vparMax)
+    : originX + (originX - px0) * (v / Math.abs(vparMin));
+  const yOfV = (v) => originY - (v / vperpMax) * (originY - py0);
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(248, 250, 252, 0.92)';
+  ctx.fillRect(px0, py0, axW, axH);
+  ctx.restore();
+
+  if (connector && bumpX != null && bumpY != null) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(96, 165, 250, 0.32)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(bumpX + 10, bumpY + 3);
+    ctx.lineTo(x + 10, y + h * 0.68);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  // thermal core glow
+  {
+    const rg = ctx.createRadialGradient(originX, originY, 0, originX, originY, Math.min(axW, axH) * 0.34);
+    rg.addColorStop(0, 'rgba(220, 55, 60, 0.70)');
+    rg.addColorStop(0.45, 'rgba(220, 55, 60, 0.28)');
+    rg.addColorStop(1, 'rgba(220, 55, 60, 0.0)');
+    ctx.save();
+    ctx.fillStyle = rg;
+    ctx.beginPath();
+    ctx.ellipse(originX, originY, axW * 0.18, axH * 0.24, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // field-aligned beam glow
+  {
+    const beamX = xOfV(Math.min(vparMax * 0.9, vbCur));
+    const beamY = originY;
+    const beamStrength = Math.min(1, 0.34 + 1.18 * beamVis);
+    const beamAlpha = Math.min(0.96, beamScale * beamStrength);
+    const beamW = axW * (0.10 + 0.17 * beamVis);
+    const beamH = axH * Math.max(0.05, 0.040 + 0.050 * beamVis + 0.32 * sigmaB);
+    const bg = ctx.createRadialGradient(beamX, beamY, 0, beamX, beamY, Math.max(beamW, beamH) * 1.75);
+    bg.addColorStop(0, `rgba(60, 135, 235, ${0.78 * beamAlpha})`);
+    bg.addColorStop(0.45, `rgba(60, 135, 235, ${0.30 * beamAlpha})`);
+    bg.addColorStop(1, 'rgba(60, 135, 235, 0.0)');
+    ctx.save();
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.ellipse(beamX, beamY, beamW, beamH, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // axes
+  ctx.save();
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 1.2;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(px0, originY);
+  ctx.lineTo(px1 - 3, originY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(px1, originY);
+  ctx.lineTo(px1 - 8, originY - 4);
+  ctx.lineTo(px1 - 8, originY + 4);
+  ctx.closePath();
+  ctx.fillStyle = '#0f172a';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(originX, py1);
+  ctx.lineTo(originX, py0 + 4);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(originX, py0);
+  ctx.lineTo(originX - 4, py0 + 8);
+  ctx.lineTo(originX + 4, py0 + 8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // labels
+  ctx.save();
+  if (showTitle && !compact) {
+    ctx.font = uiFont(8.5, '600');
+    ctx.fillStyle = '#64748b';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText('2D velocity space', x + 10, y + 7);
+  }
+  ctx.font = compact ? mathFont(10) : mathFont(12);
+  ctx.fillStyle = '#0f172a';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('v∥', px1 - 4, originY - 10);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText('v⊥', originX + (compact ? 10 : 12), py0 + 2);
+  ctx.restore();
+}
+
+function drawVelocity() {
+  const { ctx, w, h } = sizeCanvas(velocityC);
+  ctx.clearRect(0, 0, w, h);
+
+  const grad = ctx.createRadialGradient(w * 0.5, h * 0.5, h * 0.14, w * 0.5, h * 0.5, Math.max(w, h) * 0.82);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(1, '#f4f6fa');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  const vte = V_TE_SOLAR;
+  const vbCur = state.vb;
+  const nratio = Math.pow(10, state.logN);
+  const sigmaB = Math.max(0.016, 0.22 * vbCur);
+  const breath = 0.06 * Math.sin(state.breathPhase);
+  const beamScale = (1 + breath);
+  const beamVis = Math.min(1.0, 2.2 * Math.pow(nratio, 0.35));
+
+  drawVelocityInset(ctx, 0, 0, w, h, {
+    vbCur,
+    vte,
+    sigmaB,
+    beamVis,
+    beamScale,
+    framed: false,
+    connector: false,
+    showTitle: false
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Wave-particle panel + Langmuir resonance diagram                     */
+/* ------------------------------------------------------------------ */
+const waveParticleC = document.getElementById('waveParticle');
+const growthC = document.getElementById('growth');
+
+function panelCDisplaySpeed() {
+  return Math.max(0.06, Math.min(0.80, state.vb || 0.30));
+}
+
+function panelCTrackPhaseSpeed() {
+  return 0.08 + panelCDisplaySpeed() * 0.48;
+}
+
+function panelCResonanceProgress(xNorm) {
+  const t = Math.max(0, Math.min(1, (xNorm - 0.16) / 0.68));
+  return t * t * (3 - 2 * t);
+}
+
+function panelCWrap01(x) {
+  return ((x % 1) + 1) % 1;
+}
+
+function advancePanelCParticles(dtMs) {
+  const dt = Math.min(Math.max(dtMs, 0), 50) / 1000;
+  if (!dt || !state.panelCParticles) return;
+
+  const vphi = panelCTrackPhaseSpeed();
+  const relax = 1 - Math.exp(-dt / 0.34);
+  state.panelCParticles.forEach(p => {
+    if (!p.v) p.v = vphi * p.entryRel;
+    const oldCycle = Math.floor(p.x);
+    const s = panelCResonanceProgress(panelCWrap01(p.x));
+    const targetV = vphi * (p.entryRel + (p.exitRel - p.entryRel) * s);
+    const velocityError = targetV - p.v;
+    p.forceCue = Math.max(-1, Math.min(1, velocityError / (vphi * 0.55)));
+    p.v += velocityError * relax;
+    p.x += p.v * dt;
+
+    if (Math.floor(p.x) !== oldCycle) {
+      p.v = vphi * p.entryRel;
+      p.forceCue = 0;
+      p.history = [];
+      p.sampleT = 0;
+    }
+
+    p.sampleT = (p.sampleT || 0) + dt;
+    if (p.sampleT >= PANEL_C_TRAIL_SAMPLE_DT) {
+      p.sampleT = 0;
+      p.history.unshift({ x: p.x });
+      if (p.history.length > PANEL_C_TRAIL_MAX_DOTS) p.history.pop();
+    }
+
+    if (p.x > 1000) {
+      p.x -= 1000;
+      p.history.forEach(h => { h.x -= 1000; });
+    }
+  });
+}
+
+function drawWaveParticleInteraction(ctx, x, y, w, h, compact = false) {
+  const allowed = growthAllowed();
+  const gain = Math.max(0, Math.min(1, (state.vb / (3 * V_TE_SOLAR) - 1) / 4));
+  const displaySpeed = panelCDisplaySpeed();
+  const phase = state.breathPhase * displaySpeed;
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(248, 250, 252, 0.92)';
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+  ctx.lineWidth = 1;
+  roundRect(ctx, x, y, w, h, 13);
+  ctx.fill();
+  ctx.stroke();
+
+  const waveY = y + h * (compact ? 0.66 : 0.64);
+  const waveX0 = x + (compact ? 18 : 28);
+  const waveX1 = x + w - (compact ? 18 : 28);
+  const waveW = waveX1 - waveX0;
+  const ionRows = compact
+    ? [waveY - 16, waveY + 16]
+    : [waveY - 24, waveY + 24];
+  const ionCount = compact ? 13 : 18;
+  const oscillation = (compact ? 8 : 13) * (allowed ? 0.65 + 0.35 * gain : 0.42);
+  const cycles = compact ? 1.9 : 2.35;
+
+  // Langmuir wave in real space: fixed ions plus electrons sloshing along k.
+  // The animated phase pattern propagates; individual electrons only oscillate
+  // around their local ion sites.
+  ctx.save();
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.11)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(waveX0, waveY);
+  ctx.lineTo(waveX1, waveY);
+  ctx.stroke();
+
+  function wavePhaseAt(f) {
+    return 2 * Math.PI * (cycles * f - phase);
+  }
+  function drawIonMarker(cx, cy) {
+    const r = compact ? 3.2 : 3.8;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(100, 116, 139, 0.42)';
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(cx - r, cy);
+    ctx.lineTo(cx + r, cy);
+    ctx.moveTo(cx, cy - r);
+    ctx.lineTo(cx, cy + r);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  for (let row = 0; row < ionRows.length; row++) {
+    const rowY = ionRows[row];
+    for (let i = 0; i < ionCount; i++) {
+      const f = i / (ionCount - 1);
+      const ionX = waveX0 + f * waveW;
+      const displacement = oscillation * Math.cos(wavePhaseAt(f));
+      const ex = ionX + displacement;
+      const ey = rowY + (row === 0 ? -1 : 1);
+
+      drawIonMarker(ionX, rowY);
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.16)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(ionX, rowY);
+      ctx.lineTo(ex, ey);
+      ctx.stroke();
+
+      const coreAlpha = allowed ? 0.72 : 0.46;
+      ctx.fillStyle = `rgba(220, 55, 60, ${coreAlpha})`;
+      ctx.beginPath();
+      ctx.arc(ex, ey, compact ? 2.5 : 3.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (!compact && row === 0 && i % 4 === 1) {
+        const vel = -Math.sin(wavePhaseAt(f));
+        const len = 8 * Math.sign(vel || 1);
+        drawArrowLine(ctx, ex - len * 0.45, ey - 8, ex + len * 0.55, ey - 8,
+          'rgba(220, 55, 60, 0.42)', 0.9, 3.5);
+      }
+    }
+  }
+  ctx.restore();
+
+  drawArrowLine(ctx, waveX1 - (compact ? 58 : 72), waveY - (compact ? 42 : 54), waveX1 - 18, waveY - (compact ? 42 : 54),
+    'rgba(15, 23, 42, 0.70)', 1.2, 5);
+  ctx.font = mathFont(compact ? 9.4 : 10.2);
+  ctx.fillStyle = '#334155';
+  ctx.textAlign = 'right';
+  ctx.fillText('k', waveX1 - (compact ? 62 : 76), waveY - (compact ? 38 : 50));
+
+  if (!compact) {
+    ctx.font = uiFont(9.2, '600');
+    ctx.fillStyle = 'rgba(100, 116, 139, 0.78)';
+    ctx.textAlign = 'left';
+    ctx.fillText('fixed ions (+)', waveX0, waveY - 43);
+    ctx.fillStyle = 'rgba(220, 55, 60, 0.82)';
+    ctx.fillText('oscillating e-', waveX0 + 95, waveY - 43);
+  }
+
+  const arrows = compact ? 4 : 6;
+  for (let i = 0; i < arrows; i++) {
+    const f = (i + 0.5) / arrows;
+    const xx = waveX0 + f * waveW;
+    const eField = Math.cos(wavePhaseAt(f));
+    const amp = Math.abs(eField);
+    const sign = eField >= 0 ? 1 : -1;
+    const len = (compact ? 5 : 7) + amp * (compact ? 18 : 24);
+    const alpha = 0.22 + 0.58 * amp;
+    drawArrowLine(ctx, xx - sign * len * 0.5, waveY, xx + sign * len * 0.5, waveY,
+      `rgba(194, 105, 30, ${alpha})`, 0.8 + 0.7 * amp, 3.2 + 2.2 * amp);
+  }
+
+  // Resonant phase-speed marker.
+  const vphiX = x + w * 0.47;
+  const vphiLen = (compact ? 24 : 32) + displaySpeed * (compact ? 10 : 13);
+  const vphiArrowY = y + h * (compact ? 0.23 : 0.24);
+  ctx.save();
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.22)';
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.moveTo(vphiX, y + h * 0.17);
+  ctx.lineTo(vphiX, y + h - 18);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  drawArrowLine(ctx, vphiX - vphiLen * 0.5, vphiArrowY, vphiX + vphiLen * 0.5, vphiArrowY, 'rgba(15, 23, 42, 0.72)', 1.2, 5);
+  drawTextRuns(ctx, [
+    ...varSubRuns('v', 'φ', compact ? 8.8 : 9.6, { subSize: compact ? 6.6 : 7.2, subDy: 2 }),
+    mathRun(' = ω/k', compact ? 8.8 : 9.6)
+  ], vphiX, vphiArrowY - (compact ? 7 : 8), {
+    align: 'center',
+    color: '#334155'
+  });
+  ctx.restore();
+
+  // Resonant particles move close to the phase speed. A 3:1 excess of slightly
+  // faster particles makes the net exchange favor Langmuir-wave growth.
+  const fastParticleY = y + h * (compact ? 0.31 : 0.33);
+  const slowParticleY = y + h * (compact ? 0.11 : 0.10);
+  const dots = state.panelCParticles || [];
+  const xOfParticle = xNorm => waveX0 + (0.08 + xNorm * 0.84) * (waveX1 - waveX0);
+  dots.forEach(p => {
+    const fast = p.kind === 'fast';
+    const py = (fast ? fastParticleY : slowParticleY) + p.dy;
+    const tracked = Boolean(p.track && allowed);
+    const fill = fast
+      ? (allowed ? 'rgba(59, 130, 246, 0.95)' : 'rgba(59, 130, 246, 0.48)')
+      : (allowed ? 'rgba(100, 116, 139, 0.86)' : 'rgba(148, 163, 184, 0.45)');
+    const forceCue = allowed ? (p.forceCue || 0) : 0;
+    const forceAmp = Math.min(1, Math.abs(forceCue));
+    const forceSign = forceCue >= 0 ? 1 : -1;
+    const workColor = forceCue >= 0 ? 'rgba(20, 184, 166, 0.92)' : 'rgba(217, 119, 6, 0.92)';
+
+    function drawWrappedX(xNorm, drawFn) {
+      const base = panelCWrap01(xNorm);
+      for (let copy = -1; copy <= 1; copy++) {
+        const displayNorm = base + copy;
+        if (displayNorm < -0.10 || displayNorm > 1.10) continue;
+        drawFn(xOfParticle(displayNorm));
+      }
+    }
+
+    (p.history || []).slice().reverse().forEach((h, j) => {
+      const alpha = tracked
+        ? PANEL_C_TRACK_TRAIL_ALPHA_BASE + j * PANEL_C_TRACK_TRAIL_ALPHA_STEP
+        : (allowed ? PANEL_C_TRAIL_ALPHA_BASE + j * PANEL_C_TRAIL_ALPHA_STEP : 0.045);
+      drawWrappedX(h.x, hx => {
+        ctx.fillStyle = fast ? `rgba(59, 130, 246, ${alpha})` : `rgba(100, 116, 139, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(hx, py, tracked ? 3.7 : (fast ? 3.0 : 2.7), 0, Math.PI * 2);
+        ctx.fill();
+      });
+    });
+
+    drawWrappedX(p.x, px => {
+      const haloR = tracked ? 21 : (fast ? 16 : 12);
+      const halo = ctx.createRadialGradient(px, py, 0, px, py, haloR);
+      halo.addColorStop(0, tracked ? 'rgba(59, 130, 246, 0.34)' : (fast ? 'rgba(59, 130, 246, 0.26)' : 'rgba(100, 116, 139, 0.20)'));
+      halo.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath(); ctx.arc(px, py, haloR, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = fill;
+      ctx.beginPath(); ctx.arc(px, py, tracked ? 5.2 : (fast ? 4 : 3.8), 0, Math.PI * 2); ctx.fill();
+      if (tracked) {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.92)';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(px, py, 6.4, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      if (forceAmp >= 0.08) {
+        const minForceLen = compact ? 3 : 4;
+        const maxForceLen = compact ? 16 : 24;
+        const forceLen = minForceLen + forceAmp * (maxForceLen - minForceLen);
+        const fy = py + (fast ? -14 : 13);
+        drawArrowLine(ctx,
+          px - forceSign * forceLen * 0.5, fy,
+          px + forceSign * forceLen * 0.5, fy,
+          workColor, 1.0 + 0.7 * forceAmp, 3.5 + 2.0 * forceAmp);
+      }
+    });
+  });
+
+  const legendY = y + h - (compact ? 35 : 40);
+  const legendX = x + w - (compact ? 150 : 190);
+  ctx.font = uiFont(compact ? 6.9 : 7.8, '700');
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  drawArrowLine(ctx, legendX, legendY, legendX + (compact ? 10 : 13), legendY,
+    'rgba(20, 184, 166, 0.92)', 1.1, compact ? 3.2 : 3.8);
+  ctx.fillStyle = 'rgba(15, 118, 110, 0.82)';
+  ctx.fillText('gains K', legendX + (compact ? 14 : 17), legendY);
+  const amberX = legendX + (compact ? 60 : 74);
+  drawArrowLine(ctx, amberX, legendY, amberX + (compact ? 10 : 13), legendY,
+    'rgba(217, 119, 6, 0.92)', 1.1, compact ? 3.2 : 3.8);
+  ctx.fillStyle = 'rgba(180, 83, 9, 0.82)';
+  ctx.fillText('gives K to L', amberX + (compact ? 14 : 17), legendY);
+
+  ctx.font = uiFont(compact ? 8.6 : 9.4, '700');
+  ctx.fillStyle = allowed ? '#b45309' : '#64748b';
+  ctx.textAlign = compact ? 'center' : 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(allowed ? 'net: L grows' : 'growth weak', compact ? x + w * 0.5 : x + 13, y + h - (compact ? 20 : 25));
+
+  ctx.fillStyle = 'rgba(51, 65, 85, 0.88)';
+  drawTextRuns(ctx, [
+    mathRun('q ', compact ? 8.6 : 9.4, { italic: true, weight: '700' }),
+    ...varSubRuns('v', '∥', compact ? 9.8 : 11.4, {
+      subSize: compact ? 7.2 : 8.4,
+      subDy: compact ? 2.0 : 2.4,
+      weight: '700'
+    }),
+    mathRun(' ', compact ? 9.8 : 11.4, { italic: false, weight: '700' }),
+    ...varSubRuns('E', '∥', compact ? 9.8 : 11.4, {
+      subSize: compact ? 7.2 : 8.4,
+      subDy: compact ? 2.0 : 2.4,
+      weight: '700'
+    })
+  ], x + w - 20, y + h - (compact ? 17 : 21), { align: 'right', color: 'rgba(51, 65, 85, 0.78)' });
+
+  ctx.restore();
+}
+
+function drawWaveParticle() {
+  const { ctx, w, h } = sizeCanvas(waveParticleC);
+  ctx.clearRect(0, 0, w, h);
+  const compact = window.innerWidth < 620 || w < 430 || h < 205;
+  drawWaveParticleInteraction(ctx, 14, 14, w - 28, h - 28, compact);
+}
+
+function drawGrowth() {
+  const { ctx, w, h } = sizeCanvas(growthC);
+  ctx.clearRect(0, 0, w, h);
+
+  const padL = w < 430 ? 56 : 64;
+  const padR = w < 430 ? 16 : 20;
+  const padT = 18;
+  const padB = 32;
+  const px0 = padL;
+  const px1 = w - padR;
+  const py0 = padT;
+  const py1 = h - padB;
+  const compact = (px1 - px0) < 520;
+  const axW = px1 - px0, axH = py1 - py0;
+  const yMin = 0.5, yMax = 2.5;
+  const xMax = 0.65;
+  const beta = state.vb / V_TE_SOLAR;
+  const xOf = x => px0 + (x / xMax) * axW;
+  const yOf = om => py1 - ((om - yMin) / (yMax - yMin)) * axH;
+
+  // omega/omega_pe axis (y), k axis (x)
+  // Langmuir dispersion: ω² = ω_pe² + 3 k² v_te²   ; show in ω/ω_pe vs k·v_te/ω_pe
+  // Phase-velocity line: ω = k v_b  => (ω/ω_pe) = (v_b/v_te)(k v_te/ω_pe)
+  // Beam resonance point where dispersion intersects phase line
+
+  // dispersion curve
+  const N = 200;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(220, 55, 60, 0.8)';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  for (let i = 0; i <= N; i++) {
+    const xte = (i / N) * xMax;             // k v_te / ω_pe
+    const omega = Math.sqrt(1 + 3 * xte * xte);
+    const px = xOf(xte);
+    const py = yOf(omega);
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // phase velocity line ω = k v_b  (slope v_b / v_te in these units)
+  ctx.save();
+  ctx.strokeStyle = 'rgba(60, 135, 235, 0.8)';
+  ctx.lineWidth = 1.4;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath();
+  const xStart = Math.max(0, yMin / beta);
+  const xEnd = Math.min(xMax, yMax / beta);
+  for (let i = 0; i <= N; i++) {
+    const xte = xStart + (i / N) * Math.max(0, xEnd - xStart);
+    const om = beta * xte;
+    const px = xOf(xte);
+    const py = yOf(om);
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // resonance dot: solve beta² x² = 1 + 3x² where beta = v_b / v_te
+  const r = V_TE_SOLAR / state.vb;
+  const denom = 1 - 3 * r * r;
+  let omR = 1.0, xteR = 0.0;
+  if (denom > 0.02) {
+    omR = 1.0 / Math.sqrt(denom);
+    xteR = r * omR;
+  }
+  if (omR <= yMax && xteR <= xMax && growthAllowed()) {
+    const px = xOf(xteR);
+    const py = yOf(omR);
+    // glow
+    const rg = ctx.createRadialGradient(px, py, 0, px, py, 14);
+    rg.addColorStop(0, 'rgba(245, 158, 11, 0.6)');
+    rg.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
+    ctx.fillStyle = rg;
+    ctx.beginPath(); ctx.arc(px, py, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#b45309';
+    ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI * 2); ctx.fill();
+    // label
+    ctx.fillStyle = '#0f172a';
+    drawTextRuns(ctx, [
+      mathRun('ω ≈ k ', 11.5),
+      ...varSubRuns('v', 'b', 11.5, { subSize: 8, subDy: 2.2 })
+    ], px + 8, py - 8, { align: 'left', color: '#0f172a' });
+  }
+
+  // axes
+  ctx.save();
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(px0, py1);
+  ctx.lineTo(px1, py1);
+  ctx.moveTo(px0, py1);
+  ctx.lineTo(px0, py0 + 2);
+  ctx.stroke();
+
+  ctx.fillStyle = '#0f172a';
+  drawTextRuns(ctx, [
+    mathRun('ω / ', 11),
+    ...varSubRuns('ω', 'pe', 11, { subSize: 7.8, subDy: 2 })
+  ], px0 - 10, py0 + 12, { align: 'right', color: '#0f172a' });
+  drawTextRuns(ctx, [
+    mathRun('k ', 11),
+    ...varSubRuns('v', 'te', 11, { subSize: 7.8, subDy: 2 }),
+    mathRun(' / ', 11),
+    ...varSubRuns('ω', 'pe', 11, { subSize: 7.8, subDy: 2 })
+  ], px1 - 2, py1 + 18, { align: 'right', color: '#0f172a' });
+  ctx.restore();
+
+  // compact color-key legend
+  ctx.save();
+  const formulaSize = compact ? 12.0 : 12.8;
+  const lx = px0 + (compact ? 32 : 38), ly = py0 + 17;
+  const itemGap = compact ? 28 : 31;
+  const legendW = Math.min(axW - 42, compact ? 184 : 230);
+  const legendH = compact ? 48 : 52;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.86)';
+  ctx.strokeStyle = 'rgba(226, 232, 240, 0.95)';
+  ctx.lineWidth = 1;
+  roundRect(ctx, lx - 10, ly - 10, legendW, legendH, 10);
+  ctx.fill();
+  ctx.stroke();
+  // dispersion swatch
+  ctx.strokeStyle = 'rgba(220, 55, 60, 0.9)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + 14, ly); ctx.stroke();
+  drawTextRuns(ctx, [
+    mathRun('ω² = ', formulaSize),
+    ...varSubRuns('ω', 'pe', formulaSize, { subSize: compact ? 8.4 : 8.8, subDy: 2.4 }),
+    mathRun('² + 3k² ', formulaSize),
+    ...varSubRuns('v', 'te', formulaSize, { subSize: compact ? 8.2 : 8.7, subDy: 2.4 }),
+    mathRun('²', formulaSize)
+  ], lx + 20, ly + 4, { align: 'left', color: '#334155' });
+  // phase
+  ctx.strokeStyle = 'rgba(60, 135, 235, 0.9)';
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath(); ctx.moveTo(lx, ly + itemGap); ctx.lineTo(lx + 14, ly + itemGap); ctx.stroke();
+  ctx.setLineDash([]);
+  drawTextRuns(ctx, [
+    mathRun('ω = k ', formulaSize),
+    ...varSubRuns('v', 'b', formulaSize, { subSize: compact ? 8.2 : 8.7, subDy: 2.4 })
+  ], lx + 20, ly + itemGap + 4, { align: 'left', color: '#334155' });
+  ctx.restore();
+}
+
+/* ------------------------------------------------------------------ */
+/* Escape panel: corona column, beam ascending outward                 */
+/* ------------------------------------------------------------------ */
+const escapeC = document.getElementById('escape');
+
+function drawEscape() {
+  const { ctx, w, h } = sizeCanvas(escapeC);
+  ctx.clearRect(0, 0, w, h);
+
+  const compact = w < 460;
+  const padL = compact ? 20 : 28;
+  const padR = compact ? 14 : 22;
+  const padT = 18, padB = 26;
+  const colX = padL + 38;
+  const colW = compact
+    ? Math.min(48, Math.max(38, w - padL - padR - 140))
+    : Math.min(60, w - padL - padR - 160);
+  const yTop = padT + 6;       // small heights = high in canvas? No: outward = up
+  const yBot = h - padB;
+
+  // the column represents height above photosphere, outward = up
+  // bottom = photosphere (h = 0), top = h_max (e.g., state.h0 + a bit more than beam traveled)
+  const hTrackMax = state.h0 + state.vb * C_CGS * state.tau / R_SUN_CM + 0.02;
+  const hMax = Math.max(PRESET_COMPARE_HMAX, hTrackMax);
+  const hMin = 0;
+  const yOfH = hR => yBot - (hR - hMin) / (hMax - hMin) * (yBot - yTop);
+  const colCX = colX + colW / 2;
+  const tShown = Math.min(state.beamTime, state.tau);
+
+  // density gradient background in the column (dense at bottom, thin at top)
+  // Use the actual exponential scale-height model so changing H visibly changes
+  // the stratification, not only the frequency labels.
+  const neRef = neAt(hMin);
+  ctx.save();
+  const strips = 90;
+  for (let i = 0; i < strips; i++) {
+    const f0 = i / strips;
+    const f1 = (i + 1) / strips;
+    const yy0 = yTop + f0 * (yBot - yTop);
+    const yy1 = yTop + f1 * (yBot - yTop);
+    const hMid = hMax - (f0 + f1) * 0.5 * (hMax - hMin);
+    const rel = Math.max(1e-4, neAt(hMid) / neRef);
+    const alpha = 0.018 + 0.28 * Math.pow(rel, 0.42);
+    ctx.fillStyle = `rgba(15, 23, 42, ${alpha})`;
+    ctx.fillRect(colX, yy0, colW, Math.max(1, yy1 - yy0 + 0.3));
+  }
+  ctx.restore();
+  // column edges
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.12)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(colX + 0.5, yTop + 0.5, colW - 1, yBot - yTop - 1);
+
+  // Show one and two scale-height guides when they fit inside the plotted range.
+  ctx.save();
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.18)';
+  ctx.fillStyle = 'rgba(71, 85, 105, 0.78)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 3]);
+  ctx.font = compact ? uiFont(8.6) : uiFont(9.4);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  for (const mult of [1, 2]) {
+    const hGuide = mult * state.H;
+    if (hGuide <= hMin || hGuide >= hMax - 0.01) continue;
+    const y = yOfH(hGuide);
+    ctx.beginPath();
+    ctx.moveTo(colX + 3, y);
+    ctx.lineTo(colX + colW - 3, y);
+    ctx.stroke();
+    ctx.fillText(mult === 1 ? '1H' : '2H', colX + colW + 6, y);
+  }
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // height ticks + ν_pe labels at three heights
+  const hMarks = [hMin, state.h0, Math.min(hMax - 0.02, state.h0 + (hMax - state.h0) * 0.5), hMax - 0.01];
+  ctx.save();
+  ctx.font = compact ? uiFont(9.4) : uiFont(10.3);
+  ctx.fillStyle = '#475569';
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.22)';
+  ctx.lineWidth = 1;
+  for (const hm of hMarks) {
+    const y = yOfH(hm);
+    ctx.beginPath(); ctx.moveTo(colX - 4, y); ctx.lineTo(colX, y); ctx.stroke();
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillText(hm.toFixed(2) + ' R☉', colX - 6, y);
+  }
+  ctx.restore();
+
+  // ν_pe readouts next to the column. On the narrow lower-row card, keep only
+  // the start and high-altitude labels so the current fp/2fp labels remain readable.
+  ctx.save();
+  ctx.fillStyle = '#b91c1c';
+  const nuLabelHeights = compact
+    ? [state.h0, hMax - 0.01]
+    : [state.h0, state.h0 + (hMax - state.h0) * 0.5, hMax - 0.01];
+  for (const hm of nuLabelHeights) {
+    const y = yOfH(hm);
+    const nupe = nupeAt_MHz(hm);
+    drawTextRuns(ctx, [
+      ...varSubRuns('ν', 'pe', compact ? 10.8 : 11.6, { subSize: compact ? 7.6 : 8.2, subDy: 2 }),
+      mathRun(' ≈ ', compact ? 10.8 : 11.6, { italic: false }),
+      mathRun(formatFreq(nupe), compact ? 10.8 : 11.6, { italic: false })
+    ], colX + colW + 6, y + 3, { align: 'left', color: '#b91c1c' });
+  }
+  ctx.restore();
+
+  // outward arrow next to column top
+  ctx.save();
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.7)';
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
+  ctx.lineWidth = 1.2;
+  const arrX = colX - 28;
+  ctx.beginPath();
+  ctx.moveTo(arrX, yBot - 10);
+  ctx.lineTo(arrX, yTop + 10);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(arrX, yTop + 4);
+  ctx.lineTo(arrX - 4, yTop + 11);
+  ctx.lineTo(arrX + 4, yTop + 11);
+  ctx.closePath();
+  ctx.fill();
+  ctx.font = compact ? uiFont(8.5) : uiFont(9);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText('outward', arrX, yTop - 2);
+  ctx.restore();
+
+  // beam blob at its current height
+  const hNow = beamHeight_Rsun(tShown);
+  const yBeam = yOfH(Math.min(hNow, hMax - 0.005));
+
+  // show recent source positions so the height panel reads as time-evolving,
+  // not as a static source cartoon.
+  if (tShown > 0.02) {
+    const trailSpan = Math.min(tShown, Math.max(0.18, state.tau * 0.24));
+    const trailCount = compact ? 5 : 7;
+    for (let i = trailCount; i >= 1; i--) {
+      const frac = i / trailCount;
+      const tPast = Math.max(0, tShown - frac * trailSpan);
+      const hPast = beamHeight_Rsun(tPast);
+      const yPast = yOfH(Math.min(hPast, hMax - 0.005));
+      const alpha = 0.05 + 0.22 * (1 - frac);
+      ctx.save();
+      const rgPast = ctx.createRadialGradient(colCX, yPast, 0, colCX, yPast, 14);
+      rgPast.addColorStop(0, `rgba(60, 135, 235, ${alpha * 1.6})`);
+      rgPast.addColorStop(0.65, `rgba(60, 135, 235, ${alpha})`);
+      rgPast.addColorStop(1, 'rgba(60, 135, 235, 0.0)');
+      ctx.fillStyle = rgPast;
+      ctx.beginPath();
+      ctx.ellipse(colCX, yPast, 10, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  ctx.save();
+  const bg = ctx.createRadialGradient(colCX, yBeam, 0, colCX, yBeam, 18);
+  bg.addColorStop(0, 'rgba(60, 135, 235, 0.9)');
+  bg.addColorStop(0.55, 'rgba(60, 135, 235, 0.38)');
+  bg.addColorStop(1, 'rgba(60, 135, 235, 0.0)');
+  ctx.fillStyle = bg;
+  ctx.beginPath();
+  ctx.ellipse(colCX, yBeam, 14, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  const infoX = Math.min(
+    w - (compact ? 118 : 160),
+    colX + colW + (compact ? 74 : 96)
+  );
+  const infoY = padT + (compact ? 20 : 24);
+  const showTimeLabel = tShown > 0.05;
+  if (showTimeLabel) {
+    ctx.save();
+    ctx.font = compact ? monoFont(10.0, '600') : monoFont(10.8, '600');
+    ctx.fillStyle = 'rgba(37, 99, 235, 0.9)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('t = ' + tShown.toFixed(1) + ' s', infoX, infoY);
+    ctx.restore();
+  }
+
+  // emission lobes from beam position → right-side fp / 2fp markers
+  const nupeNow = nupeAt_MHz(hNow);
+  const emissionBaseY = infoY + (showTimeLabel ? (compact ? 24 : 28) : 4);
+  const emissionGap = compact ? 24 : 28;
+
+  function drawEmissionRay(yLabelTop, color, freqMHz, label) {
+    const labelX = infoX;
+    const rayEndX = labelX - 8;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.1;
+    ctx.setLineDash([2, 3]);
+    ctx.beginPath();
+    ctx.moveTo(colX + colW, yBeam);
+    ctx.lineTo(rayEndX, yLabelTop);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = color;
+    const size = compact ? 10.4 : 11.2;
+    const labelRuns = label === '2fp'
+      ? [mathRun('2', size, { italic: false }), ...varSubRuns('f', 'p', size, { subSize: compact ? 6.7 : 7.8, subDy: 2 })]
+      : [...varSubRuns('f', 'p', size, { subSize: compact ? 6.7 : 7.8, subDy: 2 })];
+    drawTextRuns(ctx, [
+      ...labelRuns,
+      mathRun(' = ', size, { italic: false }),
+      mathRun(formatFreq(freqMHz), size, { italic: false })
+    ], labelX, yLabelTop + 3, { align: 'left', color });
+    ctx.restore();
+  }
+
+  if (state.mode !== 'H') {
+    drawEmissionRay(emissionBaseY, 'rgba(37, 99, 235, 0.85)', nupeNow, 'fp');
+  }
+  if (state.mode !== 'F') {
+    const harmonicOffset = (state.mode === 'H') ? 0 : emissionGap;
+    drawEmissionRay(emissionBaseY + harmonicOffset, 'rgba(180, 83, 9, 0.85)', 2 * nupeNow, '2fp');
+  }
+
+  // escape annotation: mark the layer where fp originates (local ν_pe = fp)
+  // Outward emission passes through less-dense plasma and escapes easily; the
+  // toggle simply shows a thin highlight at the emission layer.
+  if (state.escapeCutoff) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(37, 99, 235, 0.55)';
+    ctx.setLineDash([4, 3]);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(colX - 2, yBeam);
+    ctx.lineTo(colX + colW + 2, yBeam);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = uiFont(9, '600');
+    ctx.fillStyle = 'rgba(30, 64, 175, 0.85)';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText('emission layer', colX + colW / 2, yBeam - 5);
+    ctx.restore();
+  }
+
+  // title-ish small caption at bottom
+  ctx.save();
+  ctx.font = compact ? uiFont(8.5, '600') : uiFont(9.5, '600');
+  ctx.fillStyle = '#64748b';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText('PHOTOSPHERE', padL, h - 6);
+  ctx.textAlign = 'right';
+  ctx.fillText('CORONA', w - padR, h - 6);
+  ctx.restore();
+}
+
+/* ------------------------------------------------------------------ */
+/* Spectrum: dynamic spectrum with drifting fp and 2fp lanes           */
+/* ------------------------------------------------------------------ */
+const specC = document.getElementById('spectrum');
+
+function drawSpectrum() {
+  const { ctx, w, h } = sizeCanvas(specC);
+  ctx.clearRect(0, 0, w, h);
+  const compact = w < 460;
+
+  const padL = compact ? 68 : 76;
+  const padR = 14, padT = 14, padB = 28;
+  const px0 = padL, px1 = w - padR;
+  const py0 = padT, py1 = h - padB;
+  const axW = px1 - px0, axH = py1 - py0;
+
+  // time axis 0..tau, freq axis log or linear (linear for simplicity)
+  // compute freq range that comfortably fits fp and 2fp over the burst
+  const nupeStart = nupeAt_MHz(state.h0);
+  const hEnd = state.h0 + state.vb * C_CGS * state.tau / R_SUN_CM;
+  const nupeEnd = nupeAt_MHz(hEnd);
+  const fMin = Math.max(1, nupeEnd * 0.7);
+  const fMax = Math.max(nupeStart * 2 * 1.1, 10);
+  const tOfX = t => px0 + (t / SPECTRUM_TMAX) * axW;
+  const yOfF = f => py1 - (Math.log(Math.max(f, 1)) - Math.log(fMin)) / (Math.log(fMax) - Math.log(fMin)) * axH;
+  const tRecorded = Math.min(state.beamTime, state.tau);
+  const hasRecorded = tRecorded > 1e-3;
+  const showGuide = !state.released && !hasRecorded;
+
+  // background
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(px0, py0, axW, axH);
+
+  // live recording band at the current sweep position
+  if (state.released) {
+    const xNow = tOfX(tRecorded);
+    const band = ctx.createLinearGradient(xNow - 12, 0, xNow + 12, 0);
+    band.addColorStop(0, 'rgba(148, 163, 184, 0.0)');
+    band.addColorStop(0.5, 'rgba(148, 163, 184, 0.12)');
+    band.addColorStop(1, 'rgba(148, 163, 184, 0.0)');
+    ctx.fillStyle = band;
+    ctx.fillRect(Math.max(px0, xNow - 12), py0, 24, axH);
+  }
+
+  function lanePath(freqFn, widthPx, colorCore, colorFade, tStart, tEnd, opts = {}) {
+    if (tEnd <= tStart + 1e-6) return;
+    const steps = Math.max(6, Math.round(90 * (tEnd - tStart) / Math.max(state.tau, 1e-6)));
+    for (let pass = 0; pass < 3; pass++) {
+      ctx.save();
+      if (opts.dashed) ctx.setLineDash(pass === 2 ? [5, 4] : [3, 4]);
+      ctx.beginPath();
+      for (let i = 0; i <= steps; i++) {
+        const t = tStart + (i / steps) * (tEnd - tStart);
+        const h_now = state.h0 + state.vb * C_CGS * t / R_SUN_CM;
+        const f = freqFn(h_now);
+        const x = tOfX(t);
+        const y = yOfF(f);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.lineWidth = widthPx * [3.2, 1.8, 1.0][pass];
+      const fade = opts.ghost ? opts.ghostFade : colorFade;
+      const core = opts.ghost ? opts.ghostCore : colorCore;
+      ctx.strokeStyle = [fade, fade, core][pass];
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      if (opts.dashed) ctx.setLineDash([]);
+      ctx.restore();
+    }
+  }
+
+  function drawCurrentMarker(freq, color) {
+    const withAlpha = (rgba, alpha) =>
+      rgba.replace(/rgba\(\s*([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)\s*,\s*[\d.]+\s*\)/,
+        `rgba($1, $2, $3, ${alpha})`);
+    const x = tOfX(tRecorded);
+    const y = yOfF(freq);
+    ctx.save();
+    const halo = ctx.createRadialGradient(x, y, 0, x, y, 12);
+    halo.addColorStop(0, withAlpha(color, 0.34));
+    halo.addColorStop(1, withAlpha(color, 0.0));
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(x, y, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, 2.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  if (state.mode !== 'H' && growthAllowed()) {
+    if (hasRecorded) {
+      lanePath(h => nupeAt_MHz(h), 1.4,
+        'rgba(37, 99, 235, 0.95)', 'rgba(37, 99, 235, 0.22)',
+        0, tRecorded);
+    } else if (showGuide) {
+      lanePath(h => nupeAt_MHz(h), 1.2,
+        'rgba(37, 99, 235, 0.95)', 'rgba(37, 99, 235, 0.22)',
+        0, state.tau,
+        { ghost: true, ghostCore: 'rgba(37, 99, 235, 0.20)', ghostFade: 'rgba(37, 99, 235, 0.08)', dashed: true });
+    }
+  }
+  if (state.mode !== 'F' && growthAllowed()) {
+    if (hasRecorded) {
+      lanePath(h => 2 * nupeAt_MHz(h), 1.2,
+        'rgba(180, 83, 9, 0.95)', 'rgba(180, 83, 9, 0.22)',
+        0, tRecorded);
+    } else if (showGuide) {
+      lanePath(h => 2 * nupeAt_MHz(h), 1.1,
+        'rgba(180, 83, 9, 0.95)', 'rgba(180, 83, 9, 0.22)',
+        0, state.tau,
+        { ghost: true, ghostCore: 'rgba(180, 83, 9, 0.20)', ghostFade: 'rgba(180, 83, 9, 0.08)', dashed: true });
+    }
+  }
+
+  if (hasRecorded && growthAllowed()) {
+    const hNow = beamHeight_Rsun(tRecorded);
+    if (state.mode !== 'H') drawCurrentMarker(nupeAt_MHz(hNow), 'rgba(37, 99, 235, 0.95)');
+    if (state.mode !== 'F') drawCurrentMarker(2 * nupeAt_MHz(hNow), 'rgba(180, 83, 9, 0.95)');
+  }
+
+  // current-time cursor
+  if (state.released) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(15, 23, 42, 0.35)';
+    ctx.setLineDash([3, 3]);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(tOfX(tRecorded), py0);
+    ctx.lineTo(tOfX(tRecorded), py1);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  // axes
+  ctx.save();
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(px0, py1); ctx.lineTo(px1, py1);
+  ctx.moveTo(px0, py1); ctx.lineTo(px0, py0 + 2);
+  ctx.stroke();
+
+  // ticks/labels
+  ctx.font = monoFont(10.5);
+  ctx.fillStyle = '#475569';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  const nTicks = 4;
+  for (let i = 0; i <= nTicks; i++) {
+    const t = (i / nTicks) * SPECTRUM_TMAX;
+    const x = tOfX(t);
+    ctx.beginPath();
+    ctx.strokeStyle = '#0f172a';
+    ctx.moveTo(x, py1); ctx.lineTo(x, py1 + 3); ctx.stroke();
+    ctx.fillText(t.toFixed(1), x, py1 + 6);
+  }
+  // freq ticks (log): choose 3 nice values
+  const fRange = [fMin, Math.sqrt(fMin * fMax), fMax];
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (const f of fRange) {
+    const y = yOfF(f);
+    ctx.beginPath();
+    ctx.strokeStyle = '#0f172a';
+    ctx.moveTo(px0 - 3, y); ctx.lineTo(px0, y); ctx.stroke();
+    ctx.fillStyle = '#475569';
+    ctx.fillText(formatFreq(f), px0 - 6, y);
+  }
+  // axis labels
+  ctx.font = mathFont(11);
+  ctx.fillStyle = '#0f172a';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText('t  (s)', (px0 + px1) / 2, h - 4);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText('ν', px0 + 8, py0 + 8);
+  ctx.restore();
+
+  // legend
+  ctx.save();
+  const lx = compact ? (px0 + 44) : (px1 - 6);
+  const ly = py0 + 8;
+  if (state.mode !== 'H') {
+    ctx.fillStyle = 'rgba(37, 99, 235, 0.95)';
+    drawTextRuns(ctx, compact
+      ? [...varSubRuns('f', 'p', 10, { subSize: 7.2, subDy: 2 })]
+      : [...varSubRuns('f', 'p', 10, { subSize: 7.2, subDy: 2 }), mathRun(' (fundamental)', 10, { italic: false })],
+      lx, ly + 10, { align: compact ? 'left' : 'right', color: 'rgba(37, 99, 235, 0.95)' });
+  }
+  if (state.mode !== 'F') {
+    ctx.fillStyle = 'rgba(180, 83, 9, 0.95)';
+    const y = ly + (state.mode === 'H' ? 10 : 23);
+    drawTextRuns(ctx, compact
+      ? [mathRun('2', 10, { italic: false }), ...varSubRuns('f', 'p', 10, { subSize: 7.2, subDy: 2 })]
+      : [mathRun('2', 10, { italic: false }), ...varSubRuns('f', 'p', 10, { subSize: 7.2, subDy: 2 }), mathRun(' (harmonic)', 10, { italic: false })],
+      lx, y, { align: compact ? 'left' : 'right', color: 'rgba(180, 83, 9, 0.95)' });
+  }
+  if (hasRecorded) {
+    ctx.font = compact ? uiFont(8) : uiFont(8.5);
+    ctx.fillStyle = 'rgba(71, 85, 105, 0.95)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(state.released ? 'recording burst…' : 'recorded burst', px0 + 8, py0 + 8);
+  }
+  ctx.restore();
+}
+
+/* ------------------------------------------------------------------ */
+/* Pills                                                                */
+/* ------------------------------------------------------------------ */
+function updatePills() {
+  const tNow = Math.min(state.beamTime, state.tau);
+  const hNow = state.released ? beamHeight_Rsun(tNow) : state.h0;
+  const nupe = nupeAt_MHz(hNow);
+  const drift = driftRate_MHzPerSec(hNow);
+
+  set('pill_nupe', formatFreq(nupe));
+  set('pill_drift', formatDrift(drift));
+  const allowed = growthAllowed();
+  set('pill_growth', allowed ? 'allowed' : 'suppressed');
+  const dot = document.getElementById('pill_growth_dot');
+  dot.classList.toggle('bad', !allowed);
+  dot.classList.toggle('warn', false);
+
+  const tb = tbRatio();
+  set('pill_tb', formatRatio(tb));
+  set('phase_display_val', state.vb.toFixed(2) + ' c');
+}
+
+function set(id, v) {
+  const el = document.getElementById(id);
+  if (el && el.textContent !== v) el.textContent = v;
+}
+
+/* ------------------------------------------------------------------ */
+/* Formatters                                                           */
+/* ------------------------------------------------------------------ */
+function formatFreq(mhz) {
+  if (!isFinite(mhz)) return '—';
+  if (mhz >= 1000) return (mhz / 1000).toFixed(2) + ' GHz';
+  if (mhz >= 1)    return mhz.toFixed(mhz < 10 ? 2 : (mhz < 100 ? 1 : 0)) + ' MHz';
+  return (mhz * 1000).toFixed(0) + ' kHz';
+}
+function formatDrift(mhzPerS) {
+  if (!isFinite(mhzPerS)) return '—';
+  return mhzPerS.toFixed(mhzPerS < 10 ? 2 : 1) + ' MHz/s';
+}
+function formatRatio(x) {
+  if (!isFinite(x) || x < 1) return '≈ 1';
+  if (x >= 1e10) return '10' + sup(Math.log10(x).toFixed(0));
+  const exp = Math.floor(Math.log10(x));
+  const mant = x / Math.pow(10, exp);
+  if (exp < 2) return '× ' + x.toFixed(0);
+  return '× ' + mant.toFixed(1) + '·10' + sup(exp);
+}
+function sup(n) {
+  const map = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '.': '·' };
+  return String(n).split('').map(c => map[c] || c).join('');
+}
+
+/* ------------------------------------------------------------------ */
+/* Utility: rounded rect                                                */
+/* ------------------------------------------------------------------ */
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y,     x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x,     y + h, r);
+  ctx.arcTo(x,     y + h, x,     y,     r);
+  ctx.arcTo(x,     y,     x + w, y,     r);
+  ctx.closePath();
+}
+
+/* ------------------------------------------------------------------ */
+/* Render loop                                                          */
+/* ------------------------------------------------------------------ */
+function renderAll() {
+  drawHero();
+  drawVelocity();
+  drawWaveParticle();
+  drawGrowth();
+  drawEscape();
+  drawSpectrum();
+  updatePills();
+}
+
+function tweenStep(dtMs) {
+  const tgt = state.target;
+  const keys = ['vb', 'logN', 'h0', 'H', 'n0e9', 'tau'];
+  const rate = 1 - Math.exp(-dtMs / 60);   // ~200ms settle
+  let changed = false;
+  for (const k of keys) {
+    if (Math.abs(state[k] - tgt[k]) > 1e-5) {
+      state[k] += (tgt[k] - state[k]) * rate;
+      changed = true;
+    } else if (state[k] !== tgt[k]) {
+      state[k] = tgt[k];
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+// Throttle the idle-animation redraw to ~30 FPS (the four 2D panels are
+// repainted every frame for the breath/beam glow); state-driven redraws
+// (released, tweened) still run at full rate so user input feels snappy.
+const IDLE_FRAME_MS = 1000 / 30;
+let lastIdleFrameT = 0;
+let loopRafId = 0;
+function loop(tMs) {
+  loopRafId = 0;
+  const dt = state.lastFrameT ? Math.min(100, tMs - state.lastFrameT) : 16;
+  state.lastFrameT = tMs;
+  state.breathPhase += dt / 1000 * 2 * Math.PI / 4;
+  advancePanelCParticles(dt);
+  const tweened = tweenStep(dt);
+
+  if (state.released) {
+    state.beamTime += dt / 1000;
+    if (state.beamTime >= state.tau) {
+      state.beamTime = state.tau;
+      state.released = false;
+    }
+    renderAll();
+    lastIdleFrameT = tMs;
+  } else if (tweened) {
+    renderAll();
+    lastIdleFrameT = tMs;
+  } else if (tMs - lastIdleFrameT >= IDLE_FRAME_MS) {
+    // idle: redraw panels with breathing-dependent beam glow
+    drawHero();
+    drawVelocity();
+    drawWaveParticle();
+    drawGrowth();
+    lastIdleFrameT = tMs;
+  }
+  loopRafId = requestAnimationFrame(loop);
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { if (loopRafId) cancelAnimationFrame(loopRafId); loopRafId = 0; }
+  else if (!loopRafId) { state.lastFrameT = 0; loopRafId = requestAnimationFrame(loop); }
+});
+
+/* ------------------------------------------------------------------ */
+/* Controls                                                             */
+/* ------------------------------------------------------------------ */
+function bindSlider(sId, nId, key, transform = v => v, inverseTransform = v => v) {
+  const s = document.getElementById(sId);
+  const n = document.getElementById(nId);
+  function commit(raw) {
+    const v = Number(raw);
+    if (!isFinite(v)) return;
+    const real = transform(v);
+    state.target[key] = real;
+    s.value = String(v);
+    n.value = key === 'logN' ? v.toFixed(2) : (key === 'tau' ? v.toFixed(1) : v.toFixed(3));
+  }
+  s.addEventListener('input', e => commit(e.target.value));
+  n.addEventListener('input', e => commit(e.target.value));
+  // initial
+  commit(s.value);
+}
+
+// Bindings: slider values ARE the physical quantity (no transform needed for most)
+bindSlider('s_vb',     'n_vb',     'vb');
+bindSlider('s_nratio', 'n_nratio', 'logN');
+bindSlider('s_h0',     'n_h0',     'h0');
+bindSlider('s_H',      'n_H',      'H');
+bindSlider('s_n0',     'n_n0',     'n0e9');
+bindSlider('s_tau',    'n_tau',    'tau');
+
+// Presets
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const preset = PRESETS[btn.dataset.preset];
+    if (!preset) return;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // apply
+    for (const k of ['vb', 'logN', 'h0', 'H', 'n0e9', 'tau']) state.target[k] = preset[k];
+    state.mode = preset.mode;
+    state.escapeCutoff = preset.escapeCutoff;
+    state.released = false;
+    state.beamTime = 0;
+    // reflect into sliders
+    setSliderVal('s_vb', 'n_vb', preset.vb, 3);
+    setSliderVal('s_nratio', 'n_nratio', preset.logN, 2);
+    setSliderVal('s_h0', 'n_h0', preset.h0, 2);
+    setSliderVal('s_H', 'n_H', preset.H, 3);
+    setSliderVal('s_n0', 'n_n0', preset.n0e9, 2);
+    setSliderVal('s_tau', 'n_tau', preset.tau, 1);
+    updateModeSegment();
+    updateEscapeToggle();
+    renderAll();
+  });
+});
+function setSliderVal(sId, nId, val, dec) {
+  document.getElementById(sId).value = String(val);
+  document.getElementById(nId).value = val.toFixed(dec);
+}
+
+// Mode segment
+document.querySelectorAll('#seg_mode .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.mode = btn.dataset.mode;
+    updateModeSegment();
+    renderAll();
+  });
+});
+function updateModeSegment() {
+  document.querySelectorAll('#seg_mode .seg-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.mode === state.mode));
+}
+
+// Escape toggle
+const escBtn = document.getElementById('tog_escape');
+escBtn.addEventListener('click', () => {
+  state.escapeCutoff = !state.escapeCutoff;
+  updateEscapeToggle();
+  renderAll();
+});
+function updateEscapeToggle() {
+  escBtn.classList.toggle('on', state.escapeCutoff);
+  escBtn.setAttribute('aria-checked', String(state.escapeCutoff));
+}
+
+// Release / reset buttons
+document.getElementById('btn_release').addEventListener('click', () => {
+  state.released = true;
+  state.beamTime = 0;
+  renderAll();
+});
+document.getElementById('btn_reset').addEventListener('click', () => {
+  state.released = false;
+  state.beamTime = 0;
+  renderAll();
+});
+
+// Window resize
+let resizeT;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeT);
+  resizeT = setTimeout(renderAll, 60);
+});
+
+// Kick off
+updateModeSegment();
+updateEscapeToggle();
+renderAll();
+loopRafId = requestAnimationFrame(loop);
+
+})();
+</script>
+  <div id="site-footer-root"></div>
+</body>
+</html>

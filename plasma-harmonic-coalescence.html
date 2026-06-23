@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Show how oppositely directed Langmuir waves coalesce into harmonic electromagnetic radiation." />
+  <meta name="author" content="Sijie Yu" />
+  <meta name="application-name" content="Phys 681 Solar Physics and Instruments Teaching Visualizations" />
+<title>Langmuir Coalescence and Harmonic Emission — Phys 681</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="plasma-conversion-shared.css" />
+  <style>
+    .three-cartoon {
+      width: 100%;
+      height: 100%;
+      min-height: 220px;
+      display: block;
+      background: #f8fafc;
+    }
+    .three-cartoon canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link rel="stylesheet" href="_site-shared.css" />
+  <script defer src="_site-manifest.js"></script>
+  <script defer src="_site-nav.js"></script>
+</head>
+<body>
+  <div id="site-nav-root"></div>
+  <div class="app">
+    <aside class="rail">
+      <div class="eyebrow">Harmonic branch</div>
+      <h2 class="rail-title">Langmuir-Wave Coalescence</h2>
+      <p class="rail-lede">
+        A forward Langmuir wave and a backscattered Langmuir wave merge
+        nonlinearly. Their frequencies add to about <span class="math-i">2ω<sub>pe</sub></span>,
+        while their large wavevectors nearly cancel.
+      </p>
+
+      <section class="rail-section">
+        <div class="rail-section-head">Matching</div>
+        <div class="equation-card">
+          <div>L + L′ → T</div>
+          <div>ω<sub>L</sub> + ω<sub>L′</sub> = ω<sub>T</sub></div>
+          <div>k<sub>L</sub> + k<sub>L′</sub> = k<sub>T</sub></div>
+        </div>
+      </section>
+
+      <section class="rail-section">
+        <div class="rail-section-head">Controls</div>
+        <div class="slider-row">
+          <div class="slider-head">
+            <span class="slider-name">v<sub>b</sub> / c</span>
+            <span class="slider-desc">sets Langmuir k scale</span>
+          </div>
+          <div class="slider-line">
+            <input type="range" id="strength" min="0.18" max="0.55" step="0.01" value="0.30" />
+            <output id="strengthOut">0.30</output>
+          </div>
+        </div>
+        <div class="toggle-row">
+          <label for="vectors">Show k cancellation</label>
+          <div class="switch on" id="vectors" role="switch" aria-checked="true"></div>
+        </div>
+      </section>
+
+      <section class="rail-section">
+        <div class="rail-section-head">Navigation</div>
+        <div class="nav-card">
+          <a href="plasma-radiation-conversion-map.html">Conversion map</a>
+          <a href="plasma-fundamental-conversion.html">Fundamental conversion</a>
+          <a href="plasma-backscattering-decay.html">Backscattering / decay</a>
+        </div>
+      </section>
+    </aside>
+
+    <main class="main">
+      <section class="topbar">
+        <div class="topbar-title">
+          <h1>Harmonic emission: add frequencies, cancel wavevectors</h1>
+          <p>The backward Langmuir partner lets <span class="math-i">k<sub>L</sub> + k<sub>L′</sub></span> be small enough for a transverse wave near <span class="math-i">2ω<sub>pe</sub></span>.</p>
+        </div>
+        <div class="pill-row">
+          <div class="pill"><span class="pill-label">Input</span><span class="pill-value">L + L′</span></div>
+          <div class="pill"><span class="pill-label">Frequency</span><span class="pill-value">≈2ω<sub>pe</sub></span></div>
+          <div class="pill"><span class="pill-label">Escape</span><span class="pill-value">T</span></div>
+        </div>
+      </section>
+
+      <section class="mechanism-grid">
+        <div class="card main-plot">
+          <div class="card-head">
+            <div>
+              <div class="card-title">A · Harmonic branch matching</div>
+              <div class="card-sub"><span class="math-i">L + L′ → T(2ω<sub>pe</sub>)</span> after near-cancellation of <span class="math-i">k</span></div>
+            </div>
+          </div>
+          <div class="card-body"><canvas id="branchPlot"></canvas></div>
+        </div>
+        <div class="card support-a">
+          <div class="card-head"><div><div class="card-title">B · Counter-propagating packets</div><div class="card-sub">two electrostatic packets overlap and drive transverse radiation</div></div></div>
+          <div class="card-body"><div id="cartoon3d" class="three-cartoon" aria-label="Animated real-space picture of Langmuir-wave coalescence"></div></div>
+        </div>
+        <div class="card support-b">
+          <div class="card-head"><div><div class="card-title">C · Harmonic output</div><div class="card-sub">emission near <span class="math-i">2ω<sub>pe</sub></span> is farther above cutoff</div></div></div>
+          <div class="card-body"><canvas id="outputPlot"></canvas></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const state = { vectors: true, vb: 0.30, phase: 0 };
+    const colors = { L: "#e45757", S: "#22a46f", T: "#3b82f6", Lp: "#8b5cf6", ink: "#0f172a", muted: "#667085" };
+    function setCanvas(canvas) { const dpr = window.devicePixelRatio || 1; const r = canvas.getBoundingClientRect(); canvas.width = Math.max(1, Math.round(r.width * dpr)); canvas.height = Math.max(1, Math.round(r.height * dpr)); const ctx = canvas.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); return { ctx, w: r.width, h: r.height }; }
+    function mathFont(size, weight = "") { return `${weight ? weight + " " : ""}${size}px "STIX Two Math", "STIX Two Text", "Cambria Math", "Latin Modern Math", serif`; }
+    function drawMathRuns(ctx, runs, x, y, size, color, weight = "") { let dx = 0; ctx.save(); ctx.textBaseline = "alphabetic"; for (const run of runs) { const runSize = run.sub ? size * 0.68 : size; ctx.font = mathFont(runSize, run.weight || weight); ctx.fillStyle = run.color || color; const dy = run.sub ? size * 0.28 : 0; ctx.fillText(run.text, x + dx, y + dy); dx += ctx.measureText(run.text).width; } ctx.restore(); return dx; }
+    function uiFont(size, weight = "") { return `${weight ? weight + " " : ""}${size}px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif`; }
+    function arrow(ctx, x1, y1, x2, y2, color, dashed = false) { ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 2.2; if (dashed) ctx.setLineDash([7, 6]); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.setLineDash([]); const a = Math.atan2(y2 - y1, x2 - x1); ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - 9 * Math.cos(a - 0.45), y2 - 9 * Math.sin(a - 0.45)); ctx.lineTo(x2 - 9 * Math.cos(a + 0.45), y2 - 9 * Math.sin(a + 0.45)); ctx.closePath(); ctx.fill(); ctx.restore(); }
+    function setupPlot(w, h) { const m = { l: 68, r: 38, t: 38, b: 56 }; return { m, x0: m.l, y0: h - m.b, x1: w - m.r, y1: m.t, sx: (w - m.l - m.r) / 2.4, sy: (h - m.t - m.b) / 2.55 }; }
+    function drawBranches(ctx, geom) { const { x0, y0, x1, y1, sx, sy } = geom; const X = k => x0 + (k + 1.2) * sx; const Y = om => y0 - om * sy; ctx.fillStyle = "#f8fafc"; ctx.fillRect(x0, y1, x1 - x0, y0 - y1); ctx.strokeStyle = colors.ink; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke(); ctx.font = mathFont(18); ctx.fillStyle = colors.ink; drawMathRuns(ctx, [{ text: "ω / ω" }, { text: "pe", sub: true }], x0 - 46, y1 + 18, 18, colors.ink); ctx.fillText("k", x1 - 10, y0 + 32); ctx.strokeStyle = colors.L; ctx.lineWidth = 3; ctx.beginPath(); for (let i = 0; i <= 240; i++) { const k = -1.15 + i * 2.3 / 240; const om = Math.sqrt(1 + 0.08 * k * k); const x = X(k), y = Y(om); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke(); ctx.strokeStyle = colors.T; ctx.beginPath(); for (let i = 0; i <= 240; i++) { const k = -1.15 + i * 2.3 / 240; const om = Math.sqrt(1 + 1.35 * k * k); const x = X(k), y = Y(om); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke(); ctx.font = uiFont(14, "700"); ctx.fillStyle = colors.L; ctx.fillText("Langmuir L, L′", X(-1.08), Y(1.13)); ctx.fillStyle = colors.T; ctx.fillText("transverse T", X(0.48), Y(2.05)); return { X, Y }; }
+    function drawBranchPlot() { const { ctx, w, h } = setCanvas(document.getElementById("branchPlot")); const geom = setupPlot(w, h); const { X, Y } = drawBranches(ctx, geom); const kScale = Math.min(0.98, 0.24 / state.vb); const kL = kScale; const kT = Math.sqrt(3) / 6; const kLp = -kL + kT; const omL = Math.sqrt(1 + 0.08 * kL * kL); const omLp = Math.sqrt(1 + 0.08 * kLp * kLp); const omT = Math.sqrt(1 + 1.35 * kT * kT); ctx.fillStyle = colors.L; ctx.shadowColor = "rgba(228,87,87,0.35)"; ctx.shadowBlur = 18; ctx.beginPath(); ctx.arc(X(kL), Y(omL), 7, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; ctx.font = mathFont(18, "700"); ctx.fillText("L", X(kL) + 11, Y(omL) - 8); ctx.fillStyle = colors.Lp; ctx.shadowColor = "rgba(139,92,246,0.35)"; ctx.shadowBlur = 18; ctx.beginPath(); ctx.arc(X(kLp), Y(omLp), 7, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; ctx.fillStyle = colors.Lp; ctx.font = mathFont(18, "700"); ctx.fillText("L′", X(kLp) - 30, Y(omLp) - 10); ctx.fillStyle = colors.T; ctx.shadowColor = "rgba(59,130,246,0.35)"; ctx.shadowBlur = 18; ctx.beginPath(); ctx.arc(X(kT), Y(omT), 7, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; drawMathRuns(ctx, [{ text: "T(2ω" }, { text: "pe", sub: true }, { text: ")" }], X(kT) + 12, Y(omT) - 8, 18, colors.T, "700"); if (state.vectors) { arrow(ctx, X(kLp), Y(0.38), X(kL), Y(0.38), colors.Lp, true); ctx.fillStyle = colors.ink; ctx.font = mathFont(16); ctx.fillText("large k values nearly cancel", geom.x0 + 22, geom.y0 - 18); } ctx.fillStyle = colors.ink; ctx.font = mathFont(17); ctx.fillText("L and L′ add frequencies while k nearly cancels", geom.x0 + 20, geom.y1 + 28); }
+    let cartoon3D = null;
+    function disposeThreeObject(object) { for (const child of object.children || []) disposeThreeObject(child); if (object.geometry) object.geometry.dispose(); if (!object.material) return; const materials = Array.isArray(object.material) ? object.material : [object.material]; for (const material of materials) { if (material.map) material.map.dispose(); material.dispose(); } }
+    function clearThreeGroup(group) { while (group.children.length) { const child = group.children.pop(); disposeThreeObject(child); } }
+    function textSprite(text, color, scale = 0.18) { const c = document.createElement("canvas"); const ctx = c.getContext("2d"); ctx.font = '700 38px "STIX Two Text", serif'; const width = Math.ceil(ctx.measureText(text).width + 28); c.width = width; c.height = 58; ctx.font = '700 38px "STIX Two Text", serif'; ctx.textBaseline = "middle"; ctx.fillStyle = "rgba(255,255,255,0.88)"; ctx.roundRect(0, 5, width, 46, 12); ctx.fill(); ctx.fillStyle = color; ctx.fillText(text, 14, 30); const texture = new THREE.CanvasTexture(c); const material = new THREE.SpriteMaterial({ map: texture, transparent: true }); const sprite = new THREE.Sprite(material); sprite.scale.set(scale * width / 58, scale, 1); return sprite; }
+    function mathSprite(text, color, scale = 0.18) { const c = document.createElement("canvas"); const ctx = c.getContext("2d"); ctx.font = '700 40px "STIX Two Math", "STIX Two Text", serif'; const width = Math.ceil(ctx.measureText(text).width + 28); c.width = width; c.height = 60; ctx.font = '700 40px "STIX Two Math", "STIX Two Text", serif'; ctx.textBaseline = "middle"; ctx.fillStyle = "rgba(255,255,255,0.88)"; ctx.roundRect(0, 5, width, 48, 12); ctx.fill(); ctx.fillStyle = color; ctx.fillText(text, 14, 31); const texture = new THREE.CanvasTexture(c); const material = new THREE.SpriteMaterial({ map: texture, transparent: true }); const sprite = new THREE.Sprite(material); sprite.scale.set(scale * width / 60, scale, 1); return sprite; }
+    function threeArrow(from, to, color, radius = 0.012, head = 0.075) { const group = new THREE.Group(); const start = new THREE.Vector3(...from); const end = new THREE.Vector3(...to); const dir = new THREE.Vector3().subVectors(end, start); const len = dir.length(); if (len <= head) return group; const mat = new THREE.MeshBasicMaterial({ color }); const shaft = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, len - head, 16), mat); const cone = new THREE.Mesh(new THREE.ConeGeometry(radius * 3.5, head, 18), mat); const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5); shaft.position.copy(mid).addScaledVector(dir.clone().normalize(), -head * 0.5); cone.position.copy(end).addScaledVector(dir.clone().normalize(), -head * 0.5); const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize()); shaft.quaternion.copy(q); cone.quaternion.copy(q); group.add(shaft, cone); return group; }
+    function lineObject(points, color, opacity = 1) { const geom = new THREE.BufferGeometry().setFromPoints(points.map(p => new THREE.Vector3(...p))); const mat = new THREE.LineBasicMaterial({ color, transparent: opacity < 1, opacity }); return new THREE.Line(geom, mat); }
+    function setObjectOpacity(object, opacity) { object.traverse(child => { if (!child.material) return; const materials = Array.isArray(child.material) ? child.material : [child.material]; for (const material of materials) { material.transparent = true; material.opacity = opacity; } }); }
+    function ensureCartoon3D(container, w, h) { if (!cartoon3D || cartoon3D.container !== container) { container.replaceChildren(); const renderer = new THREE.WebGLRenderer({ antialias: true }); container.appendChild(renderer.domElement); const scene = new THREE.Scene(); const camera = new THREE.OrthographicCamera(-3, 3, 1.8, -1.8, -10, 10); const group = new THREE.Group(); scene.add(group); cartoon3D = { container, renderer, scene, camera, group }; } const aspect = Math.max(1.12, w / Math.max(h, 1)); cartoon3D.camera.left = -1.95 * aspect; cartoon3D.camera.right = 1.95 * aspect; cartoon3D.camera.top = 1.58; cartoon3D.camera.bottom = -1.48; cartoon3D.camera.updateProjectionMatrix(); cartoon3D.renderer.setSize(w, h, false); cartoon3D.renderer.setPixelRatio(window.devicePixelRatio || 1); cartoon3D.renderer.setClearColor(0xf8fafc, 1); return cartoon3D; }
+    function drawCartoonFallback() { const container = document.getElementById("cartoon3d"); let canvas = container.querySelector("canvas"); if (!canvas) { canvas = document.createElement("canvas"); container.replaceChildren(canvas); } const { ctx, w, h } = setCanvas(canvas); ctx.fillStyle = "#f8fafc"; ctx.fillRect(0, 0, w, h); const y = h * 0.54; arrow(ctx, 34, y - 38, w * 0.52, y - 38, colors.L); arrow(ctx, w - 34, y + 38, w * 0.48, y + 38, colors.Lp); arrow(ctx, w * 0.50, y - 82, w - 36, y - 82, colors.T); }
+    function drawCartoon() {
+      if (!window.THREE) { drawCartoonFallback(); return; }
+      const container = document.getElementById("cartoon3d");
+      const rect = container.getBoundingClientRect();
+      const view = ensureCartoon3D(container, Math.max(1, rect.width), Math.max(1, rect.height));
+      const g = view.group;
+      clearThreeGroup(g);
+
+      const red = 0xe45757, violet = 0x8b5cf6, blue = 0x3b82f6, orange = 0xc2691e, ink = 0x334155;
+      const t = state.phase;
+      const cycle = ((t * 0.018) % 1 + 1) % 1;
+      const smoothstep = (edge0, edge1, x) => {
+        const u = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+        return u * u * (3 - 2 * u);
+      };
+      const overlap = smoothstep(0.34, 0.52, cycle) * (1 - smoothstep(0.74, 0.92, cycle));
+      g.add(lineObject([[-2.42, -0.28, -0.04], [2.42, -0.28, -0.04]], ink, 0.14));
+
+      const lCenter = -2.20 + cycle * 2.35;
+      const lpCenter = 2.05 - cycle * 2.05;
+      const lMat = new THREE.MeshBasicMaterial({ color: red, transparent: true, opacity: 0.82 });
+      const lpMat = new THREE.MeshBasicMaterial({ color: violet, transparent: true, opacity: 0.76 });
+      for (let i = 0; i < 24; i++) {
+        const u = (i - 11.5) / 11.5;
+        const phase = 2 * Math.PI * (2.0 * u) - t * 1.1;
+        const bunch = Math.pow(0.5 + 0.5 * Math.cos(phase), 1.5);
+        const x = lCenter + u * 0.52 + Math.sin(phase) * 0.03;
+        if (x > -2.55 && x < 0.65) {
+          const dot = new THREE.Mesh(new THREE.SphereGeometry(0.032 + 0.03 * bunch, 18, 10), lMat);
+          dot.position.set(x, -0.28, 0.04);
+          g.add(dot);
+        }
+      }
+      for (let i = 0; i < 22; i++) {
+        const u = (i - 10.5) / 10.5;
+        const phase = 2 * Math.PI * (1.9 * u) + t * 1.05;
+        const bunch = Math.pow(0.5 + 0.5 * Math.cos(phase), 1.5);
+        const x = lpCenter + u * 0.48 - Math.sin(phase) * 0.03;
+        if (x > -0.65 && x < 2.55) {
+          const dot = new THREE.Mesh(new THREE.SphereGeometry(0.028 + 0.028 * bunch, 18, 10), lpMat);
+          dot.position.set(x, -0.58, 0.04);
+          g.add(dot);
+        }
+      }
+      g.add(threeArrow([-2.35, 0.22, 0], [0.38, 0.22, 0], red, 0.01, 0.075));
+      g.add(threeArrow([2.34, -0.92, 0], [-0.36, -0.92, 0], violet, 0.01, 0.075));
+      const lLabel = textSprite("1  forward L", colors.L, 0.18); lLabel.position.set(-1.45, 0.88, 0.12); g.add(lLabel);
+      const lpLabel = textSprite("2  backward L′", colors.Lp, 0.18); lpLabel.position.set(1.24, -1.15, 0.12); g.add(lpLabel);
+
+      const waveMat = new THREE.LineBasicMaterial({ color: blue, transparent: true, opacity: 0.15 + 0.85 * overlap });
+      const pts = [];
+      for (let i = 0; i <= 72; i++) {
+        const u = i / 72;
+        const x = -0.10 + u * 2.22;
+        const y = 0.46 + Math.sin(u * Math.PI * 4.0 - t * 1.35) * 0.15 * overlap;
+        pts.push(new THREE.Vector3(x, y, 0.08));
+      }
+      const wave = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), waveMat);
+      g.add(wave);
+      const tArrow = threeArrow([-0.12, 0.46, 0.08], [2.28, 0.46, 0.08], blue, 0.009, 0.075);
+      setObjectOpacity(tArrow, overlap);
+      g.add(tArrow);
+      for (let i = 0; i < 4; i++) {
+        const x = 0.18 + i * 0.46;
+        const sign = i % 2 ? -1 : 1;
+        const eArrow = threeArrow([x, 0.46, 0.1], [x, 0.46 + sign * (0.20 * overlap + 0.04), 0.1], blue, 0.008, 0.055);
+        setObjectOpacity(eArrow, overlap);
+        g.add(eArrow);
+      }
+      const energy = threeArrow([-0.46, 0.74, 0.08], [0.66, 0.74, 0.08], orange, 0.008, 0.06);
+      setObjectOpacity(energy, 0.25 + 0.55 * overlap);
+      g.add(energy);
+      const tLabel = textSprite("3  T at 2ωₚₑ", colors.T, 0.18); tLabel.material.opacity = overlap; tLabel.position.set(1.16, 1.06, 0.12); g.add(tLabel);
+      const eq = mathSprite("kₗ + kₗ′ = kₜ", colors.ink, 0.17); eq.position.set(0.05, -1.32, 0.12); g.add(eq);
+
+      if (state.vectors) {
+        const y = -1.05;
+        const panel = new THREE.Mesh(new THREE.PlaneGeometry(3.25, 0.50), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.70 }));
+        panel.position.set(-0.02, y - 0.02, 0.01);
+        g.add(panel);
+        g.add(threeArrow([-1.48, y + 0.09, 0.13], [1.00, y + 0.09, 0.13], red, 0.01, 0.07));
+        g.add(threeArrow([1.00, y - 0.09, 0.13], [-0.92, y - 0.09, 0.13], violet, 0.01, 0.07));
+        g.add(threeArrow([-1.48, y - 0.27, 0.13], [-0.92, y - 0.27, 0.13], blue, 0.01, 0.07));
+        const kt = mathSprite("small kₜ", colors.T, 0.15); kt.position.set(-1.20, y - 0.44, 0.14); g.add(kt);
+      }
+
+      view.renderer.render(view.scene, view.camera);
+    }
+    function drawOutput() { const { ctx, w, h } = setCanvas(document.getElementById("outputPlot")); ctx.fillStyle = "#f8fafc"; ctx.fillRect(0, 0, w, h); const x0 = 48, y0 = h - 44, x1 = w - 24, y1 = 32; ctx.strokeStyle = colors.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke(); const yFund = y0 - (y0 - y1) * 0.34; const yHarm = y0 - (y0 - y1) * 0.72; ctx.strokeStyle = "rgba(15,23,42,0.24)"; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.moveTo(x0, yFund); ctx.lineTo(x1, yFund); ctx.moveTo(x0, yHarm); ctx.lineTo(x1, yHarm); ctx.stroke(); ctx.setLineDash([]); drawMathRuns(ctx, [{ text: "ω" }, { text: "pe", sub: true }], x0 + 8, yFund - 7, 15, colors.muted); drawMathRuns(ctx, [{ text: "2ω" }, { text: "pe", sub: true }], x0 + 8, yHarm - 7, 15, colors.muted); const g = ctx.createLinearGradient(0, yHarm - 36, 0, yHarm + 36); g.addColorStop(0, "rgba(59,130,246,0)"); g.addColorStop(0.5, "rgba(59,130,246,0.8)"); g.addColorStop(1, "rgba(59,130,246,0)"); ctx.fillStyle = g; ctx.fillRect(x0 + 130, yHarm - 38, 32, 76); ctx.fillRect(x0 + 190, yHarm - 22, 24, 44); drawMathRuns(ctx, [{ text: "T(ω≈2ω" }, { text: "pe", sub: true }, { text: ")" }], x0 + 92, y1 + 26, 17, colors.T, "700"); }
+    function render() { drawBranchPlot(); drawCartoon(); drawOutput(); }
+    // Throttle the heavy redraw to ~30 FPS (drawCartoon rebuilds the entire
+    // Three.js scene each call) and pause when the tab is hidden.
+    const FRAME_MS = 1000 / 30;
+    let lastFrameMs = 0;
+    let rafId = 0;
+    function tick(tMs) {
+      rafId = 0;
+      state.phase += 0.08;
+      const now = tMs || performance.now();
+      if (now - lastFrameMs >= FRAME_MS) {
+        render();
+        lastFrameMs = now;
+      }
+      rafId = requestAnimationFrame(tick);
+    }
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) { if (rafId) cancelAnimationFrame(rafId); rafId = 0; }
+      else if (!rafId) { lastFrameMs = 0; rafId = requestAnimationFrame(tick); }
+    });
+    document.getElementById("strength").addEventListener("input", e => { state.vb = Number(e.target.value); document.getElementById("strengthOut").textContent = state.vb.toFixed(2); render(); });
+    document.getElementById("vectors").addEventListener("click", e => { state.vectors = !state.vectors; e.currentTarget.classList.toggle("on", state.vectors); e.currentTarget.setAttribute("aria-checked", String(state.vectors)); render(); });
+    new ResizeObserver(render).observe(document.querySelector(".mechanism-grid"));
+    rafId = requestAnimationFrame(tick);
+  </script>
+  <div id="site-footer-root"></div>
+</body>
+</html>

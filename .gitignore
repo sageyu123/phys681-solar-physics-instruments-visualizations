@@ -1,0 +1,37 @@
+.DS_Store
+**/.DS_Store
+__pycache__/
+*.pyc
+node_modules/
+.quarto/
+*.quarto_ipynb
+*.log
+*.aux
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.tex
+~$*
+
+# Local assistant/tool state.
+.claude/
+.claude/settings.local.json
+
+# Generated release artifacts. Recreate with:
+# python3 tools/release/build_dist.py
+dist/
+zenodo-package/
+figures/qa-screenshots/
+
+# Local planning, proposal, and backup artifacts excluded from the DOI package.
+_plan*.md
+_proposal-*/
+dev/
+*-backup.html
+*backup*.html
+*-dev.html
+coherent-emission-explorer-narratives_files/
+emission-mechanism-explorer-narratives 2.pdf
+emission-mechanism-explorer-narratives_files/**/* 2.*

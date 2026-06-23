@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gyro Emission Explorer</title>
+    <meta name="description" content="Relate single-electron gyro motion, beaming, harmonics, ensemble spectra, opacity, and Razin suppression." />
+  <meta name="author" content="Sijie Yu" />
+  <meta name="application-name" content="Phys 681 Solar Physics and Instruments Teaching Visualizations" />
+<title>Gyro Emission Explorer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -306,7 +309,7 @@
     .analysis-grid {
       min-height: 0;
       display: grid;
-      grid-template-columns: minmax(0, 1.38fr) minmax(360px, 0.92fr);
+      grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr);
       gap: 12px;
     }
 
@@ -502,9 +505,23 @@
         radial-gradient(circle at 50% 30%, rgba(255,255,255,0.94), rgba(244,248,252,0.98) 55%, rgba(236,242,248,1) 100%);
     }
 
+    .beam-inset {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 130px;
+      height: 130px;
+      pointer-events: none;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(6px);
+    }
+
     #sceneCanvas,
     #lightCurveCanvas,
-    #spectrumCanvas {
+    #spectrumCanvas,
+    #singleSpectrumCanvas {
       width: 100%;
       height: 100%;
       display: block;
@@ -588,10 +605,14 @@
     .ensemble-layout {
       min-height: 0;
       height: 100%;
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 8px;
     }
 
     .ensemble-layout .mini-shell {
       height: 100%;
+      min-height: 0;
     }
 
     .mini-shell {
@@ -650,7 +671,7 @@
 
       .analysis-grid {
         gap: 10px;
-        grid-template-columns: minmax(0, 1.14fr) minmax(280px, 0.92fr);
+        grid-template-columns: minmax(0, 1.5fr) minmax(240px, 1fr);
       }
 
       .top-bar {
@@ -699,16 +720,61 @@
     }
 
     @media (max-width: 980px) {
+      html,
+      body {
+        overflow: hidden;
+        height: 100%;
+      }
+
+      .app {
+        flex-direction: row;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .left-panel {
+        width: clamp(250px, 34vw, 300px);
+        min-width: 240px;
+        height: 100%;
+        overflow-y: auto;
+      }
+
+      .right-panel {
+        display: block;
+        height: 100%;
+        overflow-y: auto;
+      }
+
+      .top-bar {
+        margin-bottom: 12px;
+      }
+
       .analysis-grid {
         grid-template-columns: 1fr;
-        grid-template-rows: minmax(0, 1.1fr) minmax(0, 0.9fr);
+        grid-template-rows: auto auto;
+      }
+
+      .card {
+        grid-template-rows: auto auto;
+      }
+
+      .electron-card,
+      .ensemble-card {
+        height: auto;
+      }
+
+      .electron-layout {
+        grid-template-rows: clamp(260px, 42vw, 430px) 90px;
+      }
+
+      .ensemble-layout {
+        height: auto;
+        grid-template-rows: clamp(220px, 34vw, 360px) clamp(220px, 34vw, 360px);
       }
     }
 
     @media (max-width: 900px) {
       .left-panel {
-        width: 272px;
-        min-width: 250px;
         padding: 14px 14px 18px;
       }
 
@@ -730,29 +796,6 @@
     }
 
     @media (max-width: 760px) {
-      html,
-      body {
-        overflow: auto;
-        height: auto;
-      }
-
-      .app {
-        display: block;
-        height: auto;
-      }
-
-      .left-panel {
-        width: 100%;
-        min-width: 0;
-        overflow: visible;
-      }
-
-      .right-panel {
-        height: auto;
-        overflow-y: auto;
-        grid-template-rows: auto auto;
-      }
-
       .analysis-grid {
         grid-template-columns: 1fr;
       }
@@ -766,8 +809,12 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="_site-shared.css" />
+  <script defer src="_site-manifest.js"></script>
+  <script defer src="_site-nav.js"></script>
 </head>
 <body>
+  <div id="site-nav-root"></div>
   <div class="app">
     <aside class="left-panel">
       <div class="eyebrow">PHYS 681 · Magnetic Emission</div>
@@ -780,7 +827,9 @@
         <div class="formula-label">Key Scalings</div>
         <div>&nu;<sub>ce</sub> = 2.8 B MHz</div>
         <div>&gamma; = 1 / &radic;(1 - &beta;<sup>2</sup>)</div>
+        <div>&nu;<sub>s,obs</sub> = s&nu;<sub>ce</sub> / [&gamma;(1 - &beta;<sub>&parallel;</sub> cos &theta;<sub>obs</sub>)]</div>
         <div>&nu;<sub>syn</sub> &sim; &gamma;<sup>2</sup>&nu;<sub>B</sub> sin &theta;<sub>obs</sub></div>
+        <div>&nu;<sub>R</sub> &sim; 20 n<sub>e</sub> / B Hz</div>
       </div>
 
       <section class="section">
@@ -788,11 +837,10 @@
 
         <div class="row">
           <div class="label-line">
-            <div class="label-name">&gamma;</div>
-            <div class="label-desc">directly sets the beaming regime</div>
+            <div class="label-name">&gamma;</div>        
           </div>
           <div class="slider-line">
-            <input id="gammaRange" type="range" min="1.00" max="10.00" step="0.01" value="1.06" />
+            <input id="gammaRange" type="range" min="0" max="1" step="0.001" value="0.0816" />
             <input id="gammaNumber" type="number" min="1.00" max="10.00" step="0.01" value="1.06" />
           </div>
         </div>
@@ -803,15 +851,14 @@
             <div class="label-desc">sets v<sub>&perp;</sub> and v<sub>&parallel;</sub> along B</div>
           </div>
           <div class="slider-line">
-            <input id="pitchRange" type="range" min="0" max="89" step="1" value="52" />
-            <input id="pitchNumber" type="number" min="0" max="89" step="1" value="52" />
+            <input id="pitchRange" type="range" min="0" max="90" step="1" value="52" />
+            <input id="pitchNumber" type="number" min="0" max="90" step="1" value="52" />
           </div>
         </div>
 
         <div class="row">
           <div class="label-line">
             <div class="label-name">B (G)</div>
-            <div class="label-desc">sets gyrofrequency and shrinks r<sub>L</sub> as B rises</div>
           </div>
           <div class="slider-line">
             <input id="bRange" type="range" min="40" max="900" step="5" value="220" />
@@ -822,7 +869,6 @@
         <div class="row">
           <div class="label-line">
             <div class="label-name">Playback Speed</div>
-            <div class="label-desc">scales the phase advance along the helix</div>
           </div>
           <div class="slider-line">
             <input id="playbackRange" type="range" min="0.20" max="2.20" step="0.05" value="1.00" title="Speed is normalized per gamma: faster at low gamma, slower at high gamma." />
@@ -847,7 +893,7 @@
         </div>
 
         <div class="small-note">
-          Drag = rotate camera · Ctrl + drag = pan · Alt + drag or scroll = zoom. Reach top-down by drag or the Top preset. The mechanism label changes automatically with &gamma;.
+          Drag = rotate camera · Ctrl + drag = pan · Alt + drag or scroll = zoom. Reach top-down by drag or the Top preset.
         </div>
       </section>
 
@@ -875,6 +921,10 @@
             <div class="small-value" id="nuceReadout">0.00 GHz</div>
           </div>
           <div class="small-card">
+            <div class="small-label">&nu;<sub>R</sub></div>
+            <div class="small-value" id="razinReadout">0.00 GHz</div>
+          </div>
+          <div class="small-card">
             <div class="small-label">&theta;<sub>obs</sub></div>
             <div class="small-value" id="observerReadout">0&deg;</div>
           </div>
@@ -891,12 +941,12 @@
         <div class="preset-block active" id="preset-thermal">
           <div class="row">
             <div class="label-line">
-              <div class="label-name">Thermal &theta;<sub>e</sub></div>
-              <div class="label-desc">&theta;<sub>e</sub> = kT / (m<sub>e</sub> c<sup>2</sup>)</div>
+              <div class="label-name">Temperature &theta;<sub>e</sub></div>
+              <div class="label-desc">dimensionless kT/m<sub>e</sub>c<sup>2</sup> (log slider, 0.005&#8211;1); &theta;<sub>e</sub>=1 is the fully-relativistic ceiling (kT=m<sub>e</sub>c<sup>2</sup>)</div>
             </div>
             <div class="slider-line">
-              <input id="thermalThetaRange" type="range" min="0.03" max="2.50" step="0.01" value="0.35" />
-              <input id="thermalThetaNumber" type="number" min="0.03" max="2.50" step="0.01" value="0.35" />
+              <input id="thermalThetaRange" type="range" min="0" max="1" step="0.001" value="0.434" />
+              <input id="thermalThetaNumber" type="number" min="0.005" max="1.00" step="0.001" value="0.050" />
             </div>
           </div>
         </div>
@@ -931,6 +981,28 @@
               <input id="powerDeltaRange" type="range" min="2.00" max="6.50" step="0.05" value="3.60" />
               <input id="powerDeltaNumber" type="number" min="2.00" max="6.50" step="0.05" value="3.60" />
             </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="label-line">
+            <div class="label-name">Opacity log<sub>10</sub> &tau;<sub>pk</sub></div>
+            <div class="label-desc">peak optical depth (controls self-absorption turnover)</div>
+          </div>
+          <div class="slider-line">
+            <input id="tauPeakRange" type="range" min="-2" max="3" step="0.05" value="1.0" />
+            <input id="tauPeakNumber" type="number" min="-2" max="3" step="0.05" value="1.0" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="label-line">
+            <div class="label-name">Density log<sub>10</sub> n<sub>e</sub></div>
+            <div class="label-desc">cm<sup>-3</sup>; sets Razin suppression below &nu;<sub>R</sub> &sim; 20 n<sub>e</sub>/B</div>
+          </div>
+          <div class="slider-line">
+            <input id="densityRange" type="range" min="7" max="12" step="0.05" value="9.5" />
+            <input id="densityNumber" type="number" min="7" max="12" step="0.05" value="9.5" />
           </div>
         </div>
 
@@ -979,6 +1051,7 @@
         <div class="electron-layout">
           <div class="scene-shell" id="sceneShell">
             <canvas id="sceneCanvas" aria-label="3D single electron scene"></canvas>
+            <canvas id="beamInsetCanvas" class="beam-inset" aria-label="2D beam pattern projection"></canvas>
             <div class="scene-fallback" id="sceneFallback">
               WebGL rendering is unavailable in this browser. The 3D single-electron scene could not be initialized.
             </div>
@@ -991,16 +1064,15 @@
 
         <section class="card ensemble-card">
           <div class="card-head">
-            <div class="card-title">Ensemble Emission Spectrum</div>
-            <div class="card-sub" id="ensembleSub">Thermal or power-law electron population; B field and observer angle shared with the 3D view.</div>
+            <div class="card-title">Emission Spectra</div>
+            <div class="card-sub" id="ensembleSub">Top: observed single electron via Schott harmonics (J<sub>s</sub> Bessel). Bottom: ensemble average over the distribution.</div>
           </div>
           <div class="ensemble-layout">
             <div class="mini-shell">
-              <div class="mini-head visually-hidden">
-                <div class="mini-title">Resulting Ensemble Spectrum</div>
-                <div class="mini-sub" id="spectrumSub">Observer angle and B update this panel with the 2D cartoon</div>
-              </div>
-              <canvas id="spectrumCanvas" aria-label="Ensemble spectrum plot"></canvas>
+              <canvas id="singleSpectrumCanvas" aria-label="Single-electron spectrum"></canvas>
+            </div>
+            <div class="mini-shell">
+              <canvas id="spectrumCanvas" aria-label="Ensemble emissivity vs self-absorbed intensity"></canvas>
             </div>
           </div>
         </section>
@@ -1033,7 +1105,8 @@
       beamFoldHi: 4.8,
       referenceB: 220,
       helixTurnsVisible: 2.3,
-      fieldHalfSpan: 1.85
+      fieldHalfSpan: 1.85,
+      equatorialDiscRadius: 0.7
     };
     const CAMERA = {
       defaultAzimuth: -0.42,
@@ -1056,10 +1129,19 @@
       ensemblePreset: 'thermal',
       monoGamma0: 1.60,
       monoWidth: 0.18,
-      thermalTheta: 0.35,
+      thermalTheta: 0.05,
       powerGammaMin: 2.20,
       powerGammaMax: 12.0,
-      powerDelta: 3.60
+      powerDelta: 3.60,
+      tauPeakLog: 1.0,
+      densityLog: 9.5
+    };
+    const BASELINE_ENSEMBLE = {
+      thermalTheta: 0.05,
+      powerGammaMin: 2.20,
+      powerGammaMax: 12.0,
+      powerDelta: 3.60,
+      tauPeakLog: 1.0
     };
 
     const dom = {
@@ -1068,6 +1150,8 @@
       sceneFallback: document.getElementById('sceneFallback'),
       lightCurveCanvas: document.getElementById('lightCurveCanvas'),
       spectrumCanvas: document.getElementById('spectrumCanvas'),
+      singleSpectrumCanvas: document.getElementById('singleSpectrumCanvas'),
+      beamInsetCanvas: document.getElementById('beamInsetCanvas'),
       playPauseBtn: document.getElementById('playPauseBtn'),
       resetBtn: document.getElementById('resetBtn'),
       presetButtons: Array.from(document.querySelectorAll('#presetButtons .seg-btn')),
@@ -1080,6 +1164,7 @@
       mechanismReadout: document.getElementById('mechanismReadout'),
       pitchReadout: document.getElementById('pitchReadout'),
       nuceReadout: document.getElementById('nuceReadout'),
+      razinReadout: document.getElementById('razinReadout'),
       observerReadout: document.getElementById('observerReadout'),
       pillMechanism: document.getElementById('pillMechanism'),
       pillGamma: document.getElementById('pillGamma'),
@@ -1089,23 +1174,49 @@
       defaultViewBtn: document.getElementById('defaultViewBtn'),
       singleElectronSub: document.getElementById('singleElectronSub'),
       ensembleSub: document.getElementById('ensembleSub'),
-      spectrumSub: document.getElementById('spectrumSub')
     };
 
+    const GAMMA_MIN = 1.00;
+    const BETA_CLASSICAL_FLOOR = 0.05;
+    const CLASSICAL_GAMMA_EPS = 1.001;
+    const GAMMA_MAX = 10.0;
+    function gammaSliderToValue(t) {
+      const tt = Math.min(1, Math.max(0, parseFloat(t)));
+      return GAMMA_MIN + (GAMMA_MAX - GAMMA_MIN) * tt * tt;
+    }
+    function gammaValueToSlider(g) {
+      const gg = Math.min(GAMMA_MAX, Math.max(GAMMA_MIN, parseFloat(g)));
+      return Math.sqrt((gg - GAMMA_MIN) / (GAMMA_MAX - GAMMA_MIN));
+    }
+
+    const THETA_MIN = 0.005;
+    const THETA_MAX = 1.0;
+    const THETA_LOG_SPAN = Math.log(THETA_MAX / THETA_MIN);
+    function thermalThetaSliderToValue(t) {
+      const tt = Math.min(1, Math.max(0, parseFloat(t)));
+      return THETA_MIN * Math.exp(tt * THETA_LOG_SPAN);
+    }
+    function thermalThetaValueToSlider(v) {
+      const vv = Math.min(THETA_MAX, Math.max(THETA_MIN, parseFloat(v)));
+      return Math.log(vv / THETA_MIN) / THETA_LOG_SPAN;
+    }
+
     const scalarControls = [
-      ['gamma', 'gammaRange', 'gammaNumber', 1.00, 10.0],
-      ['pitchDeg', 'pitchRange', 'pitchNumber', 0, 89],
+      ['pitchDeg', 'pitchRange', 'pitchNumber', 0, 90],
       ['B', 'bRange', 'bNumber', 40, 900],
       ['playback', 'playbackRange', 'playbackNumber', 0.20, 2.20],
       ['beamScale', 'beamScaleRange', 'beamScaleNumber', 0.35, 1.25],
-      ['thermalTheta', 'thermalThetaRange', 'thermalThetaNumber', 0.03, 2.50],
       ['powerGammaMin', 'powerGammaMinRange', 'powerGammaMinNumber', 1.10, 10.0],
       ['powerGammaMax', 'powerGammaMaxRange', 'powerGammaMaxNumber', 3.00, 25.0],
-      ['powerDelta', 'powerDeltaRange', 'powerDeltaNumber', 2.00, 6.50]
+      ['powerDelta', 'powerDeltaRange', 'powerDeltaNumber', 2.00, 6.50],
+      ['tauPeakLog', 'tauPeakRange', 'tauPeakNumber', -2.00, 3.00],
+      ['densityLog', 'densityRange', 'densityNumber', 7.00, 12.00]
     ];
 
     const lightCurveCtx = dom.lightCurveCanvas.getContext('2d');
     const spectrumCtx = dom.spectrumCanvas.getContext('2d');
+    const singleSpectrumCtx = dom.singleSpectrumCanvas.getContext('2d');
+    const beamInsetCtx = dom.beamInsetCanvas.getContext('2d');
 
     function clamp(value, min, max) {
       return Math.min(max, Math.max(min, value));
@@ -1130,6 +1241,37 @@
 
     function formatGHz(value) {
       return `${value.toFixed(3)} GHz`;
+    }
+
+    function razinFrequencyGHz() {
+      const electronDensity = Math.pow(10, state.densityLog);
+      return (20 * electronDensity / Math.max(state.B, 1)) / 1e9;
+    }
+
+    function razinSuppression(freqGHz, nuRGHz) {
+      if (nuRGHz <= 0) return 1;
+      return Math.exp(-nuRGHz / Math.max(freqGHz, 1e-6));
+    }
+
+    function razinBeamMetrics(derived) {
+      const electronDensity = Math.pow(10, state.densityLog);
+      const nuPeGHz = 8.98e-6 * Math.sqrt(electronDensity);
+      const sinT = Math.max(0.08, Math.sin(derived.observerAngle));
+      const nuCharGHz = Math.max(derived.nuB, derived.gamma * derived.gamma * derived.nuB * sinT);
+      const plasmaAngle = nuPeGHz / Math.max(nuCharGHz, 1e-6);
+      const vacuumAngle = 1 / Math.max(derived.gamma, 1.001);
+      const ratio = plasmaAngle / Math.max(vacuumAngle, 1e-6);
+      const strength = smoothstep(0.45, 1.45, ratio);
+      return {
+        nuPeGHz,
+        nuCharGHz,
+        plasmaAngle,
+        vacuumAngle,
+        ratio,
+        strength,
+        amplitude: 1 - 0.78 * strength,
+        broadenPower: 1 - 0.58 * strength
+      };
     }
 
     function mechanismForGamma(gamma) {
@@ -1221,6 +1363,14 @@
         if (range) range.value = state[key];
         if (number) number.value = state[key];
       });
+      const gammaRange = document.getElementById('gammaRange');
+      const gammaNumber = document.getElementById('gammaNumber');
+      if (gammaRange) gammaRange.value = gammaValueToSlider(state.gamma);
+      if (gammaNumber) gammaNumber.value = state.gamma.toFixed(2);
+      const thetaRange = document.getElementById('thermalThetaRange');
+      const thetaNumber = document.getElementById('thermalThetaNumber');
+      if (thetaRange) thetaRange.value = thermalThetaValueToSlider(state.thermalTheta);
+      if (thetaNumber) thetaNumber.value = state.thermalTheta.toFixed(3);
     }
 
     let ensembleDirty = true;
@@ -1267,6 +1417,38 @@
       range.addEventListener('input', () => push(range.value));
       number.addEventListener('input', () => push(number.value));
     });
+
+    (function bindGammaControl() {
+      const range = document.getElementById('gammaRange');
+      const number = document.getElementById('gammaNumber');
+      function setGamma(value) {
+        state.gamma = clamp(parseFloat(value), GAMMA_MIN, GAMMA_MAX);
+        syncControls();
+        markEnsembleDirty();
+        renderFrame();
+      }
+      range.addEventListener('input', () => setGamma(gammaSliderToValue(range.value)));
+      number.addEventListener('input', () => {
+        if (number.value === '') return;
+        setGamma(number.value);
+      });
+    })();
+
+    (function bindThermalThetaControl() {
+      const range = document.getElementById('thermalThetaRange');
+      const number = document.getElementById('thermalThetaNumber');
+      function setTheta(value) {
+        state.thermalTheta = clamp(parseFloat(value), THETA_MIN, THETA_MAX);
+        syncControls();
+        markEnsembleDirty();
+        renderFrame();
+      }
+      range.addEventListener('input', () => setTheta(thermalThetaSliderToValue(range.value)));
+      number.addEventListener('input', () => {
+        if (number.value === '') return;
+        setTheta(number.value);
+      });
+    })();
 
     dom.playPauseBtn.addEventListener('click', () => {
       state.playing = !state.playing;
@@ -1321,6 +1503,7 @@
       axisLine: null,
       fieldArrow: null,
       helixLine: null,
+      helixForward: null,
       losLine: null,
       losArrow: null,
       electron: null,
@@ -1331,10 +1514,13 @@
       beamGeometry: null,
       beamPositions: null,
       beamColors: null,
-      beamIndices: null
+      beamIndices: null,
+      equatorialDisc: null,
+      equatorialSliceLine: null,
+      equatorialSlicePositions: null
     };
 
-    const contextsReady = Boolean(lightCurveCtx && spectrumCtx);
+    const contextsReady = Boolean(lightCurveCtx && spectrumCtx && singleSpectrumCtx);
     const sceneReady = initScene3D();
     const canvasReady = Boolean(sceneReady && contextsReady);
 
@@ -1386,19 +1572,37 @@
       renderFrame();
     }
 
+    function fiducialObserverUnit() {
+      return new THREE.Vector3(
+        Math.sin(CAMERA.defaultPolar) * Math.cos(view3D.azimuth),
+        Math.sin(CAMERA.defaultPolar) * Math.sin(view3D.azimuth),
+        Math.cos(CAMERA.defaultPolar)
+      ).normalize();
+    }
+
     function deriveKinematics() {
       const gamma = state.gamma;
       const beta = gamma <= 1 ? 0 : Math.sqrt(1 - 1 / (gamma * gamma));
+      const isClassical = gamma <= CLASSICAL_GAMMA_EPS;
+      const betaVis = Math.max(beta, BETA_CLASSICAL_FLOOR);
       const pitchRad = radians(state.pitchDeg);
       const betaPerp = beta * Math.sin(pitchRad);
       const betaParallel = beta * Math.cos(pitchRad);
+      const betaPerpVis = betaVis * Math.sin(pitchRad);
+      const betaParallelVis = betaVis * Math.cos(pitchRad);
       const observerUnit = currentObserverUnit();
+      const topView = isTopView();
       const gyroScale = clamp(PHYSICS.referenceB / Math.max(state.B, 1), 0.24, 2.8);
       return {
         gamma,
         beta,
+        betaVis,
         betaPerp,
         betaParallel,
+        betaPerpVis,
+        betaParallelVis,
+        isClassical,
+        topView,
         gyroScale,
         pitchRad,
         pitchDeg: state.pitchDeg,
@@ -1430,8 +1634,10 @@
     }
 
     function rawBeamIntensity(direction, particle, derived) {
-      const betaVec = particle.betaVector;
-      const betaDot = particle.acceleration.clone().multiplyScalar(Math.max(derived.betaPerp, 0.03));
+      const betaVec = derived.isClassical
+        ? new THREE.Vector3(0, 0, 0)
+        : particle.betaVector;
+      const betaDot = particle.acceleration.clone().multiplyScalar(Math.max(derived.betaPerpVis, 0.03));
       const oneMinusNDotBeta = Math.max(1 - direction.dot(betaVec), 1e-3);
       const nMinusBeta = direction.clone().sub(betaVec);
       const innerCross = new THREE.Vector3().crossVectors(nMinusBeta, betaDot);
@@ -1467,14 +1673,21 @@
 
     function beamIntensityForDirection(direction, particle, derived) {
       const normalized = rawBeamIntensity(direction, particle, derived) / getBeamNormalization(derived);
+      const vacuumProfile = clamp(Math.pow(Math.max(normalized, 0), 0.58), 0, 1);
+      const razin = razinBeamMetrics(derived);
+      return clamp(razin.amplitude * Math.pow(vacuumProfile, razin.broadenPower), 0, 1);
+    }
+
+    function vacuumBeamIntensityForDirection(direction, particle, derived) {
+      const normalized = rawBeamIntensity(direction, particle, derived) / getBeamNormalization(derived);
       return clamp(Math.pow(Math.max(normalized, 0), 0.58), 0, 1);
     }
 
     function currentParticleState(phase = sim.phase, derived = deriveKinematics()) {
       const turns = phase / (Math.PI * 2);
-      const scaledPerp = derived.gamma * derived.betaPerp * derived.gyroScale;
-      const scaledParallel = derived.gamma * derived.betaParallel * derived.gyroScale;
-      const gyroRadius = 0.88 * clamp(scaledPerp, 0.10, 1.30);
+      const scaledPerp = derived.gamma * derived.betaPerpVis * derived.gyroScale;
+      const scaledParallel = derived.gamma * derived.betaParallelVis * derived.gyroScale;
+      const gyroRadius = 1.35 * clamp(scaledPerp, 0.10, 1.80);
       const advancePerTurn = 1.75 * scaledParallel;
       const center = new THREE.Vector3(0, 0, turns * advancePerTurn);
       const position = new THREE.Vector3(
@@ -1483,11 +1696,11 @@
         center.z
       );
       const vPerp = new THREE.Vector3(
-        -Math.sin(phase) * derived.betaPerp,
-        Math.cos(phase) * derived.betaPerp,
+        -Math.sin(phase) * derived.betaPerpVis,
+        Math.cos(phase) * derived.betaPerpVis,
         0
       );
-      const vParallel = new THREE.Vector3(0, 0, derived.betaParallel);
+      const vParallel = new THREE.Vector3(0, 0, derived.betaParallelVis);
       const velocityVector = vPerp.clone().add(vParallel);
       const velocity = velocityVector.lengthSq() > 1e-8
         ? velocityVector.clone().normalize()
@@ -1513,56 +1726,74 @@
       return beamIntensityForDirection(derived.observerUnit, particle, derived);
     }
 
+    function vacuumIntensityKernel(particle, derived) {
+      return vacuumBeamIntensityForDirection(derived.observerUnit, particle, derived);
+    }
+
     function observerSignalAtPhase(phase, derived) {
       return intensityKernel(currentParticleState(phase, derived), derived);
     }
 
-    function distributionWeight(gamma) {
-      if (state.ensemblePreset === 'mono') {
-        return Math.exp(-0.5 * Math.pow((gamma - state.monoGamma0) / Math.max(state.monoWidth, 0.03), 2));
-      }
-      if (state.ensemblePreset === 'thermal') {
-        const theta = state.thermalTheta;
-        const beta = Math.sqrt(Math.max(0, 1 - 1 / (gamma * gamma)));
-        return gamma * gamma * beta * Math.exp(-gamma / Math.max(theta, 0.03));
-      }
-      if (gamma < state.powerGammaMin || gamma > state.powerGammaMax) return 0;
-      return Math.pow(gamma, -state.powerDelta);
+    function vacuumObserverSignalAtPhase(phase, derived) {
+      return vacuumIntensityKernel(currentParticleState(phase, derived), derived);
     }
 
-    function spectrumKernel(freqGHz, gamma, observerAngle, nuB) {
+    function distributionWeightFor(gamma, params) {
+      if (params.ensemblePreset === 'thermal') {
+        const theta = Math.max(params.thermalTheta, 0.003);
+        const beta = Math.sqrt(Math.max(0, 1 - 1 / (gamma * gamma)));
+        return gamma * gamma * beta * Math.exp(-gamma / theta);
+      }
+      if (gamma < params.powerGammaMin || gamma > params.powerGammaMax) return 0;
+      return Math.pow(gamma, -params.powerDelta);
+    }
+
+    function distributionWeight(gamma) {
+      return distributionWeightFor(gamma, state);
+    }
+
+    function spectrumKernel(freqGHz, gamma, pitchRad, observerAngle, nuB) {
       const sinT = Math.max(0.06, Math.sin(observerAngle));
+      const beta = Math.sqrt(Math.max(0, 1 - 1 / (gamma * gamma)));
+      const betaPerp = Math.max(0.02, beta * Math.sin(pitchRad));
+      const pitchGain = Math.pow(betaPerp / Math.max(beta, 1e-3), 1.5);
       if (gamma < PHYSICS.cyclotronThreshold) {
         let sum = 0;
-        const beta = Math.sqrt(Math.max(0, 1 - 1 / (gamma * gamma)));
         for (let s = 1; s <= 5; s += 1) {
-          const amp = (0.48 + 0.52 * sinT * sinT) * Math.exp(-(s - 1) * 0.85) * (0.6 + 0.6 * beta);
+          const amp = (0.48 + 0.52 * sinT * sinT) * Math.exp(-(s - 1) * 0.85) *
+            Math.pow(betaPerp, 2 * (s - 1) + 2) * 10;
           const center = Math.max(0.002, s * nuB);
           sum += amp * gaussianLog(freqGHz, center, 0.085 + 0.018 * s);
         }
         return sum;
       }
       if (gamma < PHYSICS.synchrotronThreshold) {
-        const peak = Math.max(0.004, 0.72 * gamma * gamma * nuB * sinT + 0.9 * nuB);
-        const shoulder = Math.max(0.004, 2.5 * nuB);
-        return Math.pow(gamma, 0.9) * Math.pow(sinT, 0.7) * (
-          1.55 * gaussianLog(freqGHz, peak, 0.52 - 0.05 * Math.min(gamma, 3.9)) +
-          0.28 * gaussianLog(freqGHz, shoulder, 0.42)
-        );
+        const sPeak = Math.max(1.0, gamma * gamma * betaPerp * sinT);
+        const sMax = Math.min(80, Math.ceil(6 * sPeak) + 4);
+        const gammaFrac = (gamma - PHYSICS.cyclotronThreshold) /
+          (PHYSICS.synchrotronThreshold - PHYSICS.cyclotronThreshold);
+        const gf = Math.max(0, Math.min(1, gammaFrac));
+        const sigmaLog = 0.05 + 0.28 * gf * gf;
+        const envSigma = 0.7 + 0.35 * beta;
+        let sum = 0;
+        for (let s = 1; s <= sMax; s += 1) {
+          const center = s * nuB;
+          const logRatio = Math.log(s / sPeak);
+          const envelope = Math.exp(-(logRatio * logRatio) / (2 * envSigma * envSigma));
+          sum += envelope * gaussianLog(freqGHz, center, sigmaLog);
+        }
+        return Math.pow(gamma, 0.9) * Math.pow(sinT, 0.7) * pitchGain * sum;
       }
-      const nuCrit = Math.max(0.004, 1.45 * gamma * gamma * nuB * sinT);
+      const nuCrit = Math.max(0.004, 1.45 * gamma * gamma * nuB * betaPerp * sinT);
       const x = Math.max(freqGHz / nuCrit, 1e-4);
-      return Math.pow(gamma, 1.25) * Math.pow(sinT, 0.8) * Math.pow(x, 1 / 3) * Math.exp(-x);
+      return Math.pow(gamma, 1.25) * Math.pow(sinT, 0.8) * pitchGain * Math.pow(x, 1 / 3) * Math.exp(-x);
     }
 
-    function computeEnsemble() {
-      const derived = deriveKinematics();
+    function computeRawEnsemble(params, derived) {
       const gammaUpper = Math.max(
-        12,
-        derived.gamma + 2,
-        state.ensemblePreset === 'power' ? state.powerGammaMax + 1 : 0,
-        state.ensemblePreset === 'mono' ? state.monoGamma0 + 4 * state.monoWidth : 0,
-        state.ensemblePreset === 'thermal' ? 1 + 8 * state.thermalTheta : 0
+        2,
+        params.ensemblePreset === 'power' ? params.powerGammaMax + 1 : 0,
+        params.ensemblePreset === 'thermal' ? 1 + 15 * params.thermalTheta : 0
       );
       const gammaGrid = [];
       const weights = [];
@@ -1570,7 +1801,7 @@
       for (let i = 0; i < nGamma; i += 1) {
         const gamma = 1 + (i / (nGamma - 1)) * (gammaUpper - 1);
         gammaGrid.push(gamma);
-        weights.push(distributionWeight(gamma));
+        weights.push(distributionWeightFor(gamma, params));
       }
       const norm = weights.reduce((sum, value) => sum + value, 0) || 1;
       for (let i = 0; i < weights.length; i += 1) {
@@ -1578,25 +1809,84 @@
       }
 
       const freqGrid = [];
-      const spectrum = [];
+      const spectrum = new Array(220).fill(0);
       const nFreq = 220;
       const fMin = 0.03;
       const fMax = 42;
+      const logFMin = Math.log(fMin);
+      const logFMax = Math.log(fMax);
+      const logStep = (logFMax - logFMin) / (nFreq - 1);
       for (let i = 0; i < nFreq; i += 1) {
-        const t = i / (nFreq - 1);
-        const freq = fMin * Math.pow(fMax / fMin, t);
-        freqGrid.push(freq);
-        let total = 0;
-        for (let j = 0; j < gammaGrid.length; j += 1) {
-          total += weights[j] * spectrumKernel(freq, gammaGrid[j], derived.observerAngle, derived.nuB);
+        freqGrid.push(Math.exp(logFMin + logStep * i));
+      }
+
+      // Each harmonic line is deposited onto the log-frequency grid as a
+      // narrow Gaussian.  σ_log is kept close to the grid resolution so lines
+      // at different γ overlap physically, not just because of sampling.
+      const kernelSigmaLog = Math.max(logStep * 1.6, 0.035);
+      const invTwoSigSq = 1 / (2 * kernelSigmaLog * kernelSigmaLog);
+      const kernelHalfWidthLog = 4 * kernelSigmaLog;
+      for (let j = 0; j < gammaGrid.length; j += 1) {
+        const w = weights[j];
+        if (w < 1e-10) continue;
+        const harmonics = schottHarmonics(
+          gammaGrid[j], derived.pitchRad, derived.observerAngle, derived.nuB,
+          { useClassicalShortcut: false }
+        );
+        for (let h = 0; h < harmonics.length; h += 1) {
+          const harmonic = harmonics[h];
+          if (harmonic.power <= 0 || harmonic.freq <= 0) continue;
+          if (harmonic.freq < fMin * 0.25 || harmonic.freq > fMax * 4) continue;
+          const logHf = Math.log(harmonic.freq);
+          const iLow = Math.max(0, Math.floor((logHf - kernelHalfWidthLog - logFMin) / logStep));
+          const iHigh = Math.min(nFreq - 1, Math.ceil((logHf + kernelHalfWidthLog - logFMin) / logStep));
+          const amp = w * harmonic.power;
+          for (let i = iLow; i <= iHigh; i += 1) {
+            const dLog = (logFMin + logStep * i) - logHf;
+            spectrum[i] += amp * Math.exp(-dLog * dLog * invTwoSigSq);
+          }
         }
-        spectrum.push(total);
       }
-      const maxSpec = Math.max(...spectrum, 1e-6);
-      for (let i = 0; i < spectrum.length; i += 1) {
-        spectrum[i] /= maxSpec;
-      }
-      return { gammaGrid, weights, gammaUpper, freqGrid, spectrum, derived };
+
+      return { gammaGrid, weights, gammaUpper, freqGrid, spectrum };
+    }
+
+    function computeEnsemble() {
+      const derived = deriveKinematics();
+      const currentParams = {
+        ensemblePreset: state.ensemblePreset,
+        thermalTheta: state.thermalTheta,
+        powerGammaMin: state.powerGammaMin,
+        powerGammaMax: state.powerGammaMax,
+        powerDelta: state.powerDelta
+      };
+      const baselineParams = {
+        ensemblePreset: state.ensemblePreset,
+        thermalTheta: BASELINE_ENSEMBLE.thermalTheta,
+        powerGammaMin: BASELINE_ENSEMBLE.powerGammaMin,
+        powerGammaMax: BASELINE_ENSEMBLE.powerGammaMax,
+        powerDelta: BASELINE_ENSEMBLE.powerDelta
+      };
+      const current = computeRawEnsemble(currentParams, derived);
+      const baseline = computeRawEnsemble(baselineParams, derived);
+      const displayNorm = Math.max(...baseline.spectrum, 1e-6);
+      const nuRGHz = razinFrequencyGHz();
+      const unsuppressedSpectrum = current.spectrum.map((value) => value / displayNorm);
+      const spectrum = current.spectrum.map((value, index) =>
+        value * razinSuppression(current.freqGrid[index], nuRGHz) / displayNorm
+      );
+      const baselineSpectrum = baseline.spectrum.map((value) => value / displayNorm);
+      return {
+        gammaGrid: current.gammaGrid,
+        weights: current.weights,
+        gammaUpper: current.gammaUpper,
+        freqGrid: current.freqGrid,
+        spectrum,
+        unsuppressedSpectrum,
+        baselineSpectrum,
+        nuRGHz,
+        derived
+      };
     }
 
     let ensembleCache = null;
@@ -1679,7 +1969,37 @@
 
       ctx.font = UI_FONT_12;
       ctx.fillStyle = COLORS.muted;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
       ctx.fillText('Observer signal', 10, 16);
+      const razin = razinBeamMetrics(derived);
+      ctx.font = UI_FONT_11;
+      ctx.textBaseline = 'middle';
+      const legendY = 12;
+      let legendX = 112;
+      ctx.strokeStyle = 'rgba(107,114,128,0.55)';
+      ctx.lineWidth = 1.4;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(legendX, legendY);
+      ctx.lineTo(legendX + 18, legendY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = COLORS.muted;
+      ctx.fillText('vacuum', legendX + 24, legendY);
+      legendX += 102;
+      ctx.strokeStyle = COLORS.blue;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(legendX, legendY);
+      ctx.lineTo(legendX + 18, legendY);
+      ctx.stroke();
+      ctx.fillStyle = COLORS.text;
+      ctx.fillText(`Razin ${Math.round(razin.strength * 100)}%`, legendX + 24, legendY);
+      ctx.font = UI_FONT_12;
+      ctx.fillStyle = COLORS.muted;
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = 'left';
       ctx.fillText('newest', width - 56, 16);
 
       ctx.strokeStyle = COLORS.grid;
@@ -1692,20 +2012,34 @@
 
       const sampleCount = Math.max(140, Math.round(plotWidth));
       const values = [];
+      const vacuumValues = [];
       const phaseSpan = derived.turnsPerSec * Math.PI * 2 * LIGHT_CURVE_HISTORY_SECONDS;
-      let maxValue = 1e-6;
       for (let i = 0; i < sampleCount; i += 1) {
         const t = i / Math.max(1, sampleCount - 1);
         const phase = sim.phase - (1 - t) * phaseSpan;
         const value = observerSignalAtPhase(phase, derived);
+        const vacuumValue = vacuumObserverSignalAtPhase(phase, derived);
         values.push(value);
-        maxValue = Math.max(maxValue, value);
+        vacuumValues.push(vacuumValue);
       }
       const xScale = (index) => x0 + (index / Math.max(1, sampleCount - 1)) * plotWidth;
-      const yScale = (value) => y0 + plotHeight - (value / maxValue) * plotHeight;
+      const yScale = (value) => y0 + plotHeight - clamp(value, 0, 1) * plotHeight;
 
-      ctx.strokeStyle = '#6b7280';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(107,114,128,0.55)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      vacuumValues.forEach((value, index) => {
+        const x = xScale(index);
+        const y = yScale(value);
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.strokeStyle = COLORS.blue;
+      ctx.lineWidth = 2.2;
       ctx.beginPath();
       values.forEach((value, index) => {
         const x = xScale(index);
@@ -1721,6 +2055,7 @@
       ctx.beginPath();
       ctx.arc(latestX, latestY, 4.2, 0, Math.PI * 2);
       ctx.fill();
+
     }
 
     function drawDistribution() {
@@ -1781,30 +2116,494 @@
       ctx.fillText('current single electron', Math.min(width - 120, gammaX + 6), margin.top + 12);
     }
 
+    const MATH_FONT_ITALIC = 'italic 600 12px "STIX Two Text", "Times New Roman", "Cambria Math", serif';
+    const MATH_FONT_ITALIC_SMALL = 'italic 600 10px "STIX Two Text", "Times New Roman", "Cambria Math", serif';
+    const MATH_FONT_SUB = '600 9px "STIX Two Text", "Times New Roman", "Cambria Math", serif';
+    const MATH_FONT_SUB_SMALL = '600 8px "STIX Two Text", "Times New Roman", "Cambria Math", serif';
+
+    function drawNuCe(ctx, x, y, { italicFont, subFont } = {}) {
+      const iFont = italicFont || MATH_FONT_ITALIC;
+      const sFont = subFont || MATH_FONT_SUB;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.font = iFont;
+      ctx.fillText('\u03BD', x, y);
+      const nuWidth = ctx.measureText('\u03BD').width;
+      ctx.font = sFont;
+      ctx.fillText('ce', x + nuWidth + 0.5, y + 3);
+    }
+
+    function formatPow10(exponent) {
+      const supers = { '-': '\u207B', '0': '\u2070', '1': '\u00B9', '2': '\u00B2', '3': '\u00B3', '4': '\u2074', '5': '\u2075', '6': '\u2076', '7': '\u2077', '8': '\u2078', '9': '\u2079' };
+      const str = Math.round(exponent).toString();
+      let out = '';
+      for (const ch of str) out += supers[ch] || ch;
+      return '10' + out;
+    }
+
+    // Bessel J_n(x) for all integer orders 0..nMax via Miller's downward recurrence.
+    function besselJArray(nMax, x) {
+      const out = new Array(nMax + 1).fill(0);
+      if (!isFinite(x)) return out;
+      const ax = Math.abs(x);
+      if (ax < 1e-30) {
+        out[0] = 1;
+        return out;
+      }
+      const mStart = nMax + Math.max(30, Math.ceil(Math.sqrt(40 * (nMax + 1))));
+      let bjp = 0;
+      let bj = 1.0;
+      let sumEven = 0;
+      for (let j = mStart; j >= 1; j -= 1) {
+        const bjm = (2 * j / ax) * bj - bjp;
+        bjp = bj;
+        bj = bjm;
+        if (j - 1 <= nMax) out[j - 1] = bj;
+        if (j - 1 > 0 && (j - 1) % 2 === 0) sumEven += bj;
+        if (Math.abs(bj) > 1e100) {
+          const s = 1e-100;
+          bj *= s;
+          bjp *= s;
+          sumEven *= s;
+          for (let k = 0; k <= nMax; k += 1) out[k] *= s;
+        }
+      }
+      const norm = 1 / (bj + 2 * sumEven);
+      for (let k = 0; k <= nMax; k += 1) out[k] *= norm;
+      if (x < 0) for (let k = 1; k <= nMax; k += 2) out[k] = -out[k];
+      return out;
+    }
+
+    // Schott harmonic amplitudes for a single electron (circular motion in B,
+    // pitch α, observed at angle θ to B). Returns array of {s, freq, power}.
+    // opts.useClassicalShortcut (default true) collapses γ ≤ 1.001 to a single
+    // s=1 line of unit amplitude; the ensemble calls with {false} so the full
+    // Schott/Bessel physics is used across all γ in the distribution.
+    function schottHarmonics(gamma, pitchRad, thetaObs, nuB, opts) {
+      const useShortcut = !opts || opts.useClassicalShortcut !== false;
+      if (useShortcut && gamma <= CLASSICAL_GAMMA_EPS) {
+        return [{ s: 1, freq: nuB, power: 1 }];
+      }
+      const beta = Math.sqrt(Math.max(0, 1 - 1 / (gamma * gamma)));
+      const betaPerp = beta * Math.sin(pitchRad);
+      const betaPar = beta * Math.cos(pitchRad);
+      const cosT = Math.cos(thetaObs);
+      const sinT = Math.max(0.05, Math.sin(thetaObs));
+      const dop = Math.max(1e-4, 1 - betaPar * cosT);
+      const k = betaPerp * sinT / dop;
+      const result = [];
+      if (betaPerp < 1e-3 || k < 1e-6) return result;
+      const sCrit = Math.max(1, gamma * gamma * k);
+      const sMax = Math.max(8, Math.min(220, Math.ceil(5 * sCrit) + 6));
+      const trigFactor = (cosT - betaPar) / sinT;
+      const trigSq = trigFactor * trigFactor;
+      const bpSq = betaPerp * betaPerp;
+      for (let s = 1; s <= sMax; s += 1) {
+        const x = s * k;
+        const jarr = besselJArray(s + 1, x);
+        const Js = jarr[s];
+        const JsPrime = 0.5 * (jarr[s - 1] - jarr[s + 1]);
+        const power = s * s * (trigSq * Js * Js + bpSq * JsPrime * JsPrime);
+        const freq = s * nuB / (gamma * dop);
+        result.push({ s, freq, power });
+      }
+      return result;
+    }
+
+    function drawLogLogSpectrumAxes(ctx, width, height, opts) {
+      const { title, margin, plotWidth, plotHeight, fMin, fMax, nuB, xScale, yScale, yDecades, showBottomAxisLabel } = opts;
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = COLORS.panelFill;
+      ctx.fillRect(0, 0, width, height);
+      ctx.strokeStyle = COLORS.grid;
+      ctx.strokeRect(0.5, 0.5, width - 1, height - 1);
+
+      ctx.font = UI_FONT_12;
+      ctx.fillStyle = COLORS.text;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(title, 10, 16);
+
+      ctx.font = UI_FONT_11;
+      ctx.fillStyle = COLORS.muted;
+      ctx.textAlign = 'right';
+      yDecades.forEach((e) => {
+        const y = yScale(Math.pow(10, e));
+        ctx.beginPath();
+        ctx.moveTo(margin.left, y);
+        ctx.lineTo(width - margin.right, y);
+        ctx.strokeStyle = COLORS.grid;
+        ctx.stroke();
+        ctx.fillText(formatPow10(e), margin.left - 6, y + 3);
+      });
+      ctx.strokeStyle = 'rgba(31,42,48,0.06)';
+      for (let i = 0; i < yDecades.length - 1; i += 1) {
+        const e = yDecades[i];
+        for (let m = 2; m <= 9; m += 1) {
+          const y = yScale(m * Math.pow(10, e));
+          ctx.beginPath();
+          ctx.moveTo(margin.left, y);
+          ctx.lineTo(width - margin.right, y);
+          ctx.stroke();
+        }
+      }
+
+      const ratioCandidates = [0.03, 0.1, 0.3, 1, 3, 10, 30, 100, 300, 1000];
+      const ratioTicks = ratioCandidates.filter((r) => {
+        const f = r * nuB;
+        return f >= fMin * 0.98 && f <= fMax * 1.02;
+      });
+      ctx.textAlign = 'center';
+      ctx.fillStyle = COLORS.muted;
+      ctx.font = UI_FONT_11;
+      ratioTicks.forEach((r) => {
+        const freq = r * nuB;
+        const x = xScale(freq);
+        ctx.strokeStyle = COLORS.grid;
+        ctx.beginPath();
+        ctx.moveTo(x, margin.top);
+        ctx.lineTo(x, height - margin.bottom);
+        ctx.stroke();
+        ctx.fillText(r.toString(), x, height - margin.bottom + 14);
+      });
+
+      const ghzTicks = [0.03, 0.1, 0.3, 1, 3, 10, 30].filter((f) => f >= fMin * 0.98 && f <= fMax * 1.02);
+      ctx.fillStyle = COLORS.muted;
+      ctx.textAlign = 'center';
+      ghzTicks.forEach((f) => {
+        const x = xScale(f);
+        ctx.strokeStyle = 'rgba(31,42,48,0.12)';
+        ctx.beginPath();
+        ctx.moveTo(x, margin.top);
+        ctx.lineTo(x, margin.top - 5);
+        ctx.stroke();
+        ctx.fillText(f.toString(), x, margin.top - 8);
+      });
+
+      ctx.fillStyle = COLORS.text;
+      ctx.font = UI_FONT_11;
+      ctx.textAlign = 'right';
+      ctx.fillText('Frequency (GHz)', width - margin.right, margin.top - 22);
+
+      if (showBottomAxisLabel) {
+        ctx.textAlign = 'center';
+        const bottomLabelY = height - 10;
+        const bottomLabelX = margin.left + plotWidth / 2;
+        ctx.font = MATH_FONT_ITALIC;
+        ctx.fillStyle = COLORS.text;
+        const nuW = ctx.measureText('\u03BD').width;
+        ctx.font = UI_FONT_12;
+        const slashW = ctx.measureText(' / ').width;
+        ctx.font = MATH_FONT_ITALIC;
+        const totalW = nuW + slashW + nuW + (function () { ctx.font = MATH_FONT_SUB; return ctx.measureText('ce').width; })();
+        let cx = bottomLabelX - totalW / 2;
+        ctx.font = MATH_FONT_ITALIC;
+        ctx.textAlign = 'left';
+        ctx.fillText('\u03BD', cx, bottomLabelY);
+        cx += nuW;
+        ctx.font = UI_FONT_12;
+        ctx.fillText(' / ', cx, bottomLabelY);
+        cx += slashW;
+        ctx.font = MATH_FONT_ITALIC;
+        ctx.fillText('\u03BD', cx, bottomLabelY);
+        cx += nuW;
+        ctx.font = MATH_FONT_SUB;
+        ctx.fillText('ce', cx, bottomLabelY + 3);
+      }
+
+      ctx.save();
+      ctx.translate(14, margin.top + plotHeight / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillStyle = COLORS.text;
+      ctx.font = UI_FONT_11;
+      ctx.textAlign = 'center';
+      ctx.fillText('Intensity (log, normalized)', 0, 0);
+      ctx.restore();
+    }
+
+    function drawNuCeMarker(ctx, width, nuB, fMin, fMax, xScale, margin, plotHeight) {
+      if (nuB < fMin || nuB > fMax) return;
+      const nuceX = xScale(nuB);
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = COLORS.amber;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(nuceX, margin.top);
+      ctx.lineTo(nuceX, margin.top + plotHeight);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = COLORS.text;
+      drawNuCe(ctx, Math.min(width - margin.right - 22, nuceX + 5), margin.top + 14);
+    }
+
+    function drawRazinMarker(ctx, width, nuRGHz, fMin, fMax, xScale, margin, plotHeight) {
+      if (nuRGHz < fMin || nuRGHz > fMax) return;
+      const x = xScale(nuRGHz);
+      ctx.save();
+      ctx.strokeStyle = COLORS.teal;
+      ctx.lineWidth = 1.4;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(x, margin.top);
+      ctx.lineTo(x, margin.top + plotHeight);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = COLORS.teal;
+      ctx.font = MATH_FONT_ITALIC;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText('\u03BD', Math.min(width - margin.right - 28, x + 5), margin.top + 28);
+      ctx.font = MATH_FONT_SUB;
+      ctx.fillText('R', Math.min(width - margin.right - 15, x + 15), margin.top + 31);
+      ctx.restore();
+    }
+
+    function drawBeamInset() {
+      const { width, height } = resizeCanvas2D(dom.beamInsetCanvas, beamInsetCtx);
+      const ctx = beamInsetCtx;
+      ctx.clearRect(0, 0, width, height);
+
+      const derived = deriveKinematics();
+      const particle = currentParticleState(sim.phase, derived);
+      const cx = width / 2;
+      const cy = height / 2;
+      const R = Math.min(width, height) * 0.42;
+
+      const cameraAzimuth = view3D.azimuth;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(cameraAzimuth);
+
+      ctx.strokeStyle = 'rgba(148,163,184,0.25)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.arc(0, 0, R, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(148,163,184,0.18)';
+      ctx.beginPath();
+      ctx.arc(0, 0, R * 0.5, 0, Math.PI * 2);
+      ctx.stroke();
+
+      const N = 361;
+      const vacuumSlice = computeEquatorialSlice(particle, derived, N, true);
+      const slice = computeEquatorialSlice(particle, derived, N, false);
+      const norm = R / Math.max(vacuumSlice.baseRadius + vacuumSlice.extent, 1e-6);
+
+      ctx.strokeStyle = 'rgba(107,114,128,0.62)';
+      ctx.lineWidth = 1.1;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      for (let i = 0; i <= N; i += 1) {
+        const idx = i % N;
+        const r = vacuumSlice.radii[idx] * norm;
+        const alpha = vacuumSlice.alphas[idx];
+        const x = r * Math.cos(alpha);
+        const y = -r * Math.sin(alpha);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = 'rgba(37,99,235,0.22)';
+      ctx.strokeStyle = '#2563eb';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      for (let i = 0; i <= N; i += 1) {
+        const idx = i % N;
+        const r = slice.radii[idx] * norm;
+        const alpha = slice.alphas[idx];
+        const x = r * Math.cos(alpha);
+        const y = -r * Math.sin(alpha);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      const razin = razinBeamMetrics(derived);
+      ctx.font = UI_FONT_11;
+      ctx.textAlign = 'left';
+      ctx.fillStyle = COLORS.teal;
+      ctx.fillText(`Razin ${Math.round(razin.strength * 100)}%`, -R + 6, R - 10);
+
+      const vAngle = sim.phase + Math.PI / 2;
+      const vEndX = R * 1.05 * Math.cos(vAngle);
+      const vEndY = -R * 1.05 * Math.sin(vAngle);
+      const tipX = R * 1.15 * Math.cos(vAngle);
+      const tipY = -R * 1.15 * Math.sin(vAngle);
+      const perpDX = -Math.sin(vAngle) * 3.5;
+      const perpDY = -Math.cos(vAngle) * 3.5;
+      ctx.strokeStyle = '#dc2626';
+      ctx.fillStyle = '#dc2626';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(vEndX, vEndY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(tipX, tipY);
+      ctx.lineTo(vEndX + perpDX, vEndY + perpDY);
+      ctx.lineTo(vEndX - perpDX, vEndY - perpDY);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+
+      ctx.fillStyle = 'rgba(31,42,48,0.78)';
+      ctx.font = 'bold 10px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText('Equatorial slice', 6, 5);
+      ctx.font = '9px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillStyle = 'rgba(31,42,48,0.58)';
+      ctx.fillText('same curve as 3D slice', 6, 18);
+    }
+
+    function drawSingleSpectrum() {
+      const { width, height } = resizeCanvas2D(dom.singleSpectrumCanvas, singleSpectrumCtx);
+      const ctx = singleSpectrumCtx;
+      const derived = deriveKinematics();
+      const nuB = Math.max(1e-6, derived.nuB);
+      const fMin = 0.03, fMax = 42;
+      const margin = { left: 52, right: 14, top: 36, bottom: 22 };
+      const plotWidth = width - margin.left - margin.right;
+      const plotHeight = height - margin.top - margin.bottom;
+      const logFMin = Math.log10(fMin), logFMax = Math.log10(fMax);
+      const xScale = (f) => margin.left + ((Math.log10(f) - logFMin) / (logFMax - logFMin)) * plotWidth;
+      const yFloor = 1e-3, logYMin = Math.log10(yFloor), logYMax = 0;
+      const yScale = (v) => margin.top + plotHeight - ((Math.log10(Math.max(yFloor, v)) - logYMin) / (logYMax - logYMin)) * plotHeight;
+
+      drawLogLogSpectrumAxes(ctx, width, height, {
+        title: 'Observed Single-Electron Spectrum',
+        margin, plotWidth, plotHeight,
+        fMin, fMax, nuB, xScale, yScale,
+        yDecades: [-3, -2, -1, 0],
+        showBottomAxisLabel: false
+      });
+
+      const harmonics = schottHarmonics(derived.gamma, derived.pitchRad, derived.observerAngle, nuB);
+      if (harmonics.length === 0) {
+        ctx.fillStyle = COLORS.muted;
+        ctx.font = UI_FONT_12;
+        ctx.textAlign = 'center';
+        ctx.fillText('No emission for this pitch/observer geometry.', width / 2, margin.top + plotHeight / 2);
+        drawNuCeMarker(ctx, width, nuB, fMin, fMax, xScale, margin, plotHeight);
+        return;
+      }
+      const maxP = harmonics.reduce((m, h) => Math.max(m, h.power), 0);
+      const norm = maxP > 0 ? 1 / maxP : 1;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(margin.left, margin.top, plotWidth, plotHeight);
+      ctx.clip();
+      ctx.strokeStyle = COLORS.blue;
+      ctx.lineWidth = 1.2;
+      const baseY = yScale(yFloor);
+      harmonics.forEach((h) => {
+        const pn = h.power * norm;
+        if (pn < yFloor * 0.5) return;
+        if (h.freq < fMin || h.freq > fMax) return;
+        const x = xScale(h.freq);
+        const y = yScale(pn);
+        ctx.beginPath();
+        ctx.moveTo(x, baseY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.fillStyle = COLORS.blue;
+        ctx.beginPath();
+        ctx.arc(x, y, 1.6, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+
+      drawNuCeMarker(ctx, width, nuB, fMin, fMax, xScale, margin, plotHeight);
+    }
+
     function drawSpectrum() {
       const { width, height } = resizeCanvas2D(dom.spectrumCanvas, spectrumCtx);
       const ctx = spectrumCtx;
-      const { freqGrid, spectrum, derived } = ensureEnsemble();
-      const margin = { left: 48, right: 12, top: 26, bottom: 28 };
+      const { freqGrid, spectrum, unsuppressedSpectrum, baselineSpectrum, nuRGHz, derived } = ensureEnsemble();
+      const nuB = Math.max(1e-6, derived.nuB);
+      const margin = { left: 52, right: 14, top: 36, bottom: 40 };
       const plotWidth = width - margin.left - margin.right;
       const plotHeight = height - margin.top - margin.bottom;
-      const xScale = (freq) => {
-        const t = (Math.log(freq) - Math.log(freqGrid[0])) / (Math.log(freqGrid[freqGrid.length - 1]) - Math.log(freqGrid[0]));
-        return margin.left + t * plotWidth;
-      };
-      const yScale = (value) => margin.top + plotHeight - value * plotHeight;
-      drawAxes(ctx, width, height, {
-        title: 'Resulting Ensemble Spectrum',
-        margin,
-        xTicks: [0.03, 0.1, 0.3, 1, 3, 10, 30],
-        yTicks: [0, 0.25, 0.5, 0.75, 1],
-        xScale,
-        yScale,
-        xFormatter: (tick) => tick < 1 ? tick.toFixed(2) : `${tick}`,
-        yFormatter: (tick) => tick.toFixed(2),
-        xLabel: 'Frequency (GHz)',
-        yLabel: 'Normalized intensity'
+      const fMin = freqGrid[0];
+      const fMax = freqGrid[freqGrid.length - 1];
+      const logFMin = Math.log10(fMin);
+      const logFMax = Math.log10(fMax);
+      const xScale = (freq) => margin.left + ((Math.log10(freq) - logFMin) / (logFMax - logFMin)) * plotWidth;
+      const yFloor = 1e-3;
+      const logYMin = Math.log10(yFloor);
+      const logYMax = 1;
+      const yScale = (value) => margin.top + plotHeight - ((Math.log10(Math.max(yFloor, value)) - logYMin) / (logYMax - logYMin)) * plotHeight;
+
+      // Self-absorbed observed intensity I_ν = S_ν (1 − exp(−τ_ν)),
+      // with S_ν ∝ ν² (Rayleigh-Jeans) and α_ν = j_ν / S_ν ⇒ τ_ν ∝ j_ν / ν².
+      // Normalize τ against the no-Razin source so Razin suppression is not
+      // hidden by retuning the optical-depth scale after suppression.
+      const tauTarget = Math.pow(10, state.tauPeakLog);
+      const baselineTauTarget = Math.pow(10, BASELINE_ENSEMBLE.tauPeakLog);
+      const N = freqGrid.length;
+      const alphaProxy = new Array(N);
+      const alphaReference = new Array(N);
+      let maxAlphaReference = 1e-30;
+      for (let i = 0; i < N; i += 1) {
+        const f = freqGrid[i];
+        alphaProxy[i] = spectrum[i] / (f * f);
+        alphaReference[i] = baselineSpectrum[i] / (f * f);
+        if (alphaReference[i] > maxAlphaReference) maxAlphaReference = alphaReference[i];
+      }
+      const tauScale = tauTarget / maxAlphaReference;
+      const baselineTauScale = baselineTauTarget / maxAlphaReference;
+      const absorbed = new Array(N);
+      let maxIReference = 1e-30;
+      for (let i = 0; i < N; i += 1) {
+        const f = freqGrid[i];
+        const tau = tauScale * alphaProxy[i];
+        const tauReference = baselineTauScale * alphaReference[i];
+        const S = f * f;
+        absorbed[i] = S * (1 - Math.exp(-tau));
+        const absorbedReference = S * (1 - Math.exp(-tauReference));
+        if (absorbedReference > maxIReference) maxIReference = absorbedReference;
+      }
+      const normI = 1 / maxIReference;
+
+      const distLabel = state.ensemblePreset === 'power' ? 'power-law' : 'Maxwell\u2013J\u00FCttner';
+      drawLogLogSpectrumAxes(ctx, width, height, {
+        title: `Ensemble Spectrum (${distLabel})`,
+        margin, plotWidth, plotHeight,
+        fMin, fMax, nuB, xScale, yScale,
+        yDecades: [-3, -2, -1, 0, 1],
+        showBottomAxisLabel: true
       });
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(margin.left, margin.top, plotWidth, plotHeight);
+      ctx.clip();
+
+      // Unsuppressed emissivity reference (muted dashed)
+      ctx.strokeStyle = COLORS.muted;
+      ctx.globalAlpha = 0.56;
+      ctx.lineWidth = 1.4;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      freqGrid.forEach((freq, index) => {
+        const x = xScale(freq);
+        const y = yScale(unsuppressedSpectrum[index]);
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+
+      // Razin-suppressed emissivity jν (blue)
       ctx.strokeStyle = COLORS.blue;
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -1815,30 +2614,70 @@
         else ctx.lineTo(x, y);
       });
       ctx.stroke();
-      const nuceX = xScale(Math.max(freqGrid[0], Math.min(freqGrid[freqGrid.length - 1], derived.nuB)));
-      ctx.setLineDash([5, 5]);
-      ctx.strokeStyle = COLORS.amber;
-      ctx.lineWidth = 1.5;
+
+      // Observed intensity Iν (rose)
+      ctx.strokeStyle = COLORS.rose;
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(nuceX, margin.top);
-      ctx.lineTo(nuceX, margin.top + plotHeight);
+      freqGrid.forEach((freq, index) => {
+        const x = xScale(freq);
+        const y = yScale(absorbed[index] * normI);
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
       ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = COLORS.text;
+      ctx.restore();
+
+      drawNuCeMarker(ctx, width, nuB, fMin, fMax, xScale, margin, plotHeight);
+      drawRazinMarker(ctx, width, nuRGHz, fMin, fMax, xScale, margin, plotHeight);
+
+      // Legend (top-right inside plot area)
+      const legendX = width - margin.right - 150;
+      const legendY = margin.top + 8;
       ctx.font = UI_FONT_11;
       ctx.textAlign = 'left';
-      ctx.fillText('nu_ce', Math.min(width - 42, nuceX + 5), margin.top + 12);
+      ctx.textBaseline = 'middle';
+      ctx.strokeStyle = COLORS.muted;
+      ctx.globalAlpha = 0.65;
+      ctx.lineWidth = 1.4;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(legendX, legendY);
+      ctx.lineTo(legendX + 18, legendY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = COLORS.text;
+      ctx.fillText('j\u03BD  (no Razin)', legendX + 22, legendY);
+      ctx.strokeStyle = COLORS.blue;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(legendX, legendY + 14);
+      ctx.lineTo(legendX + 18, legendY + 14);
+      ctx.stroke();
+      ctx.fillStyle = COLORS.text;
+      ctx.fillText('j\u03BD  (Razin)', legendX + 22, legendY + 14);
+      ctx.strokeStyle = COLORS.rose;
+      ctx.beginPath();
+      ctx.moveTo(legendX, legendY + 28);
+      ctx.lineTo(legendX + 18, legendY + 28);
+      ctx.stroke();
+      ctx.fillText('I\u03BD  (self-absorbed)', legendX + 22, legendY + 28);
     }
 
     function updateReadouts(derived) {
       const gammaText = derived.gamma.toFixed(3);
-      const observerText = formatDegrees(derived.observerAngle);
+      const observerAngleText = formatDegrees(derived.observerAngle);
+      const observerText = derived.topView
+        ? `top-down (along B)`
+        : observerAngleText;
       const pitchText = `${derived.pitchDeg.toFixed(1)}°`;
       dom.betaReadout.textContent = derived.beta.toFixed(3);
       dom.gammaReadout.textContent = gammaText;
       dom.mechanismReadout.textContent = derived.mechanism;
       dom.pitchReadout.textContent = pitchText;
       dom.nuceReadout.textContent = formatGHz(derived.nuB);
+      dom.razinReadout.textContent = formatGHz(razinFrequencyGHz());
       dom.observerReadout.textContent = observerText;
       dom.pillMechanism.textContent = derived.mechanism;
       dom.pillGamma.textContent = gammaText;
@@ -1852,9 +2691,12 @@
       } else {
         dom.singleElectronSub.textContent = 'Synchrotron-like forward searchlight aligned with the instantaneous velocity';
       }
+      const razin = razinBeamMetrics(derived);
+      if (razin.strength > 0.08) {
+        dom.singleElectronSub.textContent += ` · Razin beam ${Math.round(razin.strength * 100)}%`;
+      }
 
-      dom.ensembleSub.textContent = `B ${state.B.toFixed(0)} G · θ_obs ${observerText}`;
-      dom.spectrumSub.textContent = `Camera-derived observer angle ${observerText}`;
+      dom.ensembleSub.textContent = `B ${state.B.toFixed(0)} G · log\u2081\u2080 n\u2091 ${state.densityLog.toFixed(2)} · θ_obs ${observerText}`;
     }
 
     function initScene3D() {
@@ -1873,9 +2715,19 @@
         new THREE.LineBasicMaterial({ color: 0x5ea7a2, transparent: true, opacity: 0.55 })
       );
       scene3D.fieldArrow = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(), 0.8, 0x0f766e, 0.10, 0.05);
-      scene3D.helixLine = new THREE.Line(
+      scene3D.helixLine = new THREE.Mesh(
         new THREE.BufferGeometry(),
-        new THREE.LineBasicMaterial({ color: 0x7ea8ff, transparent: true, opacity: 0.8 })
+        new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false })
+      );
+      scene3D.helixForward = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+        new THREE.LineDashedMaterial({
+          color: 0x7ea8ff,
+          transparent: true,
+          opacity: 0.5,
+          dashSize: 0.09,
+          gapSize: 0.07
+        })
       );
       scene3D.losLine = new THREE.Line(
         new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
@@ -1886,17 +2738,43 @@
         new THREE.SphereGeometry(0.025, 20, 16),
         new THREE.MeshPhongMaterial({ color: 0x2563eb, shininess: 70, specular: 0x99b8ff })
       );
-      scene3D.totalArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 0.7, 0xdb2777, 0.16, 0.08);
-      scene3D.perpArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 0.55, 0x2563eb, 0.14, 0.07);
-      scene3D.parallelArrow = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(), 0.55, 0x0f766e, 0.14, 0.07);
+      scene3D.totalArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 0.42, 0xdb2777, 0.10, 0.05);
+      scene3D.perpArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 0.34, 0x2563eb, 0.09, 0.045);
+      scene3D.parallelArrow = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(), 0.34, 0x0f766e, 0.09, 0.045);
 
       createBeamSurface();
+
+      scene3D.equatorialDisc = new THREE.Mesh(
+        new THREE.CircleGeometry(PHYSICS.equatorialDiscRadius, 72),
+        new THREE.MeshBasicMaterial({
+          color: 0xaab9d6,
+          transparent: true,
+          opacity: 0.08,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        })
+      );
+      scene3D.equatorialDisc.renderOrder = 1;
+
+      const sliceN = 361;
+      scene3D.equatorialSlicePositions = new Float32Array(sliceN * 3);
+      const sliceGeom = new THREE.BufferGeometry();
+      sliceGeom.setAttribute('position', new THREE.BufferAttribute(scene3D.equatorialSlicePositions, 3));
+      scene3D.equatorialSliceLine = new THREE.LineLoop(
+        sliceGeom,
+        new THREE.LineBasicMaterial({ color: 0x2563eb, transparent: true, opacity: 0.95 })
+      );
+      scene3D.equatorialSliceLine.renderOrder = 3;
+
       scene3D.scene.add(
         scene3D.axisLine,
         scene3D.fieldArrow,
+        scene3D.helixForward,
         scene3D.helixLine,
         scene3D.losLine,
         scene3D.losArrow,
+        scene3D.equatorialDisc,
+        scene3D.equatorialSliceLine,
         scene3D.electron,
         scene3D.totalArrow,
         scene3D.perpArrow,
@@ -2016,7 +2894,7 @@
       const beamScale = state.beamScale;
       const baseRadius = 0.015 * beamScale;
       const extent = (0.40 + 0.12 * Math.pow(fold, 0.72)) * beamScale;
-      scene3D.beamMesh.material.opacity = 0.84;
+      scene3D.beamMesh.material.opacity = 0.72;
       const color = new THREE.Color();
       let ptr = 0;
       let cptr = 0;
@@ -2054,25 +2932,97 @@
     }
 
     function updateHelixGeometry(derived) {
-      const samples = 180;
-      const positions = new Float32Array(samples * 3);
-      for (let i = 0; i < samples; i += 1) {
-        const t = i / (samples - 1) - 0.5;
-        const phase = sim.phase + t * PHYSICS.helixTurnsVisible * Math.PI * 2;
+      const tailSamples = 240;
+      const tailTurns = PHYSICS.helixTurnsVisible * 1.6;
+      const headR = 0.494, headG = 0.659, headB = 1.000;
+      const tailR = 0.925, tailG = 0.949, tailB = 0.973;
+      const pts = new Array(tailSamples);
+      for (let i = 0; i < tailSamples; i += 1) {
+        const u = i / (tailSamples - 1);
+        const phase = sim.phase - (1 - u) * tailTurns * Math.PI * 2;
         const particle = currentParticleState(phase, derived);
-        positions[i * 3] = particle.position.x;
-        positions[i * 3 + 1] = particle.position.y;
-        positions[i * 3 + 2] = particle.position.z;
+        pts[i] = particle.position.clone();
       }
+      const curve = new THREE.CatmullRomCurve3(pts);
+      const radialSegments = 6;
+      const tubeRadius = 0.022;
+      const tubularSegments = tailSamples - 1;
+      const tubeGeom = new THREE.TubeGeometry(curve, tubularSegments, tubeRadius, radialSegments, false);
+      const posCount = tubeGeom.attributes.position.count;
+      const colors = new Float32Array(posCount * 3);
+      const ringSize = radialSegments + 1;
+      for (let i = 0; i < posCount; i += 1) {
+        const segmentIdx = Math.min(tubularSegments, Math.floor(i / ringSize));
+        const u = segmentIdx / tubularSegments;
+        const w = Math.pow(u, 1.8);
+        colors[i * 3] = tailR + (headR - tailR) * w;
+        colors[i * 3 + 1] = tailG + (headG - tailG) * w;
+        colors[i * 3 + 2] = tailB + (headB - tailB) * w;
+      }
+      tubeGeom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
       scene3D.helixLine.geometry.dispose();
-      scene3D.helixLine.geometry = new THREE.BufferGeometry();
-      scene3D.helixLine.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      scene3D.helixLine.geometry = tubeGeom;
+
+      const fwdSamples = 140;
+      const fwdTurns = PHYSICS.helixTurnsVisible * 0.9;
+      const fwdPositions = new Float32Array(fwdSamples * 3);
+      for (let i = 0; i < fwdSamples; i += 1) {
+        const u = i / (fwdSamples - 1);
+        const phase = sim.phase + u * fwdTurns * Math.PI * 2;
+        const particle = currentParticleState(phase, derived);
+        fwdPositions[i * 3] = particle.position.x;
+        fwdPositions[i * 3 + 1] = particle.position.y;
+        fwdPositions[i * 3 + 2] = particle.position.z;
+      }
+      scene3D.helixForward.geometry.dispose();
+      scene3D.helixForward.geometry = new THREE.BufferGeometry();
+      scene3D.helixForward.geometry.setAttribute('position', new THREE.BufferAttribute(fwdPositions, 3));
+      scene3D.helixForward.computeLineDistances();
+    }
+
+    function computeEquatorialSlice(particle, derived, sampleCount, useVacuum = false) {
+      const beamScale = state.beamScale;
+      const baseRadius = 0.015 * beamScale;
+      const fold = beamFoldMix(derived.gamma);
+      const extent = (0.40 + 0.12 * Math.pow(fold, 0.72)) * beamScale;
+      const alphas = new Float32Array(sampleCount);
+      const radii = new Float32Array(sampleCount);
+      for (let i = 0; i < sampleCount; i += 1) {
+        const alpha = (i / sampleCount) * Math.PI * 2;
+        alphas[i] = alpha;
+        const direction = new THREE.Vector3(Math.cos(alpha), Math.sin(alpha), 0);
+        const profile = useVacuum
+          ? vacuumBeamIntensityForDirection(direction, particle, derived)
+          : beamIntensityForDirection(direction, particle, derived);
+        radii[i] = baseRadius + extent * profile;
+      }
+      return { alphas, radii, baseRadius, extent };
+    }
+
+    function updateEquatorialSliceGeometry(particle, derived) {
+      const N = scene3D.equatorialSlicePositions.length / 3;
+      const slice = computeEquatorialSlice(particle, derived, N);
+      const px = particle.position.x;
+      const py = particle.position.y;
+      const pz = particle.position.z;
+      for (let i = 0; i < N; i += 1) {
+        const r = slice.radii[i];
+        const alpha = slice.alphas[i];
+        scene3D.equatorialSlicePositions[i * 3] = px + r * Math.cos(alpha);
+        scene3D.equatorialSlicePositions[i * 3 + 1] = py + r * Math.sin(alpha);
+        scene3D.equatorialSlicePositions[i * 3 + 2] = pz;
+      }
+      scene3D.equatorialSliceLine.geometry.attributes.position.needsUpdate = true;
+      scene3D.equatorialSliceLine.geometry.computeBoundingSphere();
+
+      scene3D.equatorialDisc.position.set(0, 0, pz);
     }
 
     function updateSceneObjects(derived, particle) {
       updateCamera(particle);
       updateHelixGeometry(derived);
       updateBeamGeometry(particle, derived);
+      updateEquatorialSliceGeometry(particle, derived);
 
       const axisPositions = new Float32Array([
         0, 0, particle.center.z - PHYSICS.fieldHalfSpan,
@@ -2096,15 +3046,15 @@
       scene3D.electron.position.copy(particle.position);
       scene3D.totalArrow.position.copy(particle.position);
       scene3D.totalArrow.setDirection(particle.velocity);
-      scene3D.totalArrow.setLength(0.82, 0.18, 0.08);
+      scene3D.totalArrow.setLength(0.50, 0.11, 0.05);
       const perpDir = particle.vPerp.lengthSq() > 1e-8 ? particle.vPerp.clone().normalize() : new THREE.Vector3(1, 0, 0);
       scene3D.perpArrow.position.copy(particle.position);
       scene3D.perpArrow.setDirection(perpDir);
-      scene3D.perpArrow.setLength(0.65 * Math.max(0.2, derived.betaPerp), 0.14, 0.07);
-      const parallelSign = Math.sign(derived.betaParallel) || 1;
+      scene3D.perpArrow.setLength(0.40 * Math.max(0.2, derived.betaPerpVis), 0.09, 0.045);
+      const parallelSign = Math.sign(derived.betaParallelVis) || 1;
       scene3D.parallelArrow.position.copy(particle.position);
       scene3D.parallelArrow.setDirection(new THREE.Vector3(0, 0, parallelSign));
-      scene3D.parallelArrow.setLength(0.75 * Math.max(0.2, Math.abs(derived.betaParallel)), 0.14, 0.07);
+      scene3D.parallelArrow.setLength(0.46 * Math.max(0.2, Math.abs(derived.betaParallelVis)), 0.09, 0.045);
     }
 
     function renderScene(derived, particle) {
@@ -2121,9 +3071,9 @@
       syncViewPresetButtons();
       renderScene(derived, particle);
       drawLightCurve(derived);
-      if (ensembleDirty) {
-        drawSpectrum();
-      }
+      drawBeamInset();
+      drawSingleSpectrum();
+      drawSpectrum();
     }
 
     function handlePointerDown(event) {
@@ -2183,13 +3133,25 @@
       renderFrame();
     }
 
+    // Throttle the per-frame update to ~30 FPS — renderFrame() redraws the
+    // 3D scene plus four 2D canvas plots and is too expensive at 60 FPS on
+    // older Macs. Pause entirely when the tab is hidden.
+    const FRAME_MS = 1000 / 30;
     let lastFrameTime = performance.now();
+    let rafId = 0;
     function frame(now) {
+      rafId = 0;
       const dt = Math.min(0.05, Math.max(0.001, (now - lastFrameTime) / 1000));
-      lastFrameTime = now;
-      updateAnimation(dt);
-      requestAnimationFrame(frame);
+      if (dt * 1000 >= FRAME_MS) {
+        lastFrameTime = now;
+        updateAnimation(dt);
+      }
+      rafId = requestAnimationFrame(frame);
     }
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { if (rafId) cancelAnimationFrame(rafId); rafId = 0; }
+      else if (!rafId) { lastFrameTime = performance.now(); rafId = requestAnimationFrame(frame); }
+    });
 
     if (canvasReady) {
       const resizeObserver = new ResizeObserver(() => {
@@ -2200,13 +3162,16 @@
       resizeObserver.observe(dom.sceneShell);
       resizeObserver.observe(dom.lightCurveCanvas);
       resizeObserver.observe(dom.spectrumCanvas);
+      resizeObserver.observe(dom.singleSpectrumCanvas);
+      resizeObserver.observe(dom.beamInsetCanvas);
     }
 
     syncControls();
     if (canvasReady) {
       renderFrame();
-      requestAnimationFrame(frame);
+      rafId = requestAnimationFrame(frame);
     }
   </script>
+  <div id="site-footer-root"></div>
 </body>
 </html>

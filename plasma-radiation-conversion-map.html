@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Map nonlinear conversion paths from Langmuir waves to escaping fundamental and harmonic radiation." />
+  <meta name="author" content="Sijie Yu" />
+  <meta name="application-name" content="Phys 681 Solar Physics and Instruments Teaching Visualizations" />
+<title>Plasma Radiation Conversion Diagram — Phys 681</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="plasma-conversion-shared.css" />
+  <link rel="stylesheet" href="_site-shared.css" />
+  <script defer src="_site-manifest.js"></script>
+  <script defer src="_site-nav.js"></script>
+</head>
+<body>
+  <div id="site-nav-root"></div>
+  <div class="app">
+    <aside class="rail">
+      <div class="eyebrow">Plasma radiation · wave conversion</div>
+      <h2 class="rail-title">Conversion Map</h2>
+      <p class="rail-lede">
+        The beam explorer covers the first half of the story: electron beam,
+        bump-on-tail instability, and primary Langmuir growth. This map opens
+        the nonlinear steps that convert electrostatic energy into escaping radio waves.
+      </p>
+
+      <section class="rail-section">
+        <div class="rail-section-head">How to use</div>
+        <div class="story-card">
+          <div class="story-step"><div class="story-key">1</div><div class="story-text">Click the left branch for fundamental emission near <span class="math-i">ω<sub>pe</sub></span>.</div></div>
+          <div class="story-step"><div class="story-key">2</div><div class="story-text">Click the right branch to see how backscattering creates <span class="math-i">L'</span>.</div></div>
+          <div class="story-step"><div class="story-key">3</div><div class="story-text">Click the lower branch for Langmuir-wave coalescence and harmonic emission.</div></div>
+        </div>
+      </section>
+
+      <section class="rail-section">
+        <div class="rail-section-head">Navigation</div>
+        <div class="nav-card">
+          <a href="plasma-emission-explorer.html">Electron beam and primary Langmuir growth</a>
+          <a href="plasma-fundamental-conversion.html">Scattering / mode conversion</a>
+          <a href="plasma-backscattering-decay.html">Backscattering / decay</a>
+          <a href="plasma-harmonic-coalescence.html">Langmuir-wave coalescence</a>
+        </div>
+      </section>
+
+      <p class="rail-note">
+        The diagram is a teaching map, not a complete kinetic theory. The three
+        mechanism pages use a simplified <span class="math-i">ω-k</span> model
+        with Langmuir, ion-sound, and transverse electromagnetic branches.
+      </p>
+    </aside>
+
+    <main class="main map-main">
+      <section class="topbar">
+        <div class="topbar-title">
+          <h1>Plasma radiation conversion diagram</h1>
+          <p>Follow the nonlinear wave-wave path from primary Langmuir waves to fundamental and harmonic electromagnetic emission.</p>
+        </div>
+        <div class="pill-row">
+          <div class="pill"><span class="pill-label">Source</span><span class="pill-value">L</span></div>
+          <div class="pill"><span class="pill-label">Mediator</span><span class="pill-value">S</span></div>
+          <div class="pill"><span class="pill-label">Escape</span><span class="pill-value">T</span></div>
+        </div>
+      </section>
+
+      <section class="page-grid map-grid">
+        <div class="card map-card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Clickable process map</div>
+              <div class="card-sub">white-background flow chart for the nonlinear part of plasma radio emission</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <svg class="conversion-map" viewBox="0 0 1320 820" role="img" aria-label="Plasma Radiation Conversion Diagram">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#111827"></path>
+                </marker>
+              </defs>
+
+              <path class="map-arrow" d="M660 100 L660 145"></path>
+              <path class="map-arrow" d="M660 230 L660 270"></path>
+              <path class="map-arrow" d="M660 355 L320 405"></path>
+              <path class="map-arrow" d="M660 355 L1000 405"></path>
+              <path class="map-arrow" d="M320 485 L320 530"></path>
+              <path class="map-arrow" d="M1000 485 L1000 530"></path>
+              <path class="map-arrow" d="M1000 610 L1000 646 L890 646"></path>
+              <path class="map-arrow" d="M660 355 L660 615"></path>
+              <path class="map-arrow" d="M660 695 L660 728"></path>
+
+              <a class="map-node source" href="plasma-emission-explorer.html" aria-label="Open electron beam explorer">
+                <rect class="node-highlight" x="507" y="12" width="306" height="96" rx="12"></rect>
+                <rect x="515" y="20" width="290" height="80" rx="8" fill="#fff" stroke="#111827" stroke-width="2"></rect>
+                <text x="660" y="57" text-anchor="middle" font-size="25" font-weight="700">Electron beam</text>
+                <text x="660" y="85" text-anchor="middle" font-size="20" font-style="italic">v<tspan baseline-shift="sub" font-size="14">b</tspan> >> v<tspan baseline-shift="sub" font-size="14">te</tspan></text>
+              </a>
+
+              <a class="map-node source" href="plasma-emission-explorer.html" aria-label="Open beam instability explorer">
+                <rect class="node-highlight" x="482" y="137" width="356" height="101" rx="12"></rect>
+                <rect x="490" y="145" width="340" height="85" rx="8" fill="#fff" stroke="#111827" stroke-width="2"></rect>
+                <text x="660" y="180" text-anchor="middle" font-size="25" font-weight="700">Beam instability</text>
+                <text x="660" y="210" text-anchor="middle" font-size="19">bump-on-tail growth</text>
+              </a>
+
+              <a class="map-node source" href="plasma-emission-explorer.html" aria-label="Open primary Langmuir wave explorer">
+                <rect class="node-highlight" x="442" y="262" width="436" height="101" rx="12"></rect>
+                <rect x="450" y="270" width="420" height="85" rx="8" fill="#fff" stroke="#111827" stroke-width="2"></rect>
+                <text x="660" y="305" text-anchor="middle" font-size="25" font-weight="700">Primary Langmuir waves</text>
+                <text x="660" y="334" text-anchor="middle" font-size="22" font-style="italic">L(ω ≈ ω<tspan baseline-shift="sub" font-size="15">pe</tspan>)</text>
+              </a>
+
+              <a class="map-node fundamental" href="plasma-fundamental-conversion.html" aria-label="Open scattering and mode conversion explorer">
+                <rect class="node-highlight" x="42" y="397" width="556" height="96" rx="12"></rect>
+                <rect x="50" y="405" width="540" height="80" rx="8" fill="#fff" stroke="#111827" stroke-width="2"></rect>
+                <text x="320" y="438" text-anchor="middle" font-size="25" font-weight="700">Scattering / mode conversion</text>
+                <text x="320" y="466" text-anchor="middle" font-size="22" font-style="italic">L + S → T(ω ≈ ω<tspan baseline-shift="sub" font-size="15">pe</tspan>)</text>
+              </a>
+
+              <a class="map-node fundamental" href="plasma-fundamental-conversion.html" aria-label="Open fundamental emission explorer">
+                <rect class="node-highlight" x="94" y="522" width="452" height="96" rx="12"></rect>
+                <rect x="102" y="530" width="436" height="80" rx="8" fill="#fff" stroke="#111827" stroke-width="2"></rect>
+                <text x="320" y="565" text-anchor="middle" font-size="24" font-weight="700">Fundamental emission</text>
+                <text x="320" y="593" text-anchor="middle" font-size="21" font-style="italic">ω ≳ ω<tspan baseline-shift="sub" font-size="15">pe</tspan></text>
+              </a>
+
+              <a class="map-node backscatter" href="plasma-backscattering-decay.html" aria-label="Open backscattering and decay explorer">
+                <rect class="node-highlight" x="762" y="397" width="476" height="96" rx="12"></rect>
+                <rect x="770" y="405" width="460" height="80" rx="8" fill="#fff" stroke="#111827" stroke-width="2"></rect>
+                <text x="1000" y="438" text-anchor="middle" font-size="25" font-weight="700">Backscattering / decay</text>
+                <text x="1000" y="466" text-anchor="middle" font-size="22" font-style="italic">L → L′ + S</text>
+              </a>
+
+              <a class="map-node backscatter" href="plasma-backscattering-decay.html" aria-label="Open backscattered Langmuir wave explorer">
+                <rect class="node-highlight" x="752" y="522" width="496" height="96" rx="12"></rect>
+                <rect x="760" y="530" width="480" height="80" rx="8" fill="#fff" stroke="#111827" stroke-width="2"></rect>
+                <text x="1000" y="565" text-anchor="middle" font-size="24" font-weight="700">Backscattered Langmuir waves</text>
+                <text x="1000" y="593" text-anchor="middle" font-size="22" font-style="italic">L′</text>
+              </a>
+
+              <a class="map-node harmonic" href="plasma-harmonic-coalescence.html" aria-label="Open Langmuir wave coalescence explorer">
+                <rect class="node-highlight" x="422" y="607" width="476" height="96" rx="12"></rect>
+                <rect x="430" y="615" width="460" height="80" rx="8" fill="#fff" stroke="#111827" stroke-width="2"></rect>
+                <text x="660" y="646" text-anchor="middle" font-size="23" font-weight="700">Langmuir-wave coalescence</text>
+                <text x="660" y="671" text-anchor="middle" font-size="19">primary <tspan font-style="italic">L</tspan> + backscattered <tspan font-style="italic">L′</tspan></text>
+                <text x="660" y="692" text-anchor="middle" font-size="18" font-style="italic">→ T(ω ≈ 2ω<tspan baseline-shift="sub" font-size="13">pe</tspan>)</text>
+              </a>
+
+              <a class="map-node harmonic" href="plasma-harmonic-coalescence.html" aria-label="Open harmonic emission explorer">
+                <rect class="node-highlight" x="497" y="720" width="326" height="78" rx="12"></rect>
+                <rect x="505" y="728" width="310" height="62" rx="8" fill="#fff" stroke="#111827" stroke-width="2"></rect>
+                <text x="660" y="754" text-anchor="middle" font-size="23" font-weight="700">Harmonic emission</text>
+                <text x="660" y="778" text-anchor="middle" font-size="19" font-style="italic">ω ≈ 2ω<tspan baseline-shift="sub" font-size="13">pe</tspan></text>
+              </a>
+            </svg>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div id="site-footer-root"></div>
+</body>
+</html>

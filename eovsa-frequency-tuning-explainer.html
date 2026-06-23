@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EOVSA Three-Stage Frequency Tuning</title>
+    <meta name="description" content="Explain EOVSA three-stage frequency tuning and band selection." />
+  <meta name="author" content="Sijie Yu" />
+  <meta name="application-name" content="Phys 681 Solar Physics and Instruments Teaching Visualizations" />
+<title>EOVSA Three-Stage Frequency Tuning</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -48,7 +51,9 @@
     }
 
     .shell {
+      width: 100%;
       max-width: 1360px;
+      min-width: 0;
       margin: 0 auto;
       display: grid;
       gap: 22px;
@@ -56,6 +61,7 @@
 
     .hero,
     .panel {
+      min-width: 0;
       background: var(--panel);
       border: 1px solid rgba(31, 31, 31, 0.08);
       border-radius: var(--radius);
@@ -365,6 +371,9 @@
       position: sticky;
       top: 0;
       z-index: 100;
+      max-width: 100%;
+      min-width: 0;
+      overflow-x: auto;
       background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(246,248,251,0.92));
       border: 1px solid rgba(31,31,31,0.08);
       border-radius: var(--radius);
@@ -730,8 +739,14 @@
       .panel,
       .callout,
       .control-panel {
+        width: 100%;
         padding-left: 16px;
         padding-right: 16px;
+      }
+
+      .formula-strip,
+      .control-strip {
+        min-width: 0;
       }
 
       .range-wrap,
@@ -749,8 +764,12 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="_site-shared.css" />
+  <script defer src="_site-manifest.js"></script>
+  <script defer src="_site-nav.js"></script>
 </head>
 <body>
+  <div id="site-nav-root"></div>
   <div class="shell">
     <section class="hero">
       <div class="hero-copy">
@@ -2165,5 +2184,6 @@
 
     render();
   </script>
+  <div id="site-footer-root"></div>
 </body>
 </html>

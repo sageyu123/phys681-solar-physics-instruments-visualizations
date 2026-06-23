@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Distinguish brightness, solid angle, flux density, Jansky units, and brightness temperature." />
+  <meta name="author" content="Sijie Yu" />
+  <meta name="application-name" content="Phys 681 Solar Physics and Instruments Teaching Visualizations" />
+<title>Specific Intensity &amp; Flux Density — PHYS 681</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ui-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --ui-font-d: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --math: "STIX Two Text", "Cambria Math", "STIXGeneral", "Times New Roman", serif;
+      --panel-bg: #16263b;
+      --panel-ink: #e2e8f0;
+      --panel-muted: #9db0c5;
+      --panel-border: rgba(148,163,184,0.18);
+      --right-bg: #ecf2f8;
+      --card-bg: rgba(255,255,255,0.96);
+      --card-border: rgba(148,163,184,0.28);
+      --card-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(15,23,42,0.06);
+      --text: #102033;
+      --muted: #5f6d82;
+      --blue: #2563eb;
+      --teal: #0f766e;
+      --amber: #ea580c;
+      --radius: 14px;
+      --radius-sm: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: var(--ui-font); color: var(--text); background: var(--right-bg); overflow: hidden; font-size: 13px; }
+    .app { display: flex; height: 100%; overflow: hidden; }
+
+    /* ── Left panel ── */
+    .left-panel {
+      width: 306px; min-width: 280px; flex-shrink: 0;
+      overflow-y: auto; overflow-x: hidden; padding: 15px 15px 20px;
+      background: linear-gradient(180deg,#1a2a40 0%,#16263b 100%);
+      color: var(--panel-ink); scrollbar-width: thin;
+      scrollbar-color: rgba(148,163,184,0.32) transparent;
+    }
+    .left-panel::-webkit-scrollbar { width: 5px; }
+    .left-panel::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.32); border-radius: 4px; }
+
+    .eyebrow { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; color: var(--panel-muted); margin-bottom: 5px; }
+    .panel-title { font-family: var(--ui-font-d); font-size: 17px; line-height: 1.1; letter-spacing: -.025em; color: #f8fbff; margin-bottom: 10px; }
+
+    .formula-box {
+      border-radius: var(--radius-sm); border: 1px solid var(--panel-border);
+      background: rgba(255,255,255,0.05); padding: 10px 12px;
+      font-family: var(--math); color: #d6e0eb; line-height: 1.7; margin-bottom: 11px;
+    }
+    .formula-label { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--panel-muted); margin-bottom: 6px; font-family: var(--ui-font); }
+    .formula-row { font-size: 12px; }
+    .formula-row + .formula-row { margin-top: 2px; }
+    .formula-note { font-size: 11px; color: var(--panel-muted); margin-top: 6px; font-family: var(--ui-font); }
+
+    .section { border-radius: var(--radius-sm); border: 1px solid var(--panel-border); background: rgba(255,255,255,0.05); padding: 10px 11px; margin-bottom: 10px; }
+    .section-head { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--panel-muted); margin-bottom: 7px; }
+
+    .segment-row { display: flex; gap: 5px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
+    .seg-btn {
+      border: 1px solid rgba(148,163,184,0.22); background: rgba(255,255,255,0.07);
+      color: var(--panel-ink); font: inherit; font-size: 11.5px; font-weight: 700;
+      padding: 5px 9px; border-radius: 999px; white-space: nowrap; cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .seg-btn.active { background: rgba(37,99,235,0.2); border-color: rgba(96,165,250,0.55); color: #bfdbfe; }
+
+    .row { display: grid; gap: 4px; margin-bottom: 8px; }
+    .row:last-child { margin-bottom: 0; }
+    .label-line { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+    .label-name { font-family: var(--math); color: #f7fbff; font-size: 12.5px; }
+    .label-desc { color: var(--panel-muted); font-size: 11px; }
+    .slider-line { display: grid; grid-template-columns: minmax(0,1fr) 68px; gap: 7px; align-items: center; }
+    input[type="range"] { width: 100%; height: 4px; accent-color: #60a5fa; cursor: pointer; }
+    input[type="number"] {
+      width: 100%; padding: 4px 6px; border-radius: 6px;
+      border: 1px solid rgba(148,163,184,0.28); background: rgba(255,255,255,0.08);
+      color: var(--panel-ink); font: inherit; font-size: 11.5px; text-align: right; outline: none;
+    }
+    input[type="number"]:focus { border-color: rgba(96,165,250,0.65); }
+
+    .derived-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .small-card { border-radius: var(--radius-sm); border: 1px solid var(--panel-border); background: rgba(255,255,255,0.05); padding: 7px 9px; display: grid; gap: 2px; }
+    .small-label { font-size: 10px; letter-spacing: .07em; text-transform: uppercase; color: var(--panel-muted); font-weight: 700; font-family: var(--ui-font); }
+    .small-value { font-family: var(--ui-font-d); font-size: 13px; font-weight: 700; color: #f8fbff; }
+
+    /* ── Right panel ── */
+    .right-panel { flex: 1; min-height: 0; overflow: hidden; display: grid; grid-template-rows: auto minmax(0,1fr); gap: 10px; padding: 12px; }
+
+    .top-bar, .card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: var(--radius); box-shadow: var(--card-shadow);
+    }
+    .top-bar { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 14px; padding: 10px 14px; align-items: center; }
+    .topbar-title { display: grid; gap: 2px; }
+    .topbar-title h1 { font-family: var(--math); font-size: 17px; line-height: 1.1; letter-spacing: -.01em; color: var(--text); }
+    .topbar-title p { color: var(--muted); font-size: 11.5px; line-height: 1.35; font-family: var(--math); }
+
+    .pill-row { display: grid; grid-template-columns: repeat(3,minmax(68px,1fr)); gap: 7px; }
+    .pill { border-radius: 999px; border: 1px solid rgba(148,163,184,0.22); background: rgba(255,255,255,0.85); padding: 7px 10px; display: grid; gap: 1px; }
+    .pill-label { font-family: var(--math); font-size: 10px; color: var(--muted); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pill-value { font-family: var(--ui-font-d); font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Scene (left, wider) + plots-col (right) */
+    .analysis-grid { min-height: 0; display: grid; grid-template-columns: minmax(0,1.35fr) minmax(280px,1fr); gap: 10px; }
+
+    .card { min-height: 0; overflow: hidden; padding: 10px; display: grid; grid-template-rows: auto minmax(0,1fr); gap: 7px; }
+    .card-head { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+    .card-title { font-family: var(--math); font-size: 14px; font-weight: 700; color: var(--text); }
+    .card-sub { color: var(--muted); font-size: 11px; line-height: 1.3; }
+
+    /* ── 3D scene ── */
+    .scene-shell {
+      min-height: 0; overflow: hidden; border-radius: 10px;
+      border: 1px solid rgba(148,163,184,0.22);
+      background: radial-gradient(circle at 50% 30%,rgba(255,255,255,0.95),rgba(244,248,252,0.98) 55%,rgba(236,242,248,1) 100%);
+      position: relative;
+    }
+    #sceneCanvas { width: 100%; height: 100%; display: block; cursor: grab; }
+    #sceneCanvas.dragging { cursor: grabbing; }
+
+    .scene-overlay { position: absolute; inset: 8px 8px auto auto; display: grid; gap: 5px; pointer-events: none; max-width: min(44%,170px); }
+    .overlay-chip { border-radius: 8px; border: 1px solid rgba(148,163,184,0.22); background: rgba(255,255,255,0.88); padding: 6px 8px; display: grid; gap: 2px; backdrop-filter: blur(8px); }
+    .overlay-label { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; font-family: var(--ui-font); }
+    .overlay-value { font-family: var(--ui-font-d); font-size: 12px; font-weight: 700; color: var(--text); }
+    .overlay-value.teal { color: var(--teal); }
+
+    .scene-left-chip { position: absolute; left: 8px; top: 8px; pointer-events: none; border-radius: 8px; border: 1px solid rgba(15,118,110,0.35); background: rgba(240,253,250,0.9); padding: 6px 8px; backdrop-filter: blur(8px); display: grid; gap: 2px; }
+    .scene-help { position: absolute; left: 8px; bottom: 8px; border-radius: 8px; border: 1px solid rgba(148,163,184,0.22); background: rgba(255,255,255,0.84); padding: 5px 8px; color: var(--muted); font-size: 10.5px; backdrop-filter: blur(8px); }
+    .scene-fallback { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.5; padding: 22px; background: rgba(248,251,255,0.92); }
+    .scene-fallback.visible { display: flex; }
+
+    /* ── Plots column ── */
+    .plots-col { display: grid; grid-template-rows: 1fr 1fr auto; gap: 10px; min-height: 0; overflow: hidden; }
+
+    .plot-card {
+      min-height: 0; overflow: hidden;
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: var(--radius); box-shadow: var(--card-shadow);
+      padding: 10px; display: grid; grid-template-rows: auto minmax(0,1fr); gap: 6px;
+    }
+    .plot-shell {
+      min-height: 0; position: relative; overflow: hidden;
+      border-radius: 8px; border: 1px solid rgba(148,163,184,0.14); background: #f9fbfe;
+    }
+    .plot-shell canvas { width: 100%; height: 100%; display: block; }
+
+    /* ── Info cards row ── */
+    .info-cards-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .info-card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm); box-shadow: var(--card-shadow);
+      padding: 9px 11px; display: grid; gap: 4px;
+    }
+    .info-card-title { font-family: var(--math); font-size: 12px; font-weight: 700; color: var(--text); }
+    .info-card-body { font-size: 11px; color: var(--muted); line-height: 1.45; font-family: var(--math); }
+
+    @media (max-width: 1200px) { .left-panel { width: 284px; } }
+    @media (max-width: 980px) { .analysis-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 760px) { html,body { overflow: auto; height: auto; } .app { display: block; } .left-panel { width: 100%; } .right-panel { height: auto; overflow-y: auto; } .analysis-grid { grid-template-columns: 1fr; } .info-cards-row { grid-template-columns: 1fr; } }
+  </style>
+  <link rel="stylesheet" href="_site-shared.css" />
+  <script defer src="_site-manifest.js"></script>
+  <script defer src="_site-nav.js"></script>
+</head>
+<body>
+  <div id="site-nav-root"></div>
+<div class="app">
+
+  <!-- ══════════════ LEFT PANEL ══════════════ -->
+  <aside class="left-panel">
+    <div class="eyebrow">PHYS 681 · Radiometry</div>
+    <div class="panel-title">Specific Intensity &amp; Flux Density</div>
+
+    <div class="formula-box">
+      <div class="formula-label">Key Relations</div>
+      <div class="formula-row">d<i>P</i> = <i>I</i><sub>&nu;</sub> cos&thinsp;&theta; &thinsp;d&sigma;&thinsp;d&Omega;&thinsp;d&nu;</div>
+      <div class="formula-row"><i>S</i><sub>&nu;</sub> = &int; <i>I</i><sub>&nu;</sub>(&theta;,&phi;)&thinsp;cos&thinsp;&theta;&thinsp;d&Omega;</div>
+      <div class="formula-row"><i>S</i><sub>&nu;</sub> &prop; cos&theta; &thinsp;&times;&thinsp;<i>r</i><sup>&minus;2</sup> &nbsp;(resolved source)</div>
+      <div class="formula-note">1 Jy = 10<sup>&minus;26</sup> W&thinsp;m<sup>&minus;2</sup>&thinsp;Hz<sup>&minus;1</sup></div>
+    </div>
+
+    <!-- Presets -->
+    <div class="section">
+      <div class="section-head">Presets</div>
+      <div class="segment-row" id="presetRow">
+        <button class="seg-btn active" data-preset="default" type="button">Default</button>
+        <button class="seg-btn" data-preset="near"    type="button">Near</button>
+        <button class="seg-btn" data-preset="far"     type="button">Far</button>
+        <button class="seg-btn" data-preset="tilted"  type="button">Tilted</button>
+      </div>
+    </div>
+
+    <!-- Parameters -->
+    <div class="section">
+      <div class="section-head">Parameters</div>
+
+      <div class="row">
+        <div class="label-line">
+          <div class="label-name">Distance <i>r</i></div>
+          <div class="label-desc">source–detector (AU)</div>
+        </div>
+        <div class="slider-line">
+          <input id="rRange"    type="range"  min="1"   max="10"      step="0.1"  value="5" />
+          <input id="rNumber"   type="number" min="1"   max="10"      step="0.1"  value="5" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="label-line">
+          <div class="label-name">Source radius <i>R</i><sub>s</sub></div>
+          <div class="label-desc">angular size on sky</div>
+        </div>
+        <div class="slider-line">
+          <input id="sizeRange"   type="range"  min="0.3" max="2.0" step="0.05" value="1" />
+          <input id="sizeNumber"  type="number" min="0.3" max="2.0" step="0.05" value="1" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="label-line">
+          <div class="label-name">Zenith angle &theta;</div>
+          <div class="label-desc">source position (0–60°)</div>
+        </div>
+        <div class="slider-line">
+          <input id="thetaRange"   type="range"  min="0" max="60" step="1" value="0" />
+          <input id="thetaNumber"  type="number" min="0" max="60" step="1" value="0" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Live readout -->
+    <div class="section">
+      <div class="section-head">Live Readout</div>
+      <div class="derived-grid">
+        <div class="small-card" style="border-color:rgba(15,118,110,0.35);background:rgba(15,118,110,0.08);">
+          <div class="small-label"><i>I</i><sub>&nu;</sub> (norm.)</div>
+          <div class="small-value" id="readInu" style="color:#14b8a6;">1.000</div>
+        </div>
+        <div class="small-card" style="border-color:rgba(234,88,12,0.35);background:rgba(234,88,12,0.08);">
+          <div class="small-label"><i>S</i><sub>&nu;</sub> / <i>S</i><sub>0</sub></div>
+          <div class="small-value" id="readSnu" style="color:#fb923c;">—</div>
+        </div>
+        <div class="small-card">
+          <div class="small-label">cos&thinsp;&theta;</div>
+          <div class="small-value" id="readCosTheta">1.000</div>
+        </div>
+        <div class="small-card">
+          <div class="small-label">d&Omega; / &Omega;<sub>0</sub></div>
+          <div class="small-value" id="readOmega">—</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════════ RIGHT PANEL ══════════════ -->
+  <main class="right-panel">
+
+    <!-- Top bar -->
+    <section class="top-bar">
+      <div class="topbar-title">
+        <div class="eyebrow" style="color:var(--muted);">Specific Intensity &amp; Flux Density — PHYS 681</div>
+        <h1><i>I</i><sub>&nu;</sub> is Distance-Independent; &thinsp;<i>S</i><sub>&nu;</sub> &prop; <i>r</i><sup>&minus;2</sup></h1>
+        <p>As <i>r</i> doubles, d&Omega; shrinks 4&times; — <i>I</i><sub>&nu;</sub> stays fixed while <i>S</i><sub>&nu;</sub> = &int;<i>I</i><sub>&nu;</sub>&thinsp;cos&thinsp;&theta;&thinsp;d&Omega; falls as 1/<i>r</i><sup>2</sup>.</p>
+      </div>
+      <div>
+        <div class="pill-row">
+          <div class="pill">
+            <div class="pill-label"><i>I</i><sub>&nu;</sub> (norm.)</div>
+            <div class="pill-value" id="pillInu" style="color:var(--teal);">1.000</div>
+          </div>
+          <div class="pill">
+            <div class="pill-label"><i>S</i><sub>&nu;</sub> / <i>S</i><sub>0</sub></div>
+            <div class="pill-value" id="pillSnu" style="color:var(--amber);">—</div>
+          </div>
+          <div class="pill">
+            <div class="pill-label"><i>r</i> (AU)</div>
+            <div class="pill-value" id="pillR">5.0</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Analysis grid: scene (left) | plots (right) -->
+    <div class="analysis-grid">
+
+      <!-- 3D line-of-sight card -->
+      <section class="card">
+        <div class="card-head">
+          <div class="card-title">Line-of-Sight Geometry</div>
+          <div class="card-sub" id="sceneSub">Source · Solid-angle cone · Detector · Rays</div>
+        </div>
+        <div class="scene-shell" id="sceneShell">
+          <canvas id="sceneCanvas" aria-label="3D scene: source on sky dome, light rays, solid-angle cone, flat detector"></canvas>
+
+          <div class="scene-left-chip">
+            <div class="overlay-label" style="color:var(--teal);">Source</div>
+            <div class="overlay-value teal" style="font-family:var(--math);font-size:12px;"><i>I</i><sub>&nu;</sub> = const</div>
+            <div style="margin-top:4px;font-size:10.5px;color:#0f766e;line-height:1.4;font-family:var(--math);">
+              Teal cap = &Omega;<sub>src</sub><br>
+              <i>S</i><sub>&nu;</sub> = &int;<i>I</i><sub>&nu;</sub>&thinsp;d&Omega;
+            </div>
+          </div>
+
+          <div class="scene-overlay">
+            <div class="overlay-chip">
+              <div class="overlay-label">d&Omega; / &Omega;<sub>0</sub></div>
+              <div class="overlay-value" id="ovOmega">1.0000</div>
+            </div>
+            <div class="overlay-chip">
+              <div class="overlay-label">Distance <i>r</i></div>
+              <div class="overlay-value" id="ovR">5.0 AU</div>
+            </div>
+          </div>
+
+          <div class="scene-help">Drag to orbit &nbsp;&middot;&nbsp; Scroll to zoom</div>
+          <div class="scene-fallback" id="sceneFallback">WebGL unavailable — 3D scene cannot be displayed.</div>
+        </div>
+      </section>
+
+      <!-- Plots column: Iν, Sν, info cards -->
+      <div class="plots-col">
+
+        <!-- Iν vs r -->
+        <section class="plot-card">
+          <div class="card-head">
+            <div class="card-title">Specific Intensity &thinsp;<i>I</i><sub>&nu;</sub> vs. Distance</div>
+            <div class="card-sub">Surface brightness is distance-independent</div>
+          </div>
+          <div class="plot-shell">
+            <canvas id="plotInuCanvas" aria-label="I_nu vs r: flat line at 1.0"></canvas>
+          </div>
+        </section>
+
+        <!-- Sν vs r -->
+        <section class="plot-card">
+          <div class="card-head">
+            <div class="card-title">Flux Density &thinsp;<i>S</i><sub>&nu;</sub> vs. Distance</div>
+            <div class="card-sub"><i>S</i><sub>&nu;</sub> &prop; cos&thinsp;&theta; &thinsp;&times;&thinsp;<i>r</i><sup>&minus;2</sup> — inverse-square law</div>
+          </div>
+          <div class="plot-shell">
+            <canvas id="plotSnuCanvas" aria-label="S_nu vs r: 1/r^2 curve"></canvas>
+          </div>
+        </section>
+
+        <!-- Info cards -->
+        <div class="info-cards-row">
+          <div class="info-card">
+            <div class="info-card-title">Why <i>I</i><sub>&nu;</sub> is constant</div>
+            <div class="info-card-body">As <i>r</i> doubles, d&Omega; shrinks 4&times; but so does the solid angle subtended — the photon surface brightness is preserved exactly at every distance.</div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">The Jansky</div>
+            <div class="info-card-body"><i>S</i><sub>&nu;</sub> = &int;<i>I</i><sub>&nu;</sub>&thinsp;cos&thinsp;&theta;&thinsp;d&Omega;&thinsp; [W&thinsp;m<sup>&minus;2</sup>&thinsp;Hz<sup>&minus;1</sup>]. One Jansky = 10<sup>&minus;26</sup> W m<sup>&minus;2</sup> Hz<sup>&minus;1</sup> — the standard radio flux density unit.</div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">Brightness Temperature</div>
+            <div class="info-card-body"><i>T</i><sub>b</sub> = c<sup>2</sup><i>I</i><sub>&nu;</sub>&thinsp;/&thinsp;(2<i>k</i>&nu;<sup>2</sup>). For a blackbody, <i>T</i><sub>b</sub> = <i>T</i> in the Rayleigh–Jeans regime and, like <i>I</i><sub>&nu;</sub>, it is independent of distance.</div>
+          </div>
+        </div>
+
+      </div><!-- /plots-col -->
+    </div><!-- /analysis-grid -->
+  </main>
+
+</div><!-- /app -->
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js';
+
+/* ─────────────────── A. Physics constants ─────────────────── */
+
+const PHYSICS = {
+  rMin: 1.0, rMax: 10.0, rDefault: 5.0,
+  sizeMin: 0.3, sizeMax: 2.0, sizeDefault: 1.0,
+  thetaMin: 0, thetaMax: 60, thetaDefault: 0,
+};
+
+const PRESETS = {
+  default: { r: 5.0, sourceSize: 1.0, thetaDeg: 0 },
+  near:    { r: 1.5, sourceSize: 1.0, thetaDeg: 0 },
+  far:     { r: 8.0, sourceSize: 1.0, thetaDeg: 0 },
+  tilted:  { r: 3.0, sourceSize: 1.0, thetaDeg: 45 },
+};
+
+const state = { r: 5.0, sourceSize: 1.0, thetaDeg: 0.0 };
+
+function derivePhysics(s) {
+  const theta    = s.thetaDeg * Math.PI / 180;
+  const cosTheta = Math.cos(theta);
+  const OmegaNorm = Math.PI * (s.sourceSize / s.r) ** 2;
+  const OmegaRef  = Math.PI * s.sourceSize ** 2;   // at r=1
+  const Snu       = OmegaNorm * cosTheta;           // normalised so Snu(r=1,θ=0) = π Rs²
+  const SnuRef    = OmegaRef;
+  return { Inu: 1.0, OmegaNorm, OmegaRef, Snu, SnuRef, cosTheta, theta };
+}
+
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+const COLORS = {
+  text: '#102033', muted: '#5f6d82', grid: 'rgba(15,23,42,0.07)',
+  axis: 'rgba(15,23,42,0.18)', bg: '#f9fbfe',
+  teal: '#0f766e', tealL: '#14b8a6', amber: '#ea580c', blue: '#2563eb',
+  marker: '#5a57d8',
+};
+const MFONT  = (sz, w) => `${w||600} ${sz}px "STIX Two Text","Cambria Math",serif`;
+const UIFONT = (sz, w) => `${w||400} ${sz}px -apple-system,"Helvetica Neue",Arial,sans-serif`;
+
+/* ─────────────────── B. DOM references ─────────────────── */
+
+const dom = {
+  sceneShell:    document.getElementById('sceneShell'),
+  sceneCanvas:   document.getElementById('sceneCanvas'),
+  sceneFallback: document.getElementById('sceneFallback'),
+  sceneSub:      document.getElementById('sceneSub'),
+  plotInuCanvas: document.getElementById('plotInuCanvas'),
+  plotSnuCanvas: document.getElementById('plotSnuCanvas'),
+  rRange:        document.getElementById('rRange'),
+  rNumber:       document.getElementById('rNumber'),
+  sizeRange:     document.getElementById('sizeRange'),
+  sizeNumber:    document.getElementById('sizeNumber'),
+  thetaRange:    document.getElementById('thetaRange'),
+  thetaNumber:   document.getElementById('thetaNumber'),
+  readInu:       document.getElementById('readInu'),
+  readSnu:       document.getElementById('readSnu'),
+  readCosTheta:  document.getElementById('readCosTheta'),
+  readOmega:     document.getElementById('readOmega'),
+  pillInu:       document.getElementById('pillInu'),
+  pillSnu:       document.getElementById('pillSnu'),
+  pillR:         document.getElementById('pillR'),
+  ovOmega:       document.getElementById('ovOmega'),
+  ovR:           document.getElementById('ovR'),
+  presetButtons: Array.from(document.querySelectorAll('#presetRow .seg-btn')),
+};
+
+/* ─────────────────── C. Canvas utilities ─────────────────── */
+
+function resizeCanvas2D(canvas, ctx) {
+  const dpr  = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(1, Math.round(rect.width  * dpr));
+  const h = Math.max(1, Math.round(rect.height * dpr));
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { width: rect.width, height: rect.height };
+}
+
+/* ─────────────────── D. Three.js scene ─────────────────── */
+
+function makeRenderer(canvas) {
+  const opts = { alpha: true, antialias: true, powerPreference: 'default', failIfMajorPerformanceCaveat: false };
+  try {
+    const ctx = canvas.getContext('webgl2', opts) || canvas.getContext('webgl', opts) || canvas.getContext('experimental-webgl', opts);
+    if (!ctx) throw new Error('no WebGL');
+    const renderer = new THREE.WebGLRenderer({ canvas, context: ctx, antialias: true, alpha: true });
+    renderer.isFallback = false;
+    renderer.setClearColor(0x000000, 0);
+    return renderer;
+  } catch (e) {
+    return { isFallback: true, setPixelRatio() {}, setSize() {}, setClearColor() {}, render() {} };
+  }
+}
+
+const R_DOME = 2.5;
+
+const scene3D = {
+  renderer: null, scene: null, camera: null,
+  sourceGroup: null, sourceDisc: null, sourceRing: null,
+  detectorGroup: null, detectorMesh: null, detectorEdge: null, detectorNormal: null,
+  rays: [],
+  coneMesh: null,
+  domeCirPts: null, domeCir: null,
+  domeCap: null,
+  thetaArc: null, thetaArcPts: null,
+  zenithLine: null,
+};
+
+function initScene3D() {
+  scene3D.renderer = makeRenderer(dom.sceneCanvas);
+  if (scene3D.renderer.isFallback) { dom.sceneFallback.classList.add('visible'); return false; }
+
+  scene3D.scene  = new THREE.Scene();
+  scene3D.camera = new THREE.PerspectiveCamera(38, 1, 0.05, 100);
+
+  const ambient = new THREE.AmbientLight(0xffffff, 1.1);
+  const key = new THREE.DirectionalLight(0xffffff, 0.45);
+  key.position.set(4, 6, 5);
+  scene3D.scene.add(ambient, key);
+
+  /* Ground */
+  const gnd = new THREE.Mesh(
+    new THREE.PlaneGeometry(8, 8),
+    new THREE.MeshBasicMaterial({ color: 0xd4c9b0, transparent: true, opacity: 0.30, side: THREE.DoubleSide, depthWrite: false })
+  );
+  gnd.rotation.x = -Math.PI / 2;
+  scene3D.scene.add(gnd);
+  const grid = new THREE.GridHelper(8, 14, 0x9a8a70, 0xb0a090);
+  grid.material.transparent = true; grid.material.opacity = 0.28;
+  scene3D.scene.add(grid);
+
+  /* Sky hemisphere */
+  scene3D.scene.add(new THREE.Mesh(
+    new THREE.SphereGeometry(R_DOME, 36, 18, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.MeshBasicMaterial({ color: 0x2d5f9a, transparent: true, opacity: 0.07, side: THREE.BackSide, depthWrite: false })
+  ));
+  const hPts = [];
+  for (let i = 0; i <= 128; i++) {
+    const a = (i / 128) * Math.PI * 2;
+    hPts.push(new THREE.Vector3(R_DOME * Math.cos(a), 0.01, R_DOME * Math.sin(a)));
+  }
+  scene3D.scene.add(new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(hPts),
+    new THREE.LineBasicMaterial({ color: 0x6f8a93, transparent: true, opacity: 0.40 })
+  ));
+
+  /* Zenith line */
+  scene3D.zenithLine = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0.02, 0), new THREE.Vector3(0, R_DOME, 0)]),
+    new THREE.LineDashedMaterial({ color: 0x94a3b8, dashSize: 0.15, gapSize: 0.10, transparent: true, opacity: 0.55 })
+  );
+  scene3D.zenithLine.computeLineDistances();
+  scene3D.scene.add(scene3D.zenithLine);
+
+  /* Source group */
+  scene3D.sourceGroup = new THREE.Group();
+  scene3D.sourceDisc = new THREE.Mesh(
+    new THREE.CircleGeometry(1.0, 64),
+    new THREE.MeshBasicMaterial({ color: 0x99f6e4, transparent: true, opacity: 0.75, side: THREE.DoubleSide })
+  );
+  const rPts = [];
+  for (let i = 0; i <= 64; i++) { const a = (i / 64) * Math.PI * 2; rPts.push(new THREE.Vector3(Math.cos(a), Math.sin(a), 0)); }
+  scene3D.sourceRing = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(rPts), new THREE.LineBasicMaterial({ color: 0x5eead4 }));
+  scene3D.sourceGroup.add(scene3D.sourceDisc, scene3D.sourceRing);
+  scene3D.scene.add(scene3D.sourceGroup);
+
+  /* Detector */
+  scene3D.detectorGroup = new THREE.Group();
+  scene3D.detectorMesh  = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.85, 0.85),
+    new THREE.MeshBasicMaterial({ color: 0xbfdbfe, transparent: true, opacity: 0.80, side: THREE.DoubleSide })
+  );
+  scene3D.detectorMesh.rotation.x = -Math.PI / 2;
+  const ePts = [new THREE.Vector3(-0.425,0,-0.425), new THREE.Vector3(0.425,0,-0.425), new THREE.Vector3(0.425,0,0.425), new THREE.Vector3(-0.425,0,0.425)];
+  scene3D.detectorEdge = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(ePts), new THREE.LineBasicMaterial({ color: 0x2563eb }));
+  scene3D.detectorGroup.add(scene3D.detectorMesh, scene3D.detectorEdge);
+  scene3D.scene.add(scene3D.detectorGroup);
+
+  /* Normal arrow */
+  scene3D.detectorNormal = new THREE.ArrowHelper(new THREE.Vector3(0,1,0), new THREE.Vector3(0,0,0), 0.75, 0x2563eb, 0.14, 0.07);
+  scene3D.scene.add(scene3D.detectorNormal);
+
+  /* Light rays */
+  for (let i = 0; i < 5; i++) {
+    const line = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+      new THREE.LineBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.65 })
+    );
+    scene3D.rays.push(line);
+    scene3D.scene.add(line);
+  }
+
+  /* Solid-angle cone */
+  scene3D.coneMesh = new THREE.Mesh(
+    new THREE.ConeGeometry(0.3, R_DOME, 22, 1, true),
+    new THREE.MeshBasicMaterial({ color: 0x94a3b8, wireframe: true, transparent: true, opacity: 0.35 })
+  );
+  scene3D.scene.add(scene3D.coneMesh);
+
+  /* Dome landing circle */
+  scene3D.domeCirPts = new Float32Array(65 * 3);
+  const dcGeom = new THREE.BufferGeometry();
+  dcGeom.setAttribute('position', new THREE.BufferAttribute(scene3D.domeCirPts, 3));
+  scene3D.domeCir = new THREE.LineLoop(dcGeom, new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.75 }));
+  scene3D.scene.add(scene3D.domeCir);
+
+  /* Teal spherical cap (solid angle Ω_src) */
+  scene3D.domeCap = new THREE.Mesh(
+    new THREE.SphereGeometry(R_DOME * 0.998, 32, 10, 0, Math.PI * 2, 0, 0.2),
+    new THREE.MeshBasicMaterial({ color: 0x14b8a6, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false })
+  );
+  scene3D.scene.add(scene3D.domeCap);
+
+  /* Theta arc */
+  scene3D.thetaArcPts = new Float32Array(31 * 3);
+  const arcGeom = new THREE.BufferGeometry();
+  arcGeom.setAttribute('position', new THREE.BufferAttribute(scene3D.thetaArcPts, 3));
+  scene3D.thetaArc = new THREE.Line(arcGeom, new THREE.LineBasicMaterial({ color: 0xf472b6, transparent: true, opacity: 0.9 }));
+  scene3D.scene.add(scene3D.thetaArc);
+
+  dom.sceneCanvas.addEventListener('pointerdown',  handlePointerDown);
+  dom.sceneCanvas.addEventListener('pointermove',  handlePointerMove);
+  dom.sceneCanvas.addEventListener('pointerup',    handlePointerEnd);
+  dom.sceneCanvas.addEventListener('pointercancel',handlePointerEnd);
+  dom.sceneCanvas.addEventListener('wheel',        handleWheel, { passive: false });
+
+  resize3DScene();
+  return true;
+}
+
+/* ─────────────────── E. Scene geometry update ─────────────────── */
+
+function updateSceneGeometry() {
+  const { r, sourceSize, thetaDeg } = state;
+  const theta     = thetaDeg * Math.PI / 180;
+  const sourceDir = new THREE.Vector3(0, Math.cos(theta), Math.sin(theta)).normalize();
+  const sourceCtr = sourceDir.clone().multiplyScalar(R_DOME);
+  const visR      = clamp(R_DOME * sourceSize / r, 0.04, R_DOME * 0.65);
+  const rayOpacity = Math.max(0.20, 0.75 - 0.055 * (r - PHYSICS.rMin));
+
+  scene3D.sourceGroup.position.copy(sourceCtr);
+  scene3D.sourceGroup.scale.setScalar(visR);
+  scene3D.sourceGroup.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), sourceDir.clone().negate());
+
+  scene3D.detectorGroup.rotation.set(0, 0, 0);
+  scene3D.detectorNormal.setDirection(new THREE.Vector3(0, 1, 0));
+
+  const v1 = new THREE.Vector3(1, 0, 0);
+  const v2 = new THREE.Vector3().crossVectors(sourceDir, v1).normalize();
+  const origin = new THREE.Vector3(0, 0.02, 0);
+  const srcPts = [
+    sourceCtr,
+    sourceCtr.clone().addScaledVector(v1,  visR * 0.92),
+    sourceCtr.clone().addScaledVector(v1, -visR * 0.92),
+    sourceCtr.clone().addScaledVector(v2,  visR * 0.92),
+    sourceCtr.clone().addScaledVector(v2, -visR * 0.92),
+  ];
+  scene3D.rays.forEach((ray, i) => { ray.geometry.setFromPoints([srcPts[i], origin]); ray.material.opacity = rayOpacity; });
+
+  const negDir = sourceDir.clone().negate();
+  scene3D.coneMesh.geometry.dispose();
+  scene3D.coneMesh.geometry = new THREE.ConeGeometry(visR, R_DOME, 22, 1, true);
+  scene3D.coneMesh.position.copy(sourceDir.clone().multiplyScalar(R_DOME / 2));
+  scene3D.coneMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), negDir);
+
+  /* Dome landing circle — projected onto sphere surface */
+  const dcp = scene3D.domeCirPts;
+  for (let i = 0; i < 65; i++) {
+    const phi = (i / 64) * Math.PI * 2;
+    const raw = sourceCtr.clone()
+      .addScaledVector(v1, visR * Math.cos(phi))
+      .addScaledVector(v2, visR * Math.sin(phi));
+    raw.normalize().multiplyScalar(R_DOME);
+    dcp[i*3] = raw.x; dcp[i*3+1] = raw.y; dcp[i*3+2] = raw.z;
+  }
+  scene3D.domeCir.geometry.attributes.position.needsUpdate = true;
+
+  /* Teal spherical cap */
+  const alpha = Math.atan2(visR, R_DOME);
+  scene3D.domeCap.geometry.dispose();
+  scene3D.domeCap.geometry = new THREE.SphereGeometry(R_DOME * 0.998, 32, 10, 0, Math.PI * 2, 0, alpha);
+  scene3D.domeCap.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), sourceDir);
+
+  /* Theta arc */
+  const Ra = 0.55, ap = scene3D.thetaArcPts;
+  for (let i = 0; i <= 30; i++) {
+    const angle = (i / 30) * theta;
+    ap[i*3] = 0; ap[i*3+1] = Ra * Math.cos(angle); ap[i*3+2] = Ra * Math.sin(angle);
+  }
+  scene3D.thetaArc.geometry.attributes.position.needsUpdate = true;
+  scene3D.thetaArc.visible = thetaDeg > 1;
+}
+
+/* ─────────────────── F. Camera orbit ─────────────────── */
+
+const view3D = { azimuth: 0.38, polar: 1.05, distance: 6.5, dragging: false, pointerId: null, lastX: 0, lastY: 0 };
+const LOOK_AT_Y = 1.0;
+
+function updateCamera() {
+  const { azimuth, polar, distance } = view3D;
+  const sinP = Math.sin(polar);
+  scene3D.camera.position.set(
+    distance * sinP * Math.sin(azimuth),
+    LOOK_AT_Y + distance * Math.cos(polar),
+    distance * sinP * Math.cos(azimuth)
+  );
+  scene3D.camera.lookAt(0, LOOK_AT_Y, 0);
+}
+
+function resize3DScene() {
+  if (!scene3D.renderer || scene3D.renderer.isFallback || !scene3D.camera) return;
+  const rect = dom.sceneCanvas.getBoundingClientRect();
+  scene3D.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  scene3D.renderer.setSize(rect.width, rect.height, false);
+  scene3D.camera.aspect = rect.width / Math.max(rect.height, 1);
+  scene3D.camera.updateProjectionMatrix();
+}
+
+function handlePointerDown(e) {
+  view3D.dragging = true; view3D.pointerId = e.pointerId;
+  view3D.lastX = e.clientX; view3D.lastY = e.clientY;
+  dom.sceneCanvas.setPointerCapture(e.pointerId);
+  dom.sceneCanvas.classList.add('dragging');
+  e.preventDefault();
+}
+function handlePointerMove(e) {
+  if (!view3D.dragging || e.pointerId !== view3D.pointerId) return;
+  const dx = e.clientX - view3D.lastX, dy = e.clientY - view3D.lastY;
+  view3D.lastX = e.clientX; view3D.lastY = e.clientY;
+  view3D.azimuth -= dx * 0.008;
+  view3D.polar = clamp(view3D.polar - dy * 0.008, 0.12, Math.PI - 0.12);
+  updateCamera();
+  scene3D.renderer.render(scene3D.scene, scene3D.camera);
+}
+function handlePointerEnd(e) {
+  if (e.pointerId !== view3D.pointerId) return;
+  view3D.dragging = false; view3D.pointerId = null;
+  dom.sceneCanvas.classList.remove('dragging');
+}
+function handleWheel(e) {
+  e.preventDefault();
+  view3D.distance = clamp(view3D.distance + e.deltaY * 0.012, 4, 22);
+  updateCamera();
+  scene3D.renderer.render(scene3D.scene, scene3D.camera);
+}
+
+/* ─────────────────── G. 2D plot helpers ─────────────────── */
+
+let plotInuCtx = null, plotSnuCtx = null;
+
+function drawPlotAxes(ctx, pw, ph, ml, mt, xTicks, yTickVals, yTickLabels, xLabel, yLabel, yMax) {
+  ctx.fillStyle = COLORS.bg;
+  ctx.fillRect(0, 0, ml + pw + 60, mt + ph + 50);
+
+  const xOf = r => ml + (r - PHYSICS.rMin) / (PHYSICS.rMax - PHYSICS.rMin) * pw;
+  const yOf = v => mt + ph - (v / yMax) * ph;
+
+  /* Grid */
+  ctx.strokeStyle = COLORS.grid; ctx.lineWidth = 0.7; ctx.setLineDash([]);
+  xTicks.forEach(r => {
+    const x = xOf(r);
+    ctx.beginPath(); ctx.moveTo(x, mt); ctx.lineTo(x, mt + ph); ctx.stroke();
+  });
+  yTickVals.forEach(v => {
+    const y = yOf(v);
+    ctx.beginPath(); ctx.moveTo(ml, y); ctx.lineTo(ml + pw, y); ctx.stroke();
+  });
+
+  /* Axes */
+  ctx.strokeStyle = COLORS.axis; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(ml, mt); ctx.lineTo(ml, mt + ph); ctx.lineTo(ml + pw, mt + ph); ctx.stroke();
+
+  /* X tick labels */
+  ctx.fillStyle = COLORS.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.font = MFONT(10);
+  xTicks.forEach(r => ctx.fillText(String(r), xOf(r), mt + ph + 4));
+
+  /* Y tick labels */
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  yTickVals.forEach((v, i) => ctx.fillText(yTickLabels[i], ml - 5, yOf(v)));
+
+  /* Axis labels */
+  ctx.fillStyle = COLORS.text; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.font = MFONT(11);
+  ctx.fillText(xLabel, ml + pw / 2, mt + ph + 22);
+  ctx.save();
+  ctx.translate(11, mt + ph / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText(yLabel, 0, 0);
+  ctx.restore();
+}
+
+/* ─────────────────── H. Draw Iν(r) ─────────────────── */
+
+function drawPlotInu() {
+  if (!plotInuCtx) return;
+  const ctx = plotInuCtx;
+  const { width, height } = resizeCanvas2D(dom.plotInuCanvas, ctx);
+  if (width < 10 || height < 10) return;
+
+  const m = { l: 52, r: 14, t: 16, b: 34 };
+  const pw = width - m.l - m.r, ph = height - m.t - m.b;
+  const yMax = 1.45;
+  const xOf = r => m.l + (r - PHYSICS.rMin) / (PHYSICS.rMax - PHYSICS.rMin) * pw;
+  const yOf = v => m.t + ph - (v / yMax) * ph;
+
+  const dpr = window.devicePixelRatio || 1;
+  ctx.clearRect(0, 0, ctx.canvas.width / dpr + 4, ctx.canvas.height / dpr + 4);
+
+  drawPlotAxes(ctx, pw, ph, m.l, m.t,
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    [0, 0.25, 0.50, 0.75, 1.00, 1.25],
+    ['0', '0.25', '0.50', '0.75', '1.00', '1.25'],
+    'r  [AU]', 'Iν  (normalised)', yMax);
+
+  /* Flat Iν = 1 line */
+  const y1 = yOf(1.0);
+  ctx.beginPath();
+  ctx.moveTo(xOf(PHYSICS.rMin), y1); ctx.lineTo(xOf(PHYSICS.rMax), y1);
+  ctx.strokeStyle = COLORS.tealL; ctx.lineWidth = 2.4; ctx.setLineDash([]); ctx.stroke();
+
+  /* Annotation */
+  ctx.fillStyle = COLORS.teal; ctx.font = MFONT(10.5); ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+  ctx.fillText('Iν = const', xOf(PHYSICS.rMax) - 4, y1 - 5);
+
+  /* Moving vertical cursor */
+  const xM = xOf(state.r);
+  ctx.strokeStyle = 'rgba(90,87,216,0.40)'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(xM, m.t); ctx.lineTo(xM, m.t + ph); ctx.stroke(); ctx.setLineDash([]);
+
+  /* Marker dot */
+  ctx.beginPath(); ctx.arc(xM, y1, 5, 0, Math.PI * 2);
+  ctx.fillStyle = COLORS.marker; ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  ctx.fillStyle = COLORS.marker; ctx.font = MFONT(9.5); ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillText('r = ' + state.r.toFixed(1), xM, m.t + 3);
+}
+
+/* ─────────────────── I. Draw Sν(r) ─────────────────── */
+
+function drawPlotSnu() {
+  if (!plotSnuCtx) return;
+  const ctx = plotSnuCtx;
+  const { width, height } = resizeCanvas2D(dom.plotSnuCanvas, ctx);
+  if (width < 10 || height < 10) return;
+
+  const m = { l: 52, r: 14, t: 16, b: 34 };
+  const pw = width - m.l - m.r, ph = height - m.t - m.b;
+  const yMax = 1.12;
+  const xOf = r => m.l + (r - PHYSICS.rMin) / (PHYSICS.rMax - PHYSICS.rMin) * pw;
+  const yOf = v => m.t + ph - (v / yMax) * ph;
+  const cosT = Math.cos(state.thetaDeg * Math.PI / 180);
+
+  const dpr = window.devicePixelRatio || 1;
+  ctx.clearRect(0, 0, ctx.canvas.width / dpr + 4, ctx.canvas.height / dpr + 4);
+
+  drawPlotAxes(ctx, pw, ph, m.l, m.t,
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    [0, 0.25, 0.50, 0.75, 1.00],
+    ['0', '0.25', '0.50', '0.75', '1.00'],
+    'r  [AU]', 'Sν / S₀', yMax);
+
+  /* Sν = cosθ / r² curve (normalised so Sν(r=1)=cosθ, shown relative to θ=0 peak) */
+  ctx.beginPath();
+  let first = true;
+  for (let i = 0; i <= 300; i++) {
+    const r   = PHYSICS.rMin + (i / 300) * (PHYSICS.rMax - PHYSICS.rMin);
+    const snu = cosT / (r * r);
+    const x = xOf(r);
+    const y = yOf(snu);
+    if (y < m.t - 4 || y > m.t + ph + 4) { first = true; continue; }
+    if (first) { ctx.moveTo(x, Math.max(m.t, y)); first = false; } else ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = COLORS.amber; ctx.lineWidth = 2.4; ctx.setLineDash([]); ctx.stroke();
+
+  /* Annotation */
+  ctx.fillStyle = COLORS.amber; ctx.font = MFONT(10.5); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  const yAtR1 = yOf(cosT);
+  const annotY = (yAtR1 > m.t + 16) ? yAtR1 - 16 : yAtR1 + 4;
+  ctx.fillText('Sν ∝ cosθ · r⁻²', xOf(1.0) + 4, Math.max(m.t + 2, Math.min(m.t + ph - 14, annotY)));
+
+  /* cosθ label when tilted */
+  if (state.thetaDeg > 2) {
+    ctx.fillStyle = COLORS.muted; ctx.font = MFONT(10); ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+    ctx.fillText('cosθ = ' + cosT.toFixed(3), xOf(PHYSICS.rMax) - 3, m.t + 3);
+  }
+
+  /* Moving vertical cursor */
+  const xM = xOf(state.r);
+  ctx.strokeStyle = 'rgba(90,87,216,0.40)'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(xM, m.t); ctx.lineTo(xM, m.t + ph); ctx.stroke(); ctx.setLineDash([]);
+
+  /* Marker dot */
+  const snuNow = cosT / (state.r * state.r);
+  const yM = yOf(snuNow);
+  if (yM >= m.t - 4 && yM <= m.t + ph + 4) {
+    ctx.beginPath(); ctx.arc(xM, clamp(yM, m.t + 4, m.t + ph - 4), 5, 0, Math.PI * 2);
+    ctx.fillStyle = COLORS.marker; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+
+  ctx.fillStyle = COLORS.marker; ctx.font = MFONT(9.5); ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillText('r = ' + state.r.toFixed(1), xM, m.t + 3);
+}
+
+/* ─────────────────── J. Readout updates ─────────────────── */
+
+function updateReadouts() {
+  const d = derivePhysics(state);
+  const snuNorm   = d.Snu / d.SnuRef;   // = cosθ / r²
+  const omegaNorm = d.OmegaNorm / d.OmegaRef;
+
+  dom.readInu.textContent      = '1.000';
+  dom.readSnu.textContent      = snuNorm.toFixed(4);
+  dom.readCosTheta.textContent = d.cosTheta.toFixed(3);
+  dom.readOmega.textContent    = omegaNorm.toFixed(4);
+
+  dom.pillInu.textContent = '1.000';
+  dom.pillSnu.textContent = snuNorm.toFixed(4);
+  dom.pillR.textContent   = state.r.toFixed(1);
+
+  dom.ovOmega.textContent = omegaNorm.toFixed(4);
+  dom.ovR.textContent     = state.r.toFixed(1) + ' AU';
+
+  dom.sceneSub.textContent =
+    `r = ${state.r.toFixed(1)} AU  ·  θ = ${state.thetaDeg.toFixed(0)}°  ·  cosθ = ${d.cosTheta.toFixed(3)}`;
+}
+
+/* ─────────────────── K. Render ─────────────────── */
+
+function renderFrame() {
+  updateReadouts();
+  if (scene3D.renderer && !scene3D.renderer.isFallback && scene3D.scene) {
+    updateSceneGeometry();
+    updateCamera();
+    scene3D.renderer.render(scene3D.scene, scene3D.camera);
+  }
+  drawPlotInu();
+  drawPlotSnu();
+}
+
+/* ─────────────────── L. Controls ─────────────────── */
+
+function syncControls() {
+  dom.rRange.value      = state.r;
+  dom.rNumber.value     = state.r;
+  dom.sizeRange.value   = state.sourceSize;
+  dom.sizeNumber.value  = state.sourceSize;
+  dom.thetaRange.value  = state.thetaDeg;
+  dom.thetaNumber.value = state.thetaDeg;
+}
+
+function clearPresetActive() { dom.presetButtons.forEach(b => b.classList.remove('active')); }
+
+function bindSlider(rangeId, numberId, key, min, max) {
+  const range  = document.getElementById(rangeId);
+  const number = document.getElementById(numberId);
+  range.addEventListener('input', () => {
+    state[key] = clamp(parseFloat(range.value), min, max);
+    number.value = state[key]; clearPresetActive(); renderFrame();
+  });
+  number.addEventListener('change', () => {
+    const v = parseFloat(number.value);
+    if (isNaN(v)) return;
+    state[key] = clamp(v, min, max);
+    range.value = state[key]; number.value = state[key]; clearPresetActive(); renderFrame();
+  });
+}
+
+bindSlider('rRange',     'rNumber',     'r',          PHYSICS.rMin,    PHYSICS.rMax);
+bindSlider('sizeRange',  'sizeNumber',  'sourceSize', PHYSICS.sizeMin, PHYSICS.sizeMax);
+bindSlider('thetaRange', 'thetaNumber', 'thetaDeg',   PHYSICS.thetaMin,PHYSICS.thetaMax);
+
+dom.presetButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const p = PRESETS[btn.dataset.preset];
+    if (!p) return;
+    Object.assign(state, p);
+    syncControls();
+    dom.presetButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderFrame();
+  });
+});
+
+/* ─────────────────── M. Initialise ─────────────────── */
+
+plotInuCtx = dom.plotInuCanvas.getContext('2d');
+plotSnuCtx = dom.plotSnuCanvas.getContext('2d');
+
+initScene3D();
+
+const ro = new ResizeObserver(() => { resize3DScene(); renderFrame(); });
+ro.observe(dom.sceneShell);
+ro.observe(dom.plotInuCanvas.parentElement);
+ro.observe(dom.plotSnuCanvas.parentElement);
+
+syncControls();
+renderFrame();
+</script>
+  <div id="site-footer-root"></div>
+</body>
+</html>

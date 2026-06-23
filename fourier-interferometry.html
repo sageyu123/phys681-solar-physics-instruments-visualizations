@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fourier Basis of Imaging</title>
+    <meta name="description" content="Show how Fourier components build images and how interferometers sample spatial frequencies." />
+  <meta name="author" content="Sijie Yu" />
+  <meta name="application-name" content="Phys 681 Solar Physics and Instruments Teaching Visualizations" />
+<title>Fourier Basis of Imaging</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -22,8 +25,9 @@
                   linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
       padding: 24px; color: var(--ink); min-height: 100vh;
     }
-    .shell { max-width: 1100px; margin: 0 auto; display: grid; gap: 18px; }
+    .shell { width: 100%; max-width: 1100px; min-width: 0; margin: 0 auto; display: grid; gap: 18px; }
     .hero, .panel {
+      min-width: 0;
       background: var(--panel); border: 1px solid rgba(31,31,31,0.08);
       border-radius: var(--radius); box-shadow: var(--shadow); padding: 26px 30px;
     }
@@ -34,6 +38,8 @@
     p { color: var(--muted); line-height: 1.55; margin-bottom: 10px; }
     p:last-child { margin-bottom: 0; }
     .formula {
+      max-width: 100%;
+      overflow-x: auto;
       font-family: var(--math); font-size: 16px;
       background: rgba(37,99,235,0.07); border-left: 3px solid var(--accent);
       padding: 11px 18px; border-radius: 0 8px 8px 0; margin: 12px 0; color: var(--ink);
@@ -49,6 +55,7 @@
       display: flex; flex-wrap: wrap; gap: 20px;
       align-items: flex-start; margin-top: 16px;
     }
+    .main-layout > * { min-width: 0; }
     .canvas-wrap { display: flex; flex-direction: column; gap: 6px; }
     .canvas-label { font-size: 12px; color: var(--muted); text-align: center; }
     canvas { display: block; border-radius: 10px; }
@@ -323,7 +330,15 @@
     }
 
     @media (max-width: 700px) {
+      body { padding: 12px; }
+      .hero, .panel { padding: 18px 14px; }
+      .play-row { flex-wrap: wrap; }
+      .play-row input[type=range] { min-width: 150px; }
+      .s0-controls { grid-template-columns: 1fr; }
+      .s0-slider-line { flex-wrap: wrap; }
+      .s0-slider-value { min-width: auto; text-align: left; }
       .sky-canvas, .uv-canvas { width: 100% !important; height: auto !important; aspect-ratio: 1; }
+      .info-panel { width: 100%; min-width: 0; }
       .s0-visuals {
         grid-template-columns: 1fr;
       }
@@ -415,8 +430,12 @@
 
 
   </style>
+  <link rel="stylesheet" href="_site-shared.css" />
+  <script defer src="_site-manifest.js"></script>
+  <script defer src="_site-nav.js"></script>
 </head>
 <body>
+  <div id="site-nav-root"></div>
 <div class="shell">
 
   <div class="hero">
@@ -2632,5 +2651,6 @@
 
 
 
+  <div id="site-footer-root"></div>
 </body>
 </html>

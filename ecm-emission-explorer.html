@@ -1,0 +1,3431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Explain loss-cone free energy, cyclotron resonance, beam geometry, and escape conditions for ECM." />
+  <meta name="author" content="Sijie Yu" />
+  <meta name="application-name" content="Phys 681 Solar Physics and Instruments Teaching Visualizations" />
+<title>ECM Emission Explorer — Phys 681</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    @font-face {
+      font-family: "STIX Two Math";
+      src: local("STIX Two Math"), local("STIX Two Math Regular"), local("STIXTwoMath-Regular");
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+    }
+
+    :root {
+      --ui-font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --ui-font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --math-font: "STIX Two Math", "STIX Two Text", "Cambria Math", "Latin Modern Math", "STIXGeneral", "Times New Roman", serif;
+      --mono-font: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+
+      --rail-bg-top: #1a2a40;
+      --rail-bg-bot: #0f1a2a;
+      --rail-ink: #e2e8f0;
+      --rail-ink-bright: #f8fbff;
+      --rail-muted: #9db0c5;
+      --rail-border: rgba(148, 163, 184, 0.18);
+      --rail-fill: rgba(255, 255, 255, 0.05);
+      --rail-fill-strong: rgba(255, 255, 255, 0.09);
+
+      --gallery-bg: #f4f6f9;
+      --card-bg: #ffffff;
+      --card-border: rgba(15, 23, 42, 0.06);
+      --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 14px 34px -14px rgba(20, 40, 80, 0.14);
+      --card-radius: 16px;
+
+      --ink: #0f172a;
+      --ink-soft: #334155;
+      --muted: #667085;
+      --rule: rgba(15, 23, 42, 0.08);
+
+      --cloud-thermal-core: rgba(220, 55, 60, 0.85);
+      --cloud-thermal-mid:  rgba(220, 55, 60, 0.48);
+      --cloud-thermal-fade: rgba(220, 55, 60, 0.00);
+      --marker-resonance:   rgba(22, 163, 95, 1);
+      --accent:             #4ade80;    /* ECM page rail accent (green) */
+      --accent-warm:        #f59e0b;
+      --chip-ok:            #10b981;
+      --chip-bad:           #ef4444;
+      --chip-warn:          #f59e0b;
+
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: var(--ui-font-text);
+      color: var(--ink);
+      background: var(--gallery-bg);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    body { font-size: 14px; }
+
+    .app { display: flex; height: 100%; overflow: hidden; }
+
+    .rail {
+      width: 340px;
+      min-width: 320px;
+      flex-shrink: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 22px 20px 26px;
+      background: linear-gradient(180deg, var(--rail-bg-top) 0%, var(--rail-bg-bot) 100%);
+      color: var(--rail-ink);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148, 163, 184, 0.32) transparent;
+    }
+    .rail::-webkit-scrollbar { width: 6px; }
+    .rail::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.32); border-radius: 4px; }
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 14px;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    .eyebrow {
+      font-size: 10.5px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--rail-muted);
+      margin-bottom: 9px;
+    }
+    .rail-title {
+      font-family: var(--ui-font-display);
+      font-size: 29px;
+      line-height: 1.04;
+      letter-spacing: -0.03em;
+      color: var(--rail-ink-bright);
+      margin-bottom: 10px;
+    }
+    .rail-lede {
+      font-size: 13.5px;
+      color: var(--rail-muted);
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .rail-section { margin-bottom: 18px; }
+    .rail-section-head {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--rail-muted);
+      margin-bottom: 10px;
+    }
+    .story-card {
+      display: grid;
+      gap: 8px;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--rail-border);
+      background: var(--rail-fill);
+    }
+    .story-step {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+    }
+    .story-step + .story-step {
+      padding-top: 8px;
+      border-top: 1px solid rgba(148, 163, 184, 0.14);
+    }
+    .story-key {
+      font-family: var(--mono-font);
+      font-size: 11px;
+      font-weight: 700;
+      color: #86efac;
+      line-height: 1.45;
+    }
+    .story-text {
+      font-size: 11.5px;
+      line-height: 1.45;
+      color: var(--rail-ink);
+    }
+    .math-i,
+    .math-r {
+      font-family: var(--math-font);
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .math-i { font-style: italic; }
+    .math-r { font-style: normal; }
+    .math-i sub, .math-i sup,
+    .math-r sub, .math-r sup {
+      font-style: normal;
+    }
+    .math-i sub, .math-r sub {
+      font-size: 0.68em;
+      vertical-align: -0.28em;
+    }
+    .math-i sup, .math-r sup {
+      font-size: 0.68em;
+      vertical-align: 0.42em;
+    }
+
+    .preset-grid { display: grid; grid-template-columns: 1fr; gap: 7px; }
+    .preset-btn {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--rail-border);
+      background: var(--rail-fill);
+      color: var(--rail-ink);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.18s var(--ease-out), border-color 0.18s var(--ease-out), transform 0.18s var(--ease-out);
+    }
+    .preset-btn:hover { background: var(--rail-fill-strong); transform: translateY(-1px); }
+    .preset-btn.active {
+      background: rgba(74, 222, 128, 0.13);
+      border-color: rgba(74, 222, 128, 0.55);
+      color: #dcfce7;
+    }
+    .preset-icon {
+      width: 28px; height: 28px;
+      display: grid; place-items: center;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+      font-family: var(--math-font);
+      font-style: italic;
+      font-size: 14px;
+    }
+    .preset-btn.active .preset-icon {
+      background: rgba(74, 222, 128, 0.22);
+      color: #bbf7d0;
+    }
+    .preset-label { display: grid; gap: 2px; min-width: 0; }
+    .preset-name {
+      font-family: var(--ui-font-display);
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: -0.01em;
+      color: var(--rail-ink-bright);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .preset-desc {
+      font-size: 12px;
+      color: var(--rail-muted);
+      line-height: 1.3;
+    }
+
+    .slider-row { margin-bottom: 13px; }
+    .slider-row:last-child { margin-bottom: 0; }
+
+    .slider-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+    .slider-name {
+      font-family: var(--math-font);
+      font-size: 14.5px;
+      color: var(--rail-ink-bright);
+    }
+    .slider-desc {
+      font-size: 12px;
+      color: var(--rail-muted);
+      line-height: 1.3;
+    }
+
+    .slider-line {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 74px;
+      gap: 10px;
+      align-items: center;
+    }
+    input[type="range"] {
+      width: 100%;
+      height: 4px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 7px;
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--rail-ink-bright);
+      font: inherit;
+      font-family: var(--mono-font);
+      font-size: 13.5px;
+      text-align: right;
+      outline: none;
+    }
+    input[type="number"]:focus { border-color: rgba(74, 222, 128, 0.55); }
+
+    details.advanced {
+      border-top: 1px solid var(--rail-border);
+      padding-top: 14px;
+      margin-top: 2px;
+    }
+    details.advanced > summary {
+      font-size: 10.5px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--rail-muted);
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    details.advanced > summary::-webkit-details-marker { display: none; }
+    details.advanced > summary::before {
+      content: "+";
+      font-family: var(--mono-font);
+      font-size: 15px;
+      line-height: 1;
+      color: var(--rail-ink-bright);
+      width: 16px; height: 16px;
+      display: grid; place-items: center;
+      border: 1px solid var(--rail-border);
+      border-radius: 4px;
+    }
+    details.advanced[open] > summary::before { content: "−"; }
+    details.advanced .adv-body { padding-top: 4px; }
+
+    .segment-row { display: flex; gap: 5px; margin-top: 4px; }
+    .seg-btn {
+      flex: 1;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      background: var(--rail-fill);
+      color: var(--rail-ink);
+      font: inherit;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 7px 6px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.16s var(--ease-out), border-color 0.16s var(--ease-out), color 0.16s var(--ease-out);
+    }
+    .seg-btn.active {
+      background: rgba(74, 222, 128, 0.18);
+      border-color: rgba(74, 222, 128, 0.55);
+      color: #bbf7d0;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 0;
+    }
+    .toggle-row label { font-size: 13px; color: var(--rail-ink); }
+    .switch {
+      position: relative;
+      width: 34px; height: 18px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      border: 1px solid var(--rail-border);
+      cursor: pointer;
+      transition: background 0.18s var(--ease-out), border-color 0.18s var(--ease-out);
+    }
+    .switch::after {
+      content: "";
+      position: absolute;
+      top: 1px; left: 1px;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      transition: transform 0.2s var(--ease-out), background 0.2s var(--ease-out);
+    }
+    .switch.on { background: rgba(74, 222, 128, 0.35); border-color: rgba(74, 222, 128, 0.55); }
+    .switch.on::after { transform: translateX(16px); background: #f8fbff; }
+
+    .rail-note {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--rail-border);
+      color: var(--rail-muted);
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.2fr);
+      gap: 14px;
+      padding: 14px 18px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      min-height: 0;
+      align-items: start;
+      min-width: 0;
+    }
+    .topbar-title { display: grid; gap: 4px; min-width: 0; }
+    .topbar-title h1 {
+      font-family: var(--ui-font-display);
+      font-size: 24px;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+    }
+    .topbar-title p { color: var(--muted); font-size: 13.5px; line-height: 1.4; max-width: 64ch; overflow-wrap: anywhere; }
+
+    .pill-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      align-self: center;
+    }
+    .pill {
+      border-radius: 10px;
+      border: 1px solid var(--rule);
+      background: #fafbfd;
+      padding: 8px 10px;
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+    .pill-label {
+      font-size: 10.5px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .pill-value {
+      font-family: var(--mono-font);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+    .pill.chip {
+      display: grid;
+      grid-template-columns: 8px 1fr;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 10px;
+    }
+    .chip-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--chip-ok);
+      transition: background 0.25s var(--ease-out);
+    }
+    .chip-dot.bad { background: var(--chip-bad); }
+    .chip-dot.warn { background: var(--chip-warn); }
+    .chip-body { display: grid; gap: 2px; min-width: 0; }
+
+    .proxy-note {
+      grid-column: 1 / -1;
+      font-size: 10.5px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 4px 2px 0;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      overflow: hidden;
+      min-height: 0;
+      min-width: 0;
+    }
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 14px 18px 4px;
+      gap: 10px;
+    }
+    .card-title {
+      font-family: var(--ui-font-display);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+    .card-title-formula {
+      margin-left: 8px;
+      font-family: var(--math-font);
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--muted);
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+    .card-sub {
+      font-size: 12.8px;
+      color: var(--muted);
+      letter-spacing: 0.01em;
+      overflow-wrap: anywhere;
+    }
+    .card-body {
+      position: relative;
+      padding: 4px 10px 12px;
+      min-height: 0;
+    }
+    .card-body canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .three-body {
+      padding: 4px 8px 10px;
+    }
+    .three-panel {
+      width: 100%;
+      height: 100%;
+      min-height: 220px;
+      display: block;
+      position: relative;
+      overflow: hidden;
+      background: #f8fafc;
+    }
+    .three-panel canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    /* Panels A and C want a 1:1 plot region: the card-body becomes a flex
+       row that centers the canvas / three-panel, the inner element keeps a
+       1:1 aspect via height: 100% + width: auto + aspect-ratio: 1/1, and
+       max-width: 100% prevents overflow if the card-body is narrower than
+       tall (mobile collapse). */
+    .card-body.aspect-square {
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+    .card-body.aspect-square > canvas,
+    .card-body.aspect-square > .three-panel {
+      aspect-ratio: 1 / 1;
+      height: 100%;
+      width: auto;
+      max-width: 100%;
+      flex-shrink: 0;
+    }
+    .beam-ui-label {
+      position: absolute;
+      z-index: 2;
+      pointer-events: none;
+      font-family: var(--math-font);
+      font-size: 16px;
+      font-weight: 600;
+      text-shadow: 0 1px 0 #f8fafc, 0 0 5px #f8fafc;
+    }
+    .beam-theta-label  { left: 18%; bottom: 12%; }
+    .beam-cloud-label  { left: 12px; top: 10px; color: #94572f; font-size: 14px; }
+    .beam-rotate-hint  {
+      right: 12px; top: 10px; color: #94a3b8; font-size: 12px; font-weight: 500;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      transition: opacity 0.4s ease;
+    }
+    .beam-ui-label .math-i sub { font-size: 0.65em; vertical-align: -0.25em; font-style: normal; }
+    /* View-control buttons overlay the canvas in the bottom-right so they
+       take no layout space — the WebGL canvas keeps its full panel size. */
+    .beam-view-btn-row {
+      position: absolute;
+      z-index: 3;
+      right: 10px;
+      bottom: 8px;
+      display: flex;
+      gap: 4px;
+      pointer-events: auto;
+    }
+    .beam-view-btn {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #475569;
+      background: rgba(248, 250, 252, 0.88);
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      padding: 3px 7px;
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s, border-color 0.18s;
+    }
+    .beam-view-btn:hover { background: #e2e8f0; color: #0f172a; border-color: #94a3b8; }
+    .beam-view-btn:active { background: #cbd5e1; }
+    @media (max-width: 1240px) {
+      .topbar { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 1180px) {
+      html, body { overflow: hidden; height: 100%; }
+      .app { flex-direction: row; height: 100%; overflow: hidden; }
+      .app, .analysis-grid, .topbar, .card { width: 100%; max-width: 100%; }
+      .rail {
+        width: clamp(250px, 34vw, 300px);
+        min-width: 240px;
+        height: 100%;
+        max-height: 100%;
+        overflow-y: auto;
+      }
+      .main {
+        display: block;
+        height: 100%;
+        padding: 14px;
+        overflow-y: auto;
+      }
+      .topbar { grid-template-columns: 1fr; margin-bottom: 14px; }
+      .topbar-title h1 { font-size: 19px; }
+      .topbar-title p { font-size: 12.5px; max-width: none; }
+      .analysis-grid { grid-template-columns: 1fr; grid-template-rows: auto auto auto auto; }
+      .analysis-grid > .card { grid-column: auto !important; grid-row: auto !important; }
+      .card { grid-template-rows: auto auto; }
+      .card-head { flex-direction: column; align-items: flex-start; }
+      .card-head .card-sub { text-align: left !important; }
+      .card-body { height: clamp(280px, 54vw, 520px); min-height: 0; padding: 4px 8px 10px; }
+    }
+  </style>
+  <link rel="stylesheet" href="_site-shared.css" />
+  <script defer src="_site-manifest.js"></script>
+  <script defer src="_site-nav.js"></script>
+</head>
+<body>
+  <div id="site-nav-root"></div>
+  <div class="app">
+    <!-- ============================================================== -->
+    <!-- Rail                                                             -->
+    <!-- ============================================================== -->
+    <aside class="rail">
+      <div class="eyebrow">Coherent emission · Electron cyclotron maser</div>
+      <h2 class="rail-title">ECM Explorer</h2>
+      <p class="rail-lede">
+        In a high-<span class="math-i">B</span>,
+        low-<span class="math-i">n<sub>e</sub></span>
+        plasma, the electron distribution can carry free energy in the
+        perpendicular direction
+        (a loss cone or horseshoe). Where
+        <span class="math-i">∂f/∂v⊥ &gt; 0</span>
+        and the ratio
+        <span class="math-i">ω<sub>pe</sub>/Ω<sub>ce</sub> ≲ 1</span>,
+        the resonance condition
+        <span class="math-i">ω − k∥ v∥ = s Ω<sub>ce</sub>/γ</span>
+        picks out electrons that drive a direct maser near
+        <span class="math-i">s Ω<sub>ce</sub></span>.
+      </p>
+
+      <section class="rail-section">
+        <div class="rail-section-head">Narrative</div>
+        <div class="story-card">
+          <div class="story-step">
+            <div class="story-key">1</div>
+            <div class="story-text">A loss cone, horseshoe, or ring creates free energy in the perpendicular part of velocity space.</div>
+          </div>
+          <div class="story-step">
+            <div class="story-key">2</div>
+            <div class="story-text">Only electrons on the resonance curve <span class="math-i">ω − k∥ v∥ = s Ω<sub>ce</sub>/γ</span> can exchange energy efficiently with the wave.</div>
+          </div>
+          <div class="story-step">
+            <div class="story-key">3</div>
+            <div class="story-text"><span class="math-i">α<sub>lc</sub></span> shapes the velocity-space source; <span class="math-i">θ<sub>beam</sub></span> is the emitted beam angle. The resonance patch links them.</div>
+          </div>
+          <div class="story-step">
+            <div class="story-key">4</div>
+            <div class="story-text">Growth survives only when the anisotropy is strong enough and <span class="math-i">ω<sub>pe</sub>/Ω<sub>ce</sub></span> stays small.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="rail-section">
+        <div class="rail-section-head">Presets</div>
+        <div class="preset-grid" id="presets">
+          <button class="preset-btn active" data-preset="spike">
+            <span class="preset-icon">s</span>
+            <span class="preset-label">
+              <span class="preset-name">Solar spike burst</span>
+              <span class="preset-desc">low ratio, moderate loss cone</span>
+            </span>
+          </button>
+          <button class="preset-btn" data-preset="akr">
+            <span class="preset-icon">A</span>
+            <span class="preset-label">
+              <span class="preset-name">AKR (auroral kilometric)</span>
+              <span class="preset-desc">very low ratio, deep cone</span>
+            </span>
+          </button>
+          <button class="preset-btn" data-preset="stellar">
+            <span class="preset-icon">★</span>
+            <span class="preset-label">
+              <span class="preset-name">Stellar flare</span>
+              <span class="preset-desc">higher harmonic, horseshoe</span>
+            </span>
+          </button>
+        </div>
+      </section>
+
+      <section class="rail-section">
+        <div class="rail-section-head">Tuning</div>
+
+        <div class="slider-row">
+          <div class="slider-head">
+            <span class="slider-name">α<sub>lc</sub></span>
+            <span class="slider-desc">electron pitch-angle boundary</span>
+          </div>
+          <div class="slider-line">
+            <input type="range" id="s_alpha" min="5" max="60" step="1" value="32" />
+            <input type="number" id="n_alpha" min="5" max="60" step="1" value="32" />
+          </div>
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-head">
+            <span class="slider-name">ω<sub>pe</sub> / Ω<sub>ce</sub></span>
+            <span class="slider-desc">density loading vs. gyrofrequency</span>
+          </div>
+          <div class="slider-line">
+            <input type="range" id="s_ratio" min="0.01" max="2.00" step="0.01" value="0.25" />
+            <input type="number" id="n_ratio" min="0.01" max="2.00" step="0.01" value="0.25" />
+          </div>
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-head">
+            <span class="slider-name">ξ · anisotropy</span>
+            <span class="slider-desc">strength of perpendicular gradient</span>
+          </div>
+          <div class="slider-line">
+            <input type="range" id="s_xi" min="0.0" max="1.0" step="0.02" value="0.65" />
+            <input type="number" id="n_xi" min="0.0" max="1.0" step="0.02" value="0.65" />
+          </div>
+        </div>
+      </section>
+
+      <details class="advanced" id="advanced">
+        <summary>Advanced</summary>
+        <div class="adv-body">
+          <div class="slider-row">
+            <div class="slider-head">
+              <span class="slider-name">Ω<sub>ce</sub> / 2π</span>
+              <span class="slider-desc">cyclotron frequency scale (MHz)</span>
+            </div>
+            <div class="slider-line">
+              <input type="range" id="s_nuce" min="10" max="4200" step="10" value="560" />
+              <input type="number" id="n_nuce" min="10" max="4200" step="10" value="560" />
+            </div>
+          </div>
+
+          <div class="rail-section" style="margin-top: 10px; margin-bottom: 4px;">
+            <div class="rail-section-head">Distribution</div>
+            <div class="segment-row" id="seg_dist">
+              <button class="seg-btn active" data-dist="loss">Loss cone</button>
+              <button class="seg-btn" data-dist="horse">Horseshoe</button>
+              <button class="seg-btn" data-dist="ring">Ring</button>
+            </div>
+          </div>
+
+          <div class="rail-section" style="margin-top: 10px; margin-bottom: 4px;">
+            <div class="rail-section-head">Harmonic s</div>
+            <div class="segment-row" id="seg_s">
+              <button class="seg-btn active" data-s="1">1</button>
+              <button class="seg-btn" data-s="2">2</button>
+              <button class="seg-btn" data-s="3">3</button>
+            </div>
+          </div>
+
+          <div class="rail-section" style="margin-top: 10px; margin-bottom: 4px;">
+            <div class="rail-section-head">Mode</div>
+            <div class="segment-row" id="seg_mode">
+              <button class="seg-btn active" data-mode="x">X-mode</button>
+              <button class="seg-btn" data-mode="o">O-mode</button>
+              <button class="seg-btn" data-mode="b">Both</button>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <p class="rail-note">
+        Growth and brightness values are pedagogical proxies. The
+        regime map, resonance curve, and polarization label are
+        qualitative illustrations — a full treatment requires the
+        Appleton–Hartree dispersion and a self-consistent kinetic
+        growth-rate solver.
+      </p>
+    </aside>
+
+    <!-- ============================================================== -->
+    <!-- Main area                                                        -->
+    <!-- ============================================================== -->
+    <main class="main">
+      <section class="topbar">
+        <div class="topbar-title">
+          <h1>Electron cyclotron maser — anisotropy-driven coherent emission</h1>
+          <p>
+            Perpendicular free energy
+            <span class="math-i">∂f/∂v⊥ &gt; 0</span>
+            drives growth on the resonance curve; narrow-band polarized
+            escape survives only when
+            <span class="math-i">ω<sub>pe</sub>/Ω<sub>ce</sub> ≲ 1</span>.
+          </p>
+        </div>
+        <div class="pill-row" id="pills">
+          <div class="pill">
+            <span class="pill-label"><span class="math-i">ν<sub>pe</sub></span></span>
+            <span class="pill-value" id="pill_nupe">—</span>
+          </div>
+          <div class="pill">
+            <span class="pill-label"><span class="math-i">ν<sub>em</sub></span></span>
+            <span class="pill-value" id="pill_nuce">—</span>
+          </div>
+          <div class="pill chip">
+            <span class="chip-dot" id="pill_growth_dot"></span>
+            <span class="chip-body">
+              <span class="pill-label">Growth · <span class="math-i">ω<sub>pe</sub>/Ω<sub>ce</sub></span></span>
+              <span class="pill-value" id="pill_growth">—</span>
+            </span>
+          </div>
+          <div class="pill">
+            <span class="pill-label"><span class="math-r">T<sub>B,obs</sub> / T<sub>B,RJ</sub></span></span>
+            <span class="pill-value" id="pill_tb">—</span>
+          </div>
+          <span class="proxy-note">illustrative proxy values</span>
+        </div>
+      </section>
+
+      <!-- Analysis grid: 2×2 -->
+      <section class="analysis-grid">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">
+                A · Resonance in velocity space
+                <span class="card-title-formula"><span class="math-i">f(v⊥, v∥)</span></span>
+              </div>
+              <div class="card-sub">distribution ∩ resonance ellipse → free-energy patch</div>
+            </div>
+          </div>
+          <div class="card-body aspect-square"><canvas id="hero"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">B · Geometric construction</div>
+              <div class="card-sub">sphere ∩ plane → ellipse on (<span class="math-i">v⊥</span>, <span class="math-i">v∥</span>)</div>
+            </div>
+          </div>
+          <div class="card-body three-body"><div id="constructionScene" class="three-panel" aria-label="Animated unit sphere cut by the resonance plane, with the intersection projected to the v-perp v-parallel plane"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">C · Beam cone geometry</div>
+              <div class="card-sub">beam angle is not the loss-cone angle; overlap controls brightness</div>
+            </div>
+          </div>
+          <div class="card-body three-body aspect-square"><div id="beam3d" class="three-panel" aria-label="Animated ECM beam cone around the magnetic field"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">D · Regime &amp; escape</div>
+              <div class="card-sub"><span class="math-i">ω<sub>pe</sub>/Ω<sub>ce</sub></span> vs. anisotropy — with <span class="math-i">s·Ω<sub>ce</sub></span> ladder</div>
+            </div>
+          </div>
+          <div class="card-body"><canvas id="regime"></canvas></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+/* ==================================================================== */
+/* ECM Emission Explorer — rendering + physics proxies                   */
+/* ==================================================================== */
+
+(() => {
+'use strict';
+
+const LABEL_SCALE = 1.14;
+const scalePx = size => Math.round(size * LABEL_SCALE * 10) / 10;
+const clamp01 = x => Math.max(0, Math.min(1, x));
+
+/* Constants */
+const K_NUPE_MHZ = 8.98e-3;         // ν_pe [MHz] = K √(n_e/cm^-3)
+const K_NUCE_MHZ_PER_G = 2.80;      // ν_ce [MHz] = 2.80 B [G]
+const U_S = 0.99;                   // fixed near-harmonic ω / (s Ω_ce); closer to 1 → smaller resonance ellipse, matching textbook ECM near-cyclotron emission
+
+/* State */
+const state = {
+  alpha: 32,        // loss-cone angle deg
+  lne: 8.4,         // log10(n_e / cm^-3)
+  xi: 0.65,         // anisotropy 0..1
+  B: 200,           // gauss
+  dist: 'loss',     // 'loss' | 'horse' | 'ring'
+  s: 1,             // harmonic number
+  theta: 75,        // smoothed auto-selected beam angle from resonant-overlap proxy
+  thetaTarget: 75,
+  mode: 'x',        // 'x' | 'o' | 'b'
+
+  target: null,
+
+  // animation
+  animT: 0,
+  lastT: 0,
+  spikePhase: 0,
+};
+state.target = { alpha: state.alpha, lne: state.lne, xi: state.xi, B: state.B };
+
+const PRESETS = {
+  spike:   { alpha: 32, lne: 8.4, xi: 0.65, B: 200, dist: 'loss',  s: 1, mode: 'x' },
+  akr:     { alpha: 55, lne: 6.3, xi: 0.88, B: 900, dist: 'loss',  s: 1, mode: 'x' },
+  stellar: { alpha: 40, lne: 7.5, xi: 0.78, B: 450, dist: 'horse', s: 2, mode: 'x' },
+};
+
+/* Physics */
+function ne_cm3()  { return Math.pow(10, state.lne); }
+function nupe_MHz() { return K_NUPE_MHZ * Math.sqrt(ne_cm3()); }
+function nuce_MHz(s = 1) { return s * K_NUCE_MHZ_PER_G * state.B; }
+function nuem_MHz() { return U_S * nuce_MHz(state.s); }
+function omegaRatio() { return nupe_MHz() / nuce_MHz(1); }   // ω_pe / Ω_ce
+function lneFromRatioAndB(r, B) {
+  const nupe = Math.max(1e-6, r) * K_NUCE_MHZ_PER_G * Math.max(1e-6, B);
+  return 2 * Math.log10(nupe / K_NUPE_MHZ);
+}
+function ratioFromValues(lne, B) {
+  const nupe = K_NUPE_MHZ * Math.sqrt(Math.pow(10, lne));
+  return nupe / (K_NUCE_MHZ_PER_G * B);
+}
+
+function growthAllowed() {
+  const r = omegaRatio();
+  return r <= (state.s === 1 ? 1.0 : state.s === 2 ? 1.25 : 1.4) && state.xi >= 0.3;
+}
+// Growth-rate proxy: monotonic in (1 - r) × ξ, with harmonic suppression
+function growthProxy() {
+  const r = omegaRatio();
+  const barrier = Math.max(0, 1 - r / (state.s === 1 ? 1.0 : state.s === 2 ? 1.25 : 1.4));
+  const harmonicWt = state.s === 1 ? 1.0 : state.s === 2 ? 0.35 : 0.12;
+  return state.xi * barrier * harmonicWt;
+}
+function tbRatio() {
+  const g = growthProxy();
+  if (!growthAllowed() || g < 1e-3) return 1;
+  // coherent TB ~ T_e × amplification; amp ~ exp(const × g) but capped
+  const amp = Math.exp(12 * g);
+  return Math.min(1e15, Math.max(1, amp));
+}
+
+/* Canvas helper */
+function sizeCanvas(c) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const rect = c.getBoundingClientRect();
+  const w = Math.max(1, Math.floor(rect.width));
+  const h = Math.max(1, Math.floor(rect.height));
+  if (c.width !== w * dpr || c.height !== h * dpr) {
+    c.width = w * dpr;
+    c.height = h * dpr;
+  }
+  const ctx = c.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w, h };
+}
+
+/* ------------------------------------------------------------------ */
+/* Shared v-space helpers                                               */
+/* ------------------------------------------------------------------ */
+
+function distProfile() {
+  if (state.dist === 'loss') return { v0: 0.21, dv: 0.065, coreWt: 0.10 };
+  if (state.dist === 'horse') return { v0: 0.27, dv: 0.060, coreWt: 0.06 };
+  return { v0: 0.24, dv: 0.050, coreWt: 0.04 };
+}
+
+// Evaluate f(v⊥, v∥) using the current state. Normalized so peak ≈ 1.
+function evalF(vpar, vperp) {
+  const v = Math.sqrt(vpar * vpar + vperp * vperp);
+  const pitch = Math.atan2(Math.abs(vperp), Math.abs(vpar));
+  const alphaRad = state.alpha * Math.PI / 180;
+  const xi = state.xi;
+  const { v0, dv, coreWt } = distProfile();
+  const sigmaCore = 0.11;
+  const core = coreWt * Math.exp(-0.5 * (v / sigmaCore) * (v / sigmaCore));
+  const shell = Math.exp(-0.5 * ((v - v0) / dv) * ((v - v0) / dv));
+  let f = core;
+  if (state.dist === 'loss') {
+    // One-sided loss cone: wedge only on +v∥ (upgoing) side, matching the
+    // physical picture (electrons that mirrored from below have a depleted
+    // small-pitch population in the upgoing direction, while the downgoing
+    // population is full). pitchUp uses signed v∥ so vpar<0 always gives
+    // pitchUp>π/2>alphaRad → outsideCone=1 (no gap on the downgoing side).
+    const pitchUp = Math.atan2(Math.abs(vperp), vpar);
+    const outsideCone = smoothstep(alphaRad - 0.08, alphaRad + 0.08, pitchUp);
+    const shellWt = 0.28 + 0.80 * xi;
+    f += shellWt * shell * outsideCone;
+  } else if (state.dist === 'horse') {
+    const side = 0.5 * (1 + Math.tanh(-vpar * 9));
+    const outsideCone = smoothstep(alphaRad - 0.12, alphaRad + 0.12, pitch);
+    const shellWt = 0.25 + 0.85 * xi;
+    f += shellWt * shell * (0.35 + 0.65 * side) * (0.50 + 0.50 * outsideCone);
+  } else {
+    const shellWt = 0.24 + 0.86 * xi;
+    f += shellWt * shell;
+  }
+  return f;
+}
+
+// Sample f on an N×N grid spanning [-vSpan, +vSpan] in both axes.
+// Index convention: grid[j*N + i]; j=0 → vperp=+vSpan (top), j=N-1 → bottom.
+function sampleFGrid(N, vSpan) {
+  const grid = new Float32Array(N * N);
+  for (let j = 0; j < N; j++) {
+    const vperp = vSpan - (j / (N - 1)) * 2 * vSpan;
+    for (let i = 0; i < N; i++) {
+      const vpar = -vSpan + (i / (N - 1)) * 2 * vSpan;
+      grid[j * N + i] = evalF(vpar, vperp);
+    }
+  }
+  return grid;
+}
+
+// Marching-squares contour extraction. Returns line segments in grid index
+// space [[[i1,j1],[i2,j2]], ...]. Caller maps to pixels.
+function contourSegments(grid, N, level) {
+  const segs = [];
+  for (let j = 0; j < N - 1; j++) {
+    for (let i = 0; i < N - 1; i++) {
+      const tl = grid[j * N + i];
+      const tr = grid[j * N + i + 1];
+      const bl = grid[(j + 1) * N + i];
+      const br = grid[(j + 1) * N + i + 1];
+      let code = 0;
+      if (tl > level) code |= 1;
+      if (tr > level) code |= 2;
+      if (br > level) code |= 4;
+      if (bl > level) code |= 8;
+      if (code === 0 || code === 15) continue;
+      const lerp = (a, b, va, vb) => a + (level - va) / (vb - va) * (b - a);
+      const T = () => [lerp(i, i + 1, tl, tr), j];
+      const R = () => [i + 1, lerp(j, j + 1, tr, br)];
+      const B = () => [lerp(i, i + 1, bl, br), j + 1];
+      const L = () => [i, lerp(j, j + 1, tl, bl)];
+      switch (code) {
+        case 1: case 14: segs.push([L(), T()]); break;
+        case 2: case 13: segs.push([T(), R()]); break;
+        case 4: case 11: segs.push([R(), B()]); break;
+        case 8: case 7:  segs.push([B(), L()]); break;
+        case 3: case 12: segs.push([L(), R()]); break;
+        case 6: case 9:  segs.push([T(), B()]); break;
+        case 5:          segs.push([L(), T()]); segs.push([R(), B()]); break;
+        case 10:         segs.push([L(), B()]); segs.push([T(), R()]); break;
+      }
+    }
+  }
+  return segs;
+}
+
+// Shared v-space axis geometry for hero + resonance cards.
+function vSpaceGeom(w, h) {
+  const compact = w < 460;
+  const padL = compact ? 32 : 44;
+  const padR = compact ? 18 : 26;
+  const padT = compact ? 18 : 22;
+  const padB = compact ? 34 : 38;
+  const vMax = 0.55;
+  const fullW = w - padL - padR;
+  const fullH = h - padT - padB;
+  const halfSpan = Math.max(42, Math.min(fullW * 0.48, fullH * 0.5));
+  const originX = padL + fullW * 0.5;
+  const originY = padT + fullH * 0.5;
+  const axL = originX - halfSpan;
+  const axR = originX + halfSpan;
+  const axT = originY - halfSpan;
+  const axB = originY + halfSpan;
+  const axW = axR - axL;
+  const axH = axB - axT;
+  const sx = halfSpan / vMax;
+  const sy = halfSpan / vMax;
+  const pixelOfV = (vpar, vperp) => [originX + vpar * sx, originY - vperp * sy];
+  return { padL, padR, padT, padB, axL, axR, axT, axB, axW, axH,
+           originX, originY, vMax, sx, sy, pixelOfV };
+}
+
+function annotatedVSpaceGeom(w, h) {
+  const compact = w < 460;
+  const padL = compact ? 24 : 34;
+  const padR = compact ? 48 : 58;
+  const padT = compact ? 18 : 22;
+  const padB = compact ? 34 : 38;
+  const vMax = 0.55;
+  const fullW = w - padL - padR;
+  const fullH = h - padT - padB;
+  const axL = padL;
+  const axR = w - padR;
+  const axT = padT;
+  const axB = h - padB;
+  const axW = axR - axL;
+  const axH = axB - axT;
+  const originX = axL + axW * 0.5;
+  const originY = axT + axH * 0.5;
+  const sx = axW / (2 * vMax);
+  const sy = axH / (2 * vMax);
+  const pixelOfV = (vpar, vperp) => [originX + vpar * sx, originY - vperp * sy];
+  return { padL, padR, padT, padB, axL, axR, axT, axB, axW, axH,
+           originX, originY, vMax, sx, sy, pixelOfV };
+}
+
+function drawVSpaceAxes(ctx, geom) {
+  const { originX, originY, axL, axR, axT, axB } = geom;
+  ctx.save();
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 1.5;
+  ctx.lineCap = 'round';
+  ctx.fillStyle = '#0f172a';
+  ctx.beginPath();
+  ctx.moveTo(axL, originY);
+  ctx.lineTo(axR - 4, originY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(axR, originY);
+  ctx.lineTo(axR - 10, originY - 5);
+  ctx.lineTo(axR - 10, originY + 5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(originX, axB);
+  ctx.lineTo(originX, axT + 4);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(originX, axT);
+  ctx.lineTo(originX - 5, axT + 10);
+  ctx.lineTo(originX + 5, axT + 10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.font = mathFont(19);
+  ctx.fillStyle = '#0f172a';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('v∥', axR - 2, originY + 16);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText('v⊥', originX + 20, axT + 10);
+  ctx.restore();
+}
+
+function mathFont(size, opts = {}) {
+  const italic = opts.italic === false ? '' : 'italic ';
+  const weight = opts.weight ? opts.weight + ' ' : '';
+  return `${weight}${italic}${scalePx(size)}px "STIX Two Math", "STIX Two Text", "Cambria Math", "Latin Modern Math", "STIXGeneral", serif`;
+}
+
+function uiFont(size, weight = '') {
+  return `${weight ? weight + ' ' : ''}${scalePx(size)}px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif`;
+}
+
+function monoFont(size, weight = '') {
+  return `${weight ? weight + ' ' : ''}${scalePx(size)}px "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace`;
+}
+
+function mathRun(text, size, opts = {}) {
+  return {
+    text,
+    font: mathFont(size, opts),
+    dy: opts.dy || 0,
+    color: opts.color
+  };
+}
+
+function varSubRuns(base, sub, size, opts = {}) {
+  const subSize = opts.subSize || Math.max(8, size * 0.72);
+  const subDy = opts.subDy || Math.max(2, size * 0.22);
+  return [
+    mathRun(base, size, {
+      italic: opts.italicBase !== false,
+      weight: opts.weight,
+      color: opts.color
+    }),
+    mathRun(sub, subSize, {
+      italic: !!opts.italicSub,
+      weight: opts.weight,
+      dy: subDy,
+      color: opts.color
+    })
+  ];
+}
+
+function drawTextRuns(ctx, runs, x, y, opts = {}) {
+  const align = opts.align || 'left';
+  const widths = runs.map(run => {
+    ctx.font = run.font;
+    return ctx.measureText(run.text).width;
+  });
+  const total = widths.reduce((a, b) => a + b, 0);
+  let cursor = x;
+  if (align === 'center') cursor -= total / 2;
+  else if (align === 'right') cursor -= total;
+
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  const baseColor = opts.color || ctx.fillStyle;
+  runs.forEach((run, i) => {
+    ctx.font = run.font;
+    ctx.fillStyle = run.color || baseColor;
+    ctx.fillText(run.text, cursor, y + (run.dy || 0));
+    cursor += widths[i];
+  });
+  ctx.restore();
+  return total;
+}
+
+function drawVarSub(ctx, base, sub, x, y, size, opts = {}) {
+  return drawTextRuns(ctx, varSubRuns(base, sub, size, opts), x, y, opts);
+}
+
+/* ------------------------------------------------------------------ */
+/* Card A — Distribution f(v⊥, v∥) with soft contours + ∂f/∂v⊥ shade   */
+/* ------------------------------------------------------------------ */
+const hero = document.getElementById('hero');
+
+function drawHero() {
+  const { ctx, w, h } = sizeCanvas(hero);
+  ctx.clearRect(0, 0, w, h);
+  const compact = w < 460;
+
+  // white background with soft vignette
+  const grad = ctx.createRadialGradient(w * 0.5, h * 0.55, h * 0.15, w * 0.5, h * 0.55, Math.max(w, h) * 0.8);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(1, '#f4f6fa');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  const geom = annotatedVSpaceGeom(w, h);
+  const { axL, axR, axT, axB, axW, axH, originX, originY, vMax, sx, sy, pixelOfV } = geom;
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(248, 250, 252, 0.95)';
+  ctx.fillRect(axL, axT, axW, axH);
+  ctx.restore();
+
+  // -------------------- f(v⊥, v∥) rendering via offscreen low-res + upscaling --
+  // Evaluate f analytically on a low-resolution grid, paint onto a small canvas,
+  // then stretch to the hero bounds with bilinear smoothing for the soft cloud look.
+  const LOW = 112;
+  if (!drawHero._off) {
+    drawHero._off = document.createElement('canvas');
+    drawHero._off.width = LOW;
+    drawHero._off.height = LOW;
+  }
+  const off = drawHero._off;
+  const offCtx = off.getContext('2d');
+  const offImg = offCtx.createImageData(LOW, LOW);
+  const offData = offImg.data;
+
+  const alphaRad = state.alpha * Math.PI / 180;
+  const xi = state.xi;
+  const distType = state.dist;
+  const sigma = 0.14;
+
+  // map low-res (px, py) to physical (v∥, v⊥) spanning roughly [-vMax, +vMax]
+  const vSpan = vMax * 1.0;
+  for (let py = 0; py < LOW; py++) {
+    const vperp = vSpan - (py / (LOW - 1)) * 2 * vSpan;   // top = +vSpan, bot = -vSpan
+    for (let px = 0; px < LOW; px++) {
+      const vpar = -vSpan + (px / (LOW - 1)) * 2 * vSpan;
+      const v = Math.sqrt(vpar * vpar + vperp * vperp);
+      let f = Math.exp(-0.5 * (v / sigma) * (v / sigma));
+
+      if (distType === 'loss') {
+        // Mirror the horseshoe branch and `evalF` for loss-cone: a non-thermal
+        // shell at v0=0.21 (matching evalF's distProfile parameters) modulated
+        // by the cone factor, mixed into the bulk Gaussian by ξ. With this the
+        // rendered cloud has a real ring whose inner flank rises with v —
+        // which is the positive-gradient source region the amber mask labels.
+        // pitchUp uses signed vpar so the cone wedge appears only on the
+        // +v∥ (upgoing) side, matching the textbook one-sided loss cone.
+        const v0 = 0.21, dv = 0.065;
+        const ringMod = Math.exp(-0.5 * ((v - v0) / dv) * ((v - v0) / dv));
+        const edge = 0.14;
+        const pitchUp = Math.atan2(Math.abs(vperp), vpar);
+        const t = smoothstep(alphaRad - edge, alphaRad + edge, pitchUp);
+        const lossShell = ringMod * t + 0.08 * f;
+        f = (1 - xi) * Math.exp(-0.5 * (v / sigma) * (v / sigma)) + xi * lossShell;
+      } else if (distType === 'horse') {
+        const v0 = 0.28, dv = 0.10;
+        const ringMod = Math.exp(-0.5 * ((v - v0) / dv) * ((v - v0) / dv));
+        const sidePen = 0.5 * (1 + Math.tanh(-vpar * 7));
+        const shoe = ringMod * (0.35 + 0.65 * sidePen) + 0.08 * f;
+        f = (1 - xi) * Math.exp(-0.5 * (v / sigma) * (v / sigma)) + xi * shoe;
+      } else { // ring
+        const v0 = 0.25, dv = 0.08;
+        const ringMod = Math.exp(-0.5 * ((v - v0) / dv) * ((v - v0) / dv));
+        f = (1 - xi) * Math.exp(-0.5 * (v / sigma) * (v / sigma)) + xi * ringMod;
+      }
+
+      const a = Math.min(0.92, f * 1.18);
+      const o = (py * LOW + px) * 4;
+      offData[o + 0] = Math.round(220 * a + 255 * (1 - a));
+      offData[o + 1] = Math.round(55  * a + 255 * (1 - a));
+      offData[o + 2] = Math.round(60  * a + 255 * (1 - a));
+      offData[o + 3] = 255;
+    }
+  }
+  offCtx.putImageData(offImg, 0, 0);
+
+  // Upscale with smoothing (native bilinear) into the hero axis area.
+  // Draw it mapped so that ±vSpan on the low-res canvas maps to ±vMax on axes.
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  const dx = originX - vSpan * sx;
+  const dy = originY - vSpan * sy;
+  const dw = 2 * vSpan * sx;
+  const dh = 2 * vSpan * sy;
+  ctx.drawImage(off, dx, dy, dw, dh);
+  ctx.restore();
+
+  // -------------------- contour lines (iso-f) --------------------
+  // Sample f on a 64² grid (reusing smoothstep + the same loss/horse/ring model).
+  // Then run marching-squares at a few levels so the distribution reads as a
+  // shape with structure rather than a blur.
+  {
+    const N = 64;
+    const grid = sampleFGrid(N, vSpan);
+    const mask = new Float32Array(N * N);
+    const gridToPixel = (gi, gj) => {
+      const vp  = -vSpan + (gi / (N - 1)) * 2 * vSpan;
+      const vpr = vSpan - (gj / (N - 1)) * 2 * vSpan;
+      return pixelOfV(vp, vpr);
+    };
+    // ∂f/∂v⊥ > 0 shading and outline.
+    if (growthAllowed()) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.20)';
+      const cellW = 2 * vSpan * sx / (N - 1) + 0.6;
+      const cellH = 2 * vSpan * sy / (N - 1) + 0.6;
+      for (let j = 1; j < N - 1; j++) {
+        const vpr = vSpan - (j / (N - 1)) * 2 * vSpan;
+        if (vpr <= 0.02) continue;
+        for (let i = 0; i < N; i++) {
+          const vp = -vSpan + (i / (N - 1)) * 2 * vSpan;
+          const pitch = Math.atan2(Math.abs(vpr), Math.abs(vp));
+          const hot = inGradientRegion(vp, vpr, pitch, alphaRad) && grid[j * N + i] > 0.09;
+          if (hot) {
+            mask[j * N + i] = 1;
+            const [px, py] = pixelOfV(vp, vpr);
+            ctx.fillRect(px - cellW * 0.5, py - cellH * 0.5, cellW, cellH);
+          }
+        }
+      }
+      ctx.restore();
+
+      const maskSegs = contourSegments(mask, N, 0.5);
+      if (maskSegs.length) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(180, 83, 9, 0.55)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        for (const [[i1, j1], [i2, j2]] of maskSegs) {
+          const [x1, y1] = gridToPixel(i1, j1);
+          const [x2, y2] = gridToPixel(i2, j2);
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+    // Iso-f contour lines
+    for (const [L, alpha] of [[0.10, 0.22], [0.22, 0.28], [0.38, 0.38], [0.60, 0.48], [0.82, 0.58]]) {
+      const segs = contourSegments(grid, N, L);
+      if (!segs.length) continue;
+      ctx.save();
+      ctx.strokeStyle = `rgba(150, 25, 35, ${alpha})`;
+      ctx.lineWidth = 1.0;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      for (const [[i1, j1], [i2, j2]] of segs) {
+        const [x1, y1] = gridToPixel(i1, j1);
+        const [x2, y2] = gridToPixel(i2, j2);
+        ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // -------------------- ∂f/∂v⊥ callout arrow (vertical, on left side) --------------------
+  if (growthAllowed()) {
+    ctx.save();
+    const [ax1x, ax1y] = pixelOfV(-0.42, 0.08);
+    const [ax2x, ax2y] = pixelOfV(-0.42, 0.32);
+    ctx.strokeStyle = 'rgba(180, 83, 9, 0.9)';
+    ctx.fillStyle = 'rgba(180, 83, 9, 0.9)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(ax1x, ax1y);
+    ctx.lineTo(ax2x, ax2y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(ax2x, ax2y);
+    ctx.lineTo(ax2x - 4, ax2y + 8);
+    ctx.lineTo(ax2x + 4, ax2y + 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // -------------------- axes --------------------
+  ctx.save();
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 1.6;
+  ctx.lineCap = 'round';
+  // v∥ axis (horizontal)
+  ctx.beginPath();
+  ctx.moveTo(axL, originY);
+  ctx.lineTo(axR - 4, originY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(axR, originY);
+  ctx.lineTo(axR - 10, originY - 5);
+  ctx.lineTo(axR - 10, originY + 5);
+  ctx.closePath();
+  ctx.fillStyle = '#0f172a';
+  ctx.fill();
+  // v⊥ axis (vertical)
+  ctx.beginPath();
+  ctx.moveTo(originX, axB);
+  ctx.lineTo(originX, axT + 4);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(originX, axT);
+  ctx.lineTo(originX - 5, axT + 10);
+  ctx.lineTo(originX + 5, axT + 10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // axis labels (italic STIX)
+  ctx.save();
+  ctx.font = mathFont(22);
+  ctx.fillStyle = '#0f172a';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('v∥', axR - 2, originY + 18);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText('v⊥', originX + 22, axT + 12);
+  ctx.restore();
+
+  // small "loss cone" annotation arc (if loss-cone mode)
+  if (distType === 'loss') {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(15, 23, 42, 0.35)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    const rArc = Math.min(axW, axH) * 0.18;
+    ctx.beginPath();
+    ctx.moveTo(originX, originY);
+    ctx.lineTo(originX + rArc * Math.cos(alphaRad), originY - rArc * Math.sin(alphaRad));
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(originX, originY);
+    ctx.lineTo(originX + rArc * Math.cos(alphaRad), originY + rArc * Math.sin(alphaRad));
+    ctx.stroke();
+    ctx.setLineDash([]);
+	    ctx.restore();
+	  }
+
+  // Keep annotations inside the plotting canvas and on the same side as their anchors.
+  {
+    const labelX = axL + (compact ? 10 : 14);
+    const distLabel = state.dist === 'loss' ? 'loss-cone shell'
+                   : state.dist === 'horse' ? 'horseshoe shell'
+                   : 'ring shell';
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.font = compact ? uiFont(10, '600') : uiFont(11, '600');
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    const shellAnchor = pixelOfV(-0.20, 0.25);
+    const shellY = axT + (compact ? 30 : 38);
+    ctx.strokeStyle = 'rgba(100, 116, 139, 0.40)';
+    ctx.fillStyle = '#64748b';
+    ctx.beginPath();
+    ctx.moveTo(shellAnchor[0], shellAnchor[1]);
+    ctx.lineTo(labelX + 92, shellY);
+    ctx.stroke();
+    ctx.fillText(distLabel, labelX, shellY);
+
+    if (growthAllowed()) {
+      const gradAnchor = pixelOfV(-0.17, 0.20);
+      const gradY = shellY + (compact ? 24 : 28);
+      ctx.strokeStyle = 'rgba(180, 83, 9, 0.46)';
+      ctx.fillStyle = 'rgba(146, 64, 14, 0.95)';
+      ctx.beginPath();
+      ctx.moveTo(gradAnchor[0], gradAnchor[1]);
+      ctx.lineTo(labelX + 96, gradY);
+      ctx.stroke();
+      ctx.font = mathFont(compact ? 10 : 11, { italic: false, weight: '600' });
+      ctx.fillText('∂f / ∂v⊥ > 0', labelX, gradY);
+    }
+
+    if (state.dist === 'loss') {
+      const alphaAnchor = [
+        originX + axW * 0.18 * Math.cos(alphaRad),
+        originY - axH * 0.18 * Math.sin(alphaRad)
+      ];
+      const alphaRuns = [
+        ...varSubRuns('α', 'lc', compact ? 10 : 11, { weight: '600', subSize: compact ? 7 : 7.8, subDy: 2 }),
+        mathRun(' = ' + Math.round(state.alpha) + '°', compact ? 10 : 11, { italic: false, weight: '600' })
+      ];
+      const alphaW = alphaRuns.reduce((width, run) => {
+        ctx.font = run.font;
+        return width + ctx.measureText(run.text).width;
+      }, 0);
+      const alphaX = Math.min(axR - alphaW - 8, alphaAnchor[0] + (compact ? 30 : 42));
+      const alphaY = Math.max(axT + 22, alphaAnchor[1] - (compact ? 10 : 14));
+      ctx.strokeStyle = 'rgba(71, 85, 105, 0.36)';
+      ctx.fillStyle = '#475569';
+      ctx.beginPath();
+      ctx.moveTo(alphaAnchor[0], alphaAnchor[1]);
+      ctx.lineTo(alphaX - (compact ? 6 : 8), alphaY - 3);
+      ctx.stroke();
+      drawTextRuns(ctx, alphaRuns, alphaX, alphaY + 3, { align: 'left', color: '#475569' });
+    }
+    ctx.restore();
+  }
+
+  // -------------------- active resonance ellipse + resonant patch --------------------
+  // Folded in from the (now retired) Panel B. Only the active s ellipse is
+  // drawn so the merged Panel A reads as "the resonance curve threading through
+  // the distribution"; the orange arc highlights where it crosses ∂f/∂v⊥ > 0.
+  {
+    const e = resonanceEllipseAt(state.s, state.theta);
+    if (e) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(22, 163, 95, 0.18)';
+      ctx.lineWidth = 8;
+      drawEllipsePath(ctx, originX, originY, e.yc * sx, 0, e.aPar * sx, e.aPerp * sy);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(22, 163, 95, 0.98)';
+      ctx.lineWidth = 2;
+      drawEllipsePath(ctx, originX, originY, e.yc * sx, 0, e.aPar * sx, e.aPerp * sy);
+      ctx.stroke();
+      ctx.restore();
+
+      if (growthAllowed()) {
+        const aRad = state.alpha * Math.PI / 180;
+        const patchPts = [];
+        ctx.save();
+        ctx.strokeStyle = 'rgba(180, 83, 9, 0.92)';
+        ctx.lineWidth = 3.2;
+        ctx.lineCap = 'round';
+        const Np = 160;
+        let drawing = false;
+        for (let k = 0; k <= Np; k++) {
+          const phi = (k / Np) * Math.PI * 2;
+          const vp  = e.yc + e.aPar * Math.cos(phi);
+          const vpr = e.aPerp * Math.sin(phi);
+          const pitch = Math.atan2(Math.abs(vpr), Math.abs(vp));
+          const inPatch = (vpr > 0.02) && inGradientRegion(vp, vpr, pitch, aRad);
+          const [x, y] = pixelOfV(vp, vpr);
+          if (inPatch) {
+            patchPts.push([x, y]);
+            if (!drawing) { ctx.beginPath(); ctx.moveTo(x, y); drawing = true; }
+            else ctx.lineTo(x, y);
+          } else if (drawing) {
+            ctx.stroke();
+            drawing = false;
+          }
+        }
+        if (drawing) ctx.stroke();
+        ctx.restore();
+
+        if (patchPts.length) {
+          const mid = patchPts[Math.floor(patchPts.length * 0.5)];
+          ctx.save();
+          const halo = ctx.createRadialGradient(mid[0], mid[1], 0, mid[0], mid[1], 18);
+          halo.addColorStop(0, 'rgba(245, 158, 11, 0.30)');
+          halo.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
+          ctx.fillStyle = halo;
+          ctx.beginPath(); ctx.arc(mid[0], mid[1], 18, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = 'rgba(180, 83, 9, 0.96)';
+          ctx.beginPath(); ctx.arc(mid[0], mid[1], 4.2, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#fffaf0';
+          ctx.lineWidth = 1.4;
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      // θ_beam inline annotation in the top-right corner (replaces the dropped k∥ cue)
+      ctx.save();
+      drawTextRuns(ctx, [
+        ...varSubRuns('θ', 'beam', compact ? 9.5 : 11, { subSize: compact ? 6.7 : 7.6, subDy: 2 }),
+        mathRun(' = ' + Math.round(state.theta) + '°', compact ? 9.5 : 11, { italic: false })
+      ], axR - 8, axT + (compact ? 14 : 18), { align: 'right', color: '#475569' });
+      ctx.restore();
+    }
+  }
+}
+
+function smoothstep(a, b, x) {
+  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+}
+
+/* ------------------------------------------------------------------ */
+/* Card B — Resonance geometry (s = 1, 2, 3 ellipses, resonant patch)  */
+/* ------------------------------------------------------------------ */
+// Relativistic resonance condition:
+//   (ω − k∥ v∥)² = (s Ω_ce)² (1 − v²/c²)
+// Re-expressed with dimensionless y = v∥/c, x = v⊥/c,
+//   u_s = ω / (s Ω_ce),  α_s = k∥ c / (s Ω_ce) = n∥ u_s:
+//   x²  +  (1+α_s²)(y − u_s α_s / (1+α_s²))²  =  (1 + α_s² − u_s²) / (1+α_s²)
+// which is an ellipse centered at (y_c, 0) with
+//   a⊥ = √R² ,   a∥ = a⊥ / √(1+α_s²),   y_c = u_s α_s / (1+α_s²).
+
+// Shared resonance parameters used by Panel A's drawn ellipse and Panel B's
+// geometric construction. Keep one source of truth so both panels render the
+// same algebraic ellipse.
+function resonanceParams(s, thetaDeg) {
+  const cosT = Math.cos(thetaDeg * Math.PI / 180);
+  const r = Math.min(2.0, omegaRatio());
+  const dense = clamp01((r - 0.25) / 1.35);
+  const nProxy = 0.55 + 0.50 * dense;
+  // u_s = ω/(sΩ_ce) = 1/γ for resonant electrons. At the s-th harmonic with
+  // mildly relativistic electrons γ_s ≈ √(1 + (1−U_S²)/s − 1)·…, equivalently
+  // u_s² = 1 − (1−U_S²)/s. This pins u_s = U_S at s=1 and pushes it toward 1
+  // for higher harmonics, so the resonance ellipse shrinks with s — matching
+  // the intuition that higher-harmonic resonance is more selective in v-space.
+  const u_s = Math.sqrt(Math.max(0, 1 - (1 - U_S * U_S) / s));
+  const alpha_s = nProxy * u_s * cosT;
+  return { u_s, alpha_s, dense, nProxy };
+}
+
+function resonanceEllipseAt(s, thetaDeg) {
+  const { u_s, alpha_s, dense } = resonanceParams(s, thetaDeg);
+  const tilt2 = 1 + alpha_s * alpha_s;
+  const r2 = Math.max(1e-5, (tilt2 - u_s * u_s) / tilt2);
+  const aPerp = Math.sqrt(r2);
+  const aPar = aPerp / Math.sqrt(tilt2);
+  const yc = u_s * alpha_s / tilt2;
+  return { aPerp, aPar, yc, dense };
+}
+
+function beamAngleModeWeight(thetaDeg) {
+  const t = thetaDeg * Math.PI / 180;
+  if (state.mode === 'o') return 0.70 + 0.30 * Math.cos(t);
+  if (state.mode === 'b') return 0.85 + 0.15 * Math.sin(t);
+  return 0.35 + 0.65 * Math.pow(Math.sin(t), 1.4);
+}
+
+function resonanceOverlapScore(thetaDeg) {
+  const e = resonanceEllipseAt(state.s, thetaDeg);
+  const alphaRad = state.alpha * Math.PI / 180;
+  let score = 0;
+  let hits = 0;
+  const N = 96;
+  for (let k = 0; k < N; k++) {
+    const phi = (k / N) * Math.PI * 2;
+    const vpar = e.yc + e.aPar * Math.cos(phi);
+    const vperp = e.aPerp * Math.sin(phi);
+    if (vperp <= 0.02) continue;
+    const pitch = Math.atan2(Math.abs(vperp), Math.abs(vpar));
+    if (!inGradientRegion(vpar, vperp, pitch, alphaRad)) continue;
+    score += Math.max(0.02, evalF(vpar, vperp));
+    hits++;
+  }
+  if (!hits) return 0;
+  const escapeWt = growthAllowed() ? 1 : 0.25;
+  return (score / N) * beamAngleModeWeight(thetaDeg) * escapeWt;
+}
+
+function updateSelectedBeamAngle() {
+  const samples = [];
+  let bestScore = -1;
+  let bestTheta = state.thetaTarget || state.theta || 70;
+  for (let theta = 15; theta <= 90; theta += 1.5) {
+    const score = resonanceOverlapScore(theta);
+    samples.push({ theta, score });
+    if (score > bestScore) {
+      bestScore = score;
+      bestTheta = theta;
+    }
+  }
+  // Always track the score-weighted candidate (no hysteresis). Hysteresis
+  // pinned thetaTarget to whatever value happened to give a "good enough"
+  // score, which made the auto-selected angle path-dependent: dragging
+  // sliders to the same final state via different paths could produce
+  // different angles. The candidate is already a heavily-smoothed weighted
+  // average of high-score samples, and the slow tween (factor 0.10) provides
+  // the stability that hysteresis was supposed to.
+  let candidate;
+  if (bestScore <= 0) {
+    candidate = 70;
+  } else {
+    let weightedTheta = 0;
+    let weightSum = 0;
+    for (const s of samples) {
+      if (s.score < bestScore * 0.82) continue;
+      const w = Math.pow(s.score / bestScore, 4);
+      weightedTheta += s.theta * w;
+      weightSum += w;
+    }
+    candidate = weightSum > 0 ? weightedTheta / weightSum : bestTheta;
+  }
+  // Pure exponential smoothing — no snap-when-close. The earlier conditional
+  // ("snap if |delta|<threshold else tween") had a discontinuity at the
+  // threshold: while state values are still tweening the candidate keeps
+  // moving, so thetaTarget would tween toward it, snap at the boundary, then
+  // candidate would shift again, snap, … producing a visible twitch that
+  // looked like a bounce.
+  state.thetaTarget += (candidate - state.thetaTarget) * 0.12;
+  state.theta += (state.thetaTarget - state.theta) * 0.22;
+}
+
+// Is (v∥, v⊥) in the "gradient region" (∂f/∂v⊥ > 0)?
+// For loss-cone / horseshoe / ring: inner shell edge in the upper half plane.
+function inGradientRegion(vpar, vperp, pitch, alphaRad) {
+  const { v0, dv } = distProfile();
+  const v = Math.sqrt(vpar * vpar + vperp * vperp);
+  if (vperp <= 0) return false;
+  if (state.dist === 'loss') {
+    // One-sided loss cone: gradient region (∂f/∂v⊥ > 0) is the narrow strip
+    // just outside the cone edge on the +v∥ (upgoing) side only — that's
+    // where the wedge gap meets the shell. The downgoing side has no wedge
+    // and therefore no gradient, so gate on vpar > 0. The supplied `pitch`
+    // argument was symmetric atan2(|v⊥|, |v∥|); we recompute pitchUp here
+    // with signed v∥ instead.
+    const pitchUp = Math.atan2(Math.abs(vperp), vpar);
+    return vpar > 0 && pitchUp > alphaRad + 0.02
+        && v > (v0 - 1.10 * dv) && v < (v0 - 0.10 * dv);
+  }
+  if (state.dist === 'horse') {
+    return v > (v0 - 1.20 * dv) && v < (v0 + 0.05 * dv) && vpar < 0.10;
+  }
+  return v > (v0 - 1.10 * dv) && v < (v0 - 0.05 * dv);
+}
+
+function drawEllipsePath(ctx, cx, cy, dx, dy, rx, ry) {
+  ctx.beginPath();
+  ctx.ellipse(cx + dx, cy + dy, Math.abs(rx), Math.abs(ry), 0, 0, Math.PI * 2);
+}
+
+/* ------------------------------------------------------------------ */
+/* Card C — Regime zone map + escape-frequency ladder                   */
+/* ------------------------------------------------------------------ */
+const regimeC = document.getElementById('regime');
+
+function drawRegime() {
+  const { ctx, w, h } = sizeCanvas(regimeC);
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, w, h);
+  const compact = w < 460;
+
+  // Layout: left column = ω_pe/Ω_ce × ξ zone map (main).
+  //         right column = vertical frequency ladder (ν_pe, ω_UH, s·Ω_ce).
+  //         bottom strip = polarization label.
+  const ladderW = compact ? Math.min(92, w * 0.22) : Math.min(130, w * 0.28);
+  const labelH = compact ? 46 : 54;
+
+  const zoneL = compact ? 52 : 62;
+  const zoneR = w - ladderW - (compact ? 8 : 14);
+  const zoneT = compact ? 16 : 18;
+  const zoneB = h - labelH - (compact ? 10 : 12);
+  const zoneW = zoneR - zoneL, zoneH = zoneB - zoneT;
+
+  // --- zone map ---
+  const rMax = 2.0, xiMax = 1.0;
+  const xOfR = r => zoneL + (r / rMax) * zoneW;
+  const yOfXi = xi => zoneB - (xi / xiMax) * zoneH;
+
+  // Stronger zone fills than before.
+  ctx.save();
+  // ECM favored (r < 1 AND ξ > 0.3)
+  ctx.fillStyle = 'rgba(74, 222, 128, 0.22)';
+  ctx.fillRect(xOfR(0), yOfXi(1.0), xOfR(1.0) - xOfR(0), yOfXi(0.3) - yOfXi(1.0));
+  // Dense-plasma / other-mode region (r > 1, any ξ > 0.3)
+  ctx.fillStyle = 'rgba(60, 135, 235, 0.13)';
+  ctx.fillRect(xOfR(1.0), yOfXi(1.0), xOfR(rMax) - xOfR(1.0), yOfXi(0.3) - yOfXi(1.0));
+  // Quenched (low anisotropy)
+  ctx.fillStyle = 'rgba(148, 163, 184, 0.18)';
+  ctx.fillRect(zoneL, yOfXi(0.3), zoneW, zoneB - yOfXi(0.3));
+  ctx.restore();
+
+  // Zone labels — kept in the upper third of each zone so the parameter cursor
+  // (which sits at the current ξ ∈ [0.3,1] and so most often lands mid-zone)
+  // doesn't drop its halo on top of the text. White stroke keeps the labels
+  // readable even when the cursor brushes them.
+  ctx.save();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.92)';
+  const drawZoneLabel = (text, x, y, fill) => {
+    ctx.lineWidth = 4;
+    ctx.strokeText(text, x, y);
+    ctx.fillStyle = fill;
+    ctx.fillText(text, x, y);
+  };
+  ctx.font = compact ? uiFont(10, '700') : uiFont(11, '700');
+  drawZoneLabel('ECM FAVORED', (xOfR(0) + xOfR(1.0)) / 2, yOfXi(0.82), 'rgba(15, 97, 53, 0.92)');
+  drawZoneLabel('ECM suppressed', (xOfR(1.0) + xOfR(rMax)) / 2, yOfXi(0.82), 'rgba(37, 99, 235, 0.82)');
+  ctx.font = compact ? uiFont(8.5, '600') : uiFont(9.5, '600');
+  drawZoneLabel('dense plasma / other modes', (xOfR(1.0) + xOfR(rMax)) / 2, yOfXi(0.73), 'rgba(37, 99, 235, 0.70)');
+  ctx.font = compact ? uiFont(10, '700') : uiFont(11, '700');
+  drawZoneLabel('Quenched', xOfR(rMax * 0.5), (yOfXi(0.3) + zoneB) / 2, 'rgba(71, 85, 105, 0.85)');
+  ctx.restore();
+
+  // Boundary ω_pe = Ω_ce
+  ctx.save();
+  ctx.strokeStyle = 'rgba(22, 101, 52, 0.5)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(xOfR(1), zoneT); ctx.lineTo(xOfR(1), zoneB);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(22, 101, 52, 0.85)';
+  drawTextRuns(ctx, [
+    ...varSubRuns('ω', 'pe', compact ? 9 : 10, { subSize: compact ? 6.5 : 7.2, subDy: 2 }),
+    mathRun(' = ', compact ? 9 : 10),
+    ...varSubRuns('Ω', 'ce', compact ? 9 : 10, { subSize: compact ? 6.5 : 7.2, subDy: 2 })
+  ], xOfR(1), zoneT + 8, { align: 'center', color: 'rgba(22, 101, 52, 0.85)' });
+  ctx.restore();
+
+  // Current-parameter cursor — linked to the current mode color.
+  const r = omegaRatio();
+  const cx = xOfR(Math.min(r, rMax));
+  const cy = yOfXi(Math.min(state.xi, xiMax));
+  const isOK = growthAllowed();
+  const modeCol = state.mode === 'o' ? '37, 99, 235'
+                : state.mode === 'x' ? '22, 163, 95'
+                : '180, 83, 9';
+  const dotCol = isOK ? modeCol : '239, 68, 68';
+  ctx.save();
+  const rg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 18);
+  rg.addColorStop(0, `rgba(${dotCol}, 0.60)`);
+  rg.addColorStop(1, `rgba(${dotCol}, 0.0)`);
+  ctx.fillStyle = rg;
+  ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = `rgba(${dotCol}, 1)`;
+  ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+
+  // Axes + ticks
+  ctx.save();
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(zoneL, zoneB); ctx.lineTo(zoneR, zoneB);
+  ctx.moveTo(zoneL, zoneB); ctx.lineTo(zoneL, zoneT + 2);
+  ctx.stroke();
+  ctx.font = compact ? monoFont(9.5) : monoFont(10.5);
+  ctx.fillStyle = '#475569';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (const rr of [0, 0.5, 1.0, 1.5, 2.0]) {
+    const x = xOfR(rr);
+    ctx.beginPath();
+    ctx.strokeStyle = '#0f172a';
+    ctx.moveTo(x, zoneB); ctx.lineTo(x, zoneB + 3); ctx.stroke();
+    ctx.fillText(rr.toFixed(1), x, zoneB + 6);
+  }
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (const xi of [0, 0.5, 1.0]) {
+    const y = yOfXi(xi);
+    ctx.beginPath();
+    ctx.strokeStyle = '#0f172a';
+    ctx.moveTo(zoneL - 3, y); ctx.lineTo(zoneL, y); ctx.stroke();
+    ctx.fillStyle = '#475569';
+    ctx.fillText(xi.toFixed(1), zoneL - 6, y);
+  }
+  ctx.font = compact ? mathFont(10.5) : mathFont(11.5);
+  ctx.fillStyle = '#0f172a';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText('ξ', zoneL + 8, zoneT + 8);
+  drawTextRuns(ctx, [
+    ...varSubRuns('ω', 'pe', compact ? 10.5 : 11.5, { subSize: compact ? 7.4 : 8.2, subDy: 2.2 }),
+    mathRun(' / ', compact ? 10.5 : 11.5),
+    ...varSubRuns('Ω', 'ce', compact ? 10.5 : 11.5, { subSize: compact ? 7.4 : 8.2, subDy: 2.2 })
+  ], (zoneL + zoneR) / 2, zoneB + 24, { align: 'center', color: '#0f172a' });
+  ctx.restore();
+
+  // --- escape-frequency ladder (right column) ---
+  const ladL = zoneR + (compact ? 10 : 18), ladR = w - (compact ? 6 : 10);
+  const ladT = zoneT + 2, ladB = zoneB - 10;
+  const nupe = nupe_MHz();
+  const nuce1 = nuce_MHz(1);
+  const nuH = Math.sqrt(nupe * nupe + nuce1 * nuce1);
+  const nuMax = Math.max(3.2 * nuce1, 2.2 * Math.max(nupe, nuH));
+  const yOfNu = v => ladB - (v / nuMax) * (ladB - ladT);
+
+  // Vertical ν axis
+  ctx.save();
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 1.1;
+  ctx.beginPath();
+  ctx.moveTo(ladL, ladB); ctx.lineTo(ladL, ladT + 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(ladL, ladT);
+  ctx.lineTo(ladL - 4, ladT + 8);
+  ctx.lineTo(ladL + 4, ladT + 8);
+  ctx.closePath();
+  ctx.fillStyle = '#0f172a';
+  ctx.fill();
+  ctx.font = mathFont(11);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText('ν', ladL, ladT - 4);
+  ctx.restore();
+
+  // ν_pe, ω_UH dashed markers
+  const markLine = (nu, kind, color) => {
+    if (nu > nuMax || nu < 0) return;
+    const y = yOfNu(nu);
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(ladL + 6, y);
+    ctx.lineTo(ladR, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = color;
+    if (kind === 'pe') {
+      drawTextRuns(ctx, [
+        ...varSubRuns('ω', 'pe', compact ? 9 : 10, { subSize: compact ? 6.5 : 7.2, subDy: 2 })
+      ], ladR, y - 2, { align: 'right', color });
+    } else {
+      drawTextRuns(ctx, [
+        ...varSubRuns('ω', 'UH', compact ? 9 : 10, { subSize: compact ? 6.0 : 6.8, subDy: 2 })
+      ], ladR, y - 2, { align: 'right', color });
+    }
+    ctx.restore();
+  };
+  markLine(nupe, 'pe', 'rgba(37, 99, 235, 0.8)');
+  markLine(nuH,  'UH', 'rgba(100, 116, 139, 0.8)');
+
+  // s·Ω_ce bands — current s bold + glow
+  for (let ss = 1; ss <= 3; ss++) {
+    const v = nuce_MHz(ss);
+    if (v > nuMax) break;
+    const y = yOfNu(v);
+    const isCur = (ss === state.s) && growthAllowed();
+    ctx.save();
+    if (isCur) {
+      ctx.strokeStyle = 'rgba(22, 163, 95, 0.3)';
+      ctx.lineWidth = 7;
+      ctx.beginPath();
+      ctx.moveTo(ladL + 8, y); ctx.lineTo(ladR - 4, y);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(22, 163, 95, 0.98)';
+      ctx.lineWidth = 2.2;
+    } else {
+      ctx.strokeStyle = 'rgba(22, 101, 52, 0.35)';
+      ctx.lineWidth = 1.4;
+    }
+    ctx.beginPath();
+    ctx.moveTo(ladL + 8, y); ctx.lineTo(ladR - 4, y);
+    ctx.stroke();
+    ctx.font = isCur ? (compact ? uiFont(9, '600') : uiFont(10, '600'))
+                     : (compact ? uiFont(9, '500') : uiFont(10, '500'));
+    ctx.fillStyle = isCur ? 'rgba(15, 97, 53, 1)' : 'rgba(22, 101, 52, 0.6)';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText('s=' + ss, ladL + 10, y - 7);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = isCur ? '#0f172a' : '#64748b';
+    ctx.font = compact ? monoFont(9) : monoFont(10);
+    ctx.fillText(formatFreq(v), ladR - 2, y + 7);
+    ctx.restore();
+  }
+
+  // --- polarization strip at bottom ---
+  ctx.save();
+  ctx.font = compact ? uiFont(8, '700') : uiFont(9, '700');
+  ctx.fillStyle = '#64748b';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText('POLARIZATION', zoneL, zoneB + 40);
+  ctx.font = compact ? mathFont(10.5) : mathFont(12);
+  ctx.fillStyle = '#0f172a';
+  ctx.fillText(compact ? compactPolarizationLabel() : polarizationLabel(), zoneL + (compact ? 76 : 116), zoneB + 40);
+  ctx.restore();
+}
+
+function polarizationLabel() {
+  const allowed = growthAllowed();
+  if (!allowed) return 'no growth — suppressed';
+  if (state.mode === 'x') return 'X-mode dominant · strong circular';
+  if (state.mode === 'o') return 'O-mode qualitative';
+  return 'mixed · dominant mode depends on θ';
+}
+
+function compactPolarizationLabel() {
+  const allowed = growthAllowed();
+  if (!allowed) return 'suppressed';
+  if (state.mode === 'x') return 'X-mode · circular';
+  if (state.mode === 'o') return 'O-mode';
+  return 'mixed mode';
+}
+
+/* ------------------------------------------------------------------ */
+/* Construction scene: unit sphere ∩ tilted plane → projected ellipse    */
+/*                                                                       */
+/* This 3D panel makes Panel B's resonance ellipse geometric. World axes:*/
+/*   X = v_⊥/c (algebra x), Y = 1/γ (algebra z, vertical), Z = v_∥/c (y) */
+/* The (v_⊥, v_∥) plane is the floor at world Y = 0, where the projected */
+/* ellipse lives. The unit sphere is the Lorentz-factor identity         */
+/*   x² + y² + z² = 1  ⇔  (v_⊥/c)² + (v_∥/c)² + (1/γ)² = 1.              */
+/* The cutting plane is the resonance condition                          */
+/*   z = u_s − α_s y  ⇔  1/γ = u_s − α_s · v_∥/c.                        */
+/* Their intersection is a 3D circle; dropping z gives the ellipse.      */
+/* ------------------------------------------------------------------ */
+let constructionView = null;
+
+function constructionSceneHash() {
+  return Math.round(state.theta) + '|' + state.s + '|' + state.mode + '|'
+       + omegaRatio().toFixed(3);
+}
+
+function ensureConstructionScene(container, w, h) {
+  if (!constructionView || constructionView.container !== container || !container.querySelector('canvas')) {
+    container.replaceChildren();
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    container.appendChild(renderer.domElement);
+    renderer.domElement.addEventListener('webglcontextlost', () => { constructionView = null; }, { passive: true });
+    const scene = new THREE.Scene();
+    const camera = new THREE.OrthographicCamera(-2.2, 2.2, 1.55, -1.55, -20, 20);
+    camera.position.set(2.7, 2.4, 3.2);
+    camera.lookAt(0, 0.35, 0);
+    const group = new THREE.Group();
+    scene.add(group);
+    constructionView = { container, renderer, scene, camera, group };
+  }
+  // Match the orthographic frustum to the canvas so world X/Y/Z keep 1:1:1 scale.
+  const aspect = w / Math.max(h, 1);
+  const halfViewHeight = 1.58;
+  constructionView.camera.left = -halfViewHeight * aspect;
+  constructionView.camera.right = halfViewHeight * aspect;
+  constructionView.camera.top = halfViewHeight;
+  constructionView.camera.bottom = -halfViewHeight;
+  constructionView.camera.updateProjectionMatrix();
+  constructionView.renderer.setSize(w, h, false);
+  // Cap DPR at 1.5: this scene is low-poly and Retina overhead doesn't pay back.
+  constructionView.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  constructionView.renderer.setClearColor(0xf8fafc, 1);
+  return constructionView;
+}
+
+function buildConstructionScene(view) {
+  const g = view.group;
+  clearThreeGroup(g);
+
+  // u_s and α_s come from the shared resonanceParams helper so Panel B's
+  // projected ellipse matches Panel A's drawn ellipse exactly. Apply a small
+  // |cosθ_beam| floor so the cutting plane stays visibly tilted at θ_beam ≈ 90°
+  // (the geometry would otherwise collapse to a tangent point).
+  const { u_s, alpha_s: alpha_s_raw } = resonanceParams(state.s, state.theta);
+  const cosT = Math.cos(state.theta * Math.PI / 180);
+  const alpha_s = Math.abs(cosT) < 0.05
+    ? alpha_s_raw * (0.05 / Math.max(1e-6, Math.abs(cosT)))
+    : alpha_s_raw;
+
+  const tilt2 = 1 + alpha_s * alpha_s;
+  const sqrtTilt2 = Math.sqrt(tilt2);
+  const yc_alg = u_s * alpha_s / tilt2;            // ellipse centre y_alg = world Z
+  const zc_alg = u_s / tilt2;                       // 3D circle centre z_alg = world Y
+  const R3 = Math.sqrt(Math.max(1e-6, (tilt2 - u_s * u_s) / tilt2)); // 3D circle radius
+
+  const [cr, cg, cb] = beamColorRgb();
+  const accent = (cr << 16) + (cg << 8) + cb;
+
+  // ----- Unit sphere (translucent + faint wireframe) -----
+  g.add(new THREE.Mesh(
+    new THREE.SphereGeometry(1, 32, 16),
+    new THREE.MeshBasicMaterial({ color: 0xc7d2fe, transparent: true, opacity: 0.10, side: THREE.DoubleSide, depthWrite: false })
+  ));
+  g.add(new THREE.LineSegments(
+    new THREE.WireframeGeometry(new THREE.SphereGeometry(1, 16, 10)),
+    new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.28 })
+  ));
+
+  // Equator at z_alg = 0 (world Y = 0): faint reference circle on the floor.
+  {
+    const pts = [];
+    for (let i = 0; i <= 96; i++) {
+      const a = (i / 96) * Math.PI * 2;
+      pts.push(new THREE.Vector3(Math.cos(a), 0, Math.sin(a)));
+    }
+    g.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(pts),
+      new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.35 })
+    ));
+  }
+
+  // ----- Cutting plane: world Y = u_s − α_s · world Z -----
+  // Default PlaneGeometry sits in XY with normal +Z. Rotate so its normal is
+  // (0, 1, α_s)/√(1+α_s²), then translate it perpendicularly by u_s/√(1+α_s²).
+  {
+    const planeMat = new THREE.MeshBasicMaterial({
+      color: accent, transparent: true, opacity: 0.18,
+      side: THREE.DoubleSide, depthWrite: false
+    });
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.2), planeMat);
+    const normal = new THREE.Vector3(0, 1, alpha_s).normalize();
+    plane.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+    plane.position.copy(normal).multiplyScalar(u_s / sqrtTilt2);
+    g.add(plane);
+  }
+
+  // ----- 3D intersection circle -----
+  // Algebra: centre (0, y_c, z_c); orthonormal frame in plane: e1 = x̂, e2 = (0, 1, −α_s)/√(1+α_s²).
+  // World (X = x, Y = z, Z = y): centre (0, z_c, y_c), e1 = (1,0,0), e2 = (0, −α_s, 1)/√(1+α_s²).
+  const cWorld = new THREE.Vector3(0, zc_alg, yc_alg);
+  const e1 = new THREE.Vector3(1, 0, 0);
+  const e2 = new THREE.Vector3(0, -alpha_s / sqrtTilt2, 1 / sqrtTilt2);
+  const N = 96;
+  const circlePts = [], projPts = [];
+  for (let i = 0; i <= N; i++) {
+    const t = (i / N) * Math.PI * 2;
+    const p = cWorld.clone()
+      .addScaledVector(e1, R3 * Math.cos(t))
+      .addScaledVector(e2, R3 * Math.sin(t));
+    circlePts.push(p);
+    projPts.push(new THREE.Vector3(p.x, 0, p.z)); // drop world Y = drop algebra z
+  }
+
+  // Bright intersection ring on the sphere
+  g.add(new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(circlePts),
+    new THREE.LineBasicMaterial({ color: accent })
+  ));
+
+  // Drop-lines from circle samples to the floor
+  {
+    const dropPts = [];
+    for (let i = 0; i < N; i += 6) {
+      dropPts.push(circlePts[i].clone());
+      dropPts.push(projPts[i].clone());
+    }
+    g.add(new THREE.LineSegments(
+      new THREE.BufferGeometry().setFromPoints(dropPts),
+      new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.55 })
+    ));
+  }
+
+  // Projected ellipse on floor (outline + soft fill)
+  g.add(new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(projPts),
+    new THREE.LineBasicMaterial({ color: 0xb45309 })
+  ));
+  {
+    const shape = new THREE.Shape();
+    for (let i = 0; i < projPts.length; i++) {
+      const p = projPts[i];
+      if (i === 0) shape.moveTo(p.x, p.z);
+      else shape.lineTo(p.x, p.z);
+    }
+    const fill = new THREE.Mesh(
+      new THREE.ShapeGeometry(shape),
+      new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.20, side: THREE.DoubleSide, depthWrite: false })
+    );
+    // ShapeGeometry lives in XY (with shape's Y_local = p.z). Rotate +90° around
+    // X so the shape's local +Y maps to world +Z, putting the fill exactly on
+    // top of the outline. (A −90° rotation flips Z and renders a mirror copy
+    // across the v⊥ axis, which read as a second ellipse next to the real one.)
+    fill.rotation.x = Math.PI / 2;
+    fill.position.y = 0.004;
+    g.add(fill);
+  }
+
+  // ----- Axis arrows from origin (v⊥, v∥, z=1/γ) -----
+  g.add(threeArrow([0, 0, 0], [1.4, 0, 0], 0x0f172a, 0.010, 0.10));
+  g.add(threeArrow([0, 0, 0], [0, 0, 1.4], 0x0f172a, 0.010, 0.10));
+  g.add(threeArrow([0, 0, 0], [0, 1.4, 0], 0x0f172a, 0.010, 0.10));
+
+  // ----- Labels -----
+  const xLabel = beamTextSprite('v⊥', '#0f172a', 0.18);
+  xLabel.position.set(1.62, 0.04, 0);
+  g.add(xLabel);
+  const yLabel = beamTextSprite('v∥', '#0f172a', 0.18);
+  yLabel.position.set(0, 0.04, 1.62);
+  g.add(yLabel);
+  const zLabel = beamTextSprite('z = 1/γ', '#0f172a', 0.16);
+  zLabel.position.set(0, 1.58, 0);
+  g.add(zLabel);
+
+  const sphereLabel = beamTextSprite('|v|/c = 1', '#475569', 0.13);
+  sphereLabel.position.set(-0.95, 0.78, -0.42);
+  g.add(sphereLabel);
+
+  const planeLabel = beamTextSprite('z = u_s − α_s v∥/c', `rgb(${cr},${cg},${cb})`, 0.14);
+  planeLabel.position.set(1.05, Math.max(0.55, zc_alg + 0.32), Math.min(1.05, yc_alg - 0.20));
+  g.add(planeLabel);
+
+  const circleLabel = beamTextSprite('sphere ∩ plane', `rgb(${cr},${cg},${cb})`, 0.13);
+  circleLabel.position.set(-1.10, zc_alg + 0.05, yc_alg - 0.10);
+  g.add(circleLabel);
+
+  const ellipseLabel = beamTextSprite('projected ellipse', '#b45309', 0.13);
+  ellipseLabel.position.set(0.80, 0.06, yc_alg + 0.55);
+  g.add(ellipseLabel);
+}
+
+function animateConstructionScene(view) {
+  // Continuous slow auto-rotation around the vertical axis. spikePhase is in
+  // seconds (advanced by `loop`); 0.18 rad/s gives a full turn in ~35 s.
+  view.group.rotation.y = state.spikePhase * 0.18;
+}
+
+function drawConstructionFallback(container) {
+  let canvas = container.querySelector('canvas');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    container.replaceChildren(canvas);
+  }
+  const { ctx, w, h } = sizeCanvas(canvas);
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = uiFont(11, '600');
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('static fallback — WebGL unavailable', w / 2, h / 2);
+}
+
+function drawConstructionScene() {
+  const container = document.getElementById('constructionScene');
+  if (!container) return;
+  const rect = container.getBoundingClientRect();
+  const w = Math.max(1, rect.width);
+  const h = Math.max(1, rect.height);
+  if (!window.THREE) {
+    drawConstructionFallback(container);
+    return;
+  }
+  try {
+    const view = ensureConstructionScene(container, w, h);
+    const hash = constructionSceneHash();
+    if (view.lastHash !== hash) {
+      buildConstructionScene(view);
+      view.lastHash = hash;
+    }
+    animateConstructionScene(view);
+    view.renderer.render(view.scene, view.camera);
+  } catch (err) {
+    constructionView = null;
+    drawConstructionFallback(container);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Beam cone: 3D escape geometry                                        */
+/* ------------------------------------------------------------------ */
+let beamView = null;
+
+function clearThreeGroup(group) {
+  while (group.children.length) {
+    disposeNodeDeep(group.children.pop());
+  }
+}
+
+// threeArrow returns a Group whose own geometry/material are undefined; its
+// shaft and head meshes hang one level down. Without recursing we leak their
+// GPU buffers on every rebuild, so the renderer accumulates dead resources.
+function disposeNodeDeep(node) {
+  if (node.geometry) node.geometry.dispose();
+  if (node.material) {
+    if (node.material.map) node.material.map.dispose();
+    node.material.dispose();
+  }
+  if (node.children) for (const c of node.children) disposeNodeDeep(c);
+}
+
+function beamColorRgb() {
+  if (state.mode === 'o') return [37, 99, 235];
+  if (state.mode === 'b') return [180, 83, 9];
+  return [22, 163, 95];
+}
+
+function beamOpacity() {
+  if (!growthAllowed()) return 0.08;
+  const densePenalty = 1 - clamp01((omegaRatio() - 0.65) / 0.85);
+  return 0.16 + 0.46 * clamp01(state.xi) * densePenalty;
+}
+
+function patchOverlapProxy() {
+  if (!growthAllowed()) return 0.12;
+  return 0.20 + 0.80 * growthProxy() / Math.max(0.12, state.xi);
+}
+
+function threeArrow(from, to, color, radius = 0.018, head = 0.14) {
+  const group = new THREE.Group();
+  const start = new THREE.Vector3(...from);
+  const end = new THREE.Vector3(...to);
+  const dir = new THREE.Vector3().subVectors(end, start);
+  const len = dir.length();
+  if (len <= head) return group;
+  const mat = new THREE.MeshBasicMaterial({ color });
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, len - head, 18), mat);
+  const cone = new THREE.Mesh(new THREE.ConeGeometry(radius * 4.0, head, 24), mat);
+  const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+  shaft.position.copy(mid).addScaledVector(dir.clone().normalize(), -head * 0.5);
+  cone.position.copy(end).addScaledVector(dir.clone().normalize(), -head * 0.5);
+  const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+  shaft.quaternion.copy(q);
+  cone.quaternion.copy(q);
+  group.add(shaft, cone);
+  return group;
+}
+
+function beamTextSprite(text, color, scale = 0.22) {
+  const c = document.createElement('canvas');
+  c.width = 320;
+  c.height = 92;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.font = '700 34px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+  ctx.fillStyle = color;
+  ctx.strokeStyle = 'rgba(248, 250, 252, 0.88)';
+  ctx.lineWidth = 7;
+  ctx.lineJoin = 'round';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.strokeText(text, c.width / 2, c.height / 2);
+  ctx.fillText(text, c.width / 2, c.height / 2);
+  const texture = new THREE.CanvasTexture(c);
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+  material.depthTest = false;
+  material.depthWrite = false;
+  const sprite = new THREE.Sprite(material);
+  sprite.renderOrder = 10;
+  sprite.scale.set(scale * 3.5, scale, 1);
+  return sprite;
+}
+
+function coneSurface(axisSign, innerRadius, outerRadius, height, color, opacity) {
+  const seg = 96;
+  const positions = [];
+  const colors = [];
+  const indices = [];
+  // Two-stop vertex-color gradient: lighter near the apex (source / smaller
+  // distance from the cone's local origin), darker at the rim (farther from
+  // origin). Conveys depth/relative height in the cone surface even when the
+  // user spins the camera, which a single flat color cannot do.
+  const cBase = new THREE.Color(color);
+  const cNear = cBase.clone().lerp(new THREE.Color(1, 1, 1), 0.55);
+  const cFar = cBase.clone().lerp(new THREE.Color(0, 0, 0), 0.40);
+  for (let i = 0; i <= seg; i++) {
+    const a = i / seg * Math.PI * 2;
+    positions.push(Math.cos(a) * innerRadius, 0, Math.sin(a) * innerRadius);
+    colors.push(cNear.r, cNear.g, cNear.b);
+    positions.push(Math.cos(a) * outerRadius, axisSign * height, Math.sin(a) * outerRadius);
+    colors.push(cFar.r, cFar.g, cFar.b);
+    if (i < seg) {
+      const j = i * 2;
+      indices.push(j, j + 1, j + 3, j, j + 3, j + 2);
+    }
+  }
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geom.setIndex(indices);
+  geom.computeVertexNormals();
+  const mat = new THREE.MeshBasicMaterial({
+    vertexColors: true,
+    transparent: true,
+    opacity,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  return new THREE.Mesh(geom, mat);
+}
+
+function coneRing(axisSign, radius, height, color, opacity) {
+  const pts = [];
+  for (let i = 0; i <= 128; i++) {
+    const a = i / 128 * Math.PI * 2;
+    pts.push(new THREE.Vector3(Math.cos(a) * radius, axisSign * height, Math.sin(a) * radius));
+  }
+  const geom = new THREE.BufferGeometry().setFromPoints(pts);
+  const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity });
+  return new THREE.Line(geom, mat);
+}
+
+// Soft circular sprite for the electron-cloud particles. Cached.
+function electronSpriteTexture() {
+  if (electronSpriteTexture._cached) return electronSpriteTexture._cached;
+  const c = document.createElement('canvas');
+  c.width = c.height = 32;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+  g.addColorStop(0.0, 'rgba(255, 255, 255, 1)');
+  g.addColorStop(0.4, 'rgba(255, 255, 255, 0.55)');
+  g.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 32, 32);
+  const tex = new THREE.CanvasTexture(c);
+  electronSpriteTexture._cached = tex;
+  return tex;
+}
+
+// === Animated electron cloud ===========================================
+// Particles are sampled from f(v_⊥, v_∥) lifted into 3D by gyrosymmetry, but
+// each particle now has a *lifetime*: it is born at high speed in the
+// gradient region (where new resonant electrons are supplied), drifts inward
+// (its speed decays exponentially, mimicking quasilinear energy loss), fades
+// to invisibility, then respawns at high speed. Net visual: a continuously
+// circulating cloud that "drains" energy through emission and is replenished.
+//
+// Caveat: the drift is a uniform |v|-shrink at constant pitch — this preserves
+// the loss-cone wedges (no respawn at small pitch) but is *not* the literal
+// quasilinear-diffusion path along the resonance ellipse. It is a pedagogical
+// shortcut that conveys the energy-flow story without simulating the full
+// kinetics.
+
+const CLOUD_SCALE = 1.4;
+const CLOUD_VSPAN = 0.55;
+const CLOUD_DECAY_RATE = 0.55;        // exp(-rate·dt) per second
+const CYCLE_DURATION_S = 6.0;         // total emission-cycle length (sec)
+const CYCLE_PARTICLE_COUNT = 260;
+const CYCLE_PEAK_ALPHA = 0.55;
+// Gyrofrequency for the visualization. In real units this is Ω_ce, but the
+// scene is in arbitrary scaled coordinates so we just pick a rate that is
+// fast enough to read as orbital motion but not so fast as to flicker. One
+// full revolution every 0.45 s reads cleanly at 30 FPS.
+const GYRO_OMEGA = 2 * Math.PI / 0.45;
+
+// Smooth on-off envelope for one emission cycle (input cycleT ∈ [0, duration)).
+// Empty for the first 8% of the cycle, smoothly ramps up to plateau by 25%,
+// holds the plateau through 65%, smoothly ramps down to empty by 95%, then
+// pauses empty until the next cycle. Drives the shared opacity of the
+// electron cloud, the source ring/disk, the rays, and the beam cones, so the
+// whole "emission system" appears together and disappears together.
+function cycleEnvelope(cycleT) {
+  const t = cycleT / CYCLE_DURATION_S;
+  if (t < 0.08) return 0;
+  if (t < 0.25) {
+    const u = (t - 0.08) / 0.17;
+    return u * u * (3 - 2 * u);
+  }
+  if (t < 0.65) return 1;
+  if (t < 0.95) {
+    const u = 1 - (t - 0.65) / 0.30;
+    return u * u * (3 - 2 * u);
+  }
+  return 0;
+}
+
+function spawnEmissionParticle() {
+  const alphaRad = state.alpha * Math.PI / 180;
+  const { v0, dv } = distProfile();
+  // Sample only the *shell* of the distribution (|v| within the shell band),
+  // outside the loss cone. Skip the thermal core — including it makes the
+  // cloud read as a solid blob rather than the ring/donut that a loss-cone or
+  // horseshoe distribution actually is in real space (a range of Larmor radii
+  // with a hollow centre).
+  const vShellMin = Math.max(0.05, v0 - 1.30 * dv);
+  const vShellMax = v0 + 1.10 * dv;
+  let vpar = 0, vperp = 0, accepted = false;
+  for (let attempt = 0; attempt < 80 && !accepted; attempt++) {
+    // Sample in spherical-shell-like coords: pick |v| in shell band, then a
+    // pitch outside the loss cone. This guarantees no particle lands at small
+    // |v| (no thermal core) or in the loss cone (correct depletion wedges).
+    const v = vShellMin + Math.random() * (vShellMax - vShellMin);
+    const pitch = alphaRad + 0.05 + Math.random() * (Math.PI / 2 - alphaRad - 0.05);
+    const sign = Math.random() < 0.5 ? -1 : 1;
+    vpar = sign * v * Math.cos(pitch);
+    vperp = v * Math.sin(pitch);
+    const f = evalF(vpar, vperp);
+    if (Math.random() >= f) continue;
+    accepted = true;
+  }
+  if (!accepted) {
+    vperp = v0 * 0.95;
+    vpar = (Math.random() - 0.5) * v0 * 0.4;
+  }
+  const v = Math.sqrt(vpar * vpar + vperp * vperp) || 1e-3;
+  return {
+    dirPar: vpar / v,
+    dirPerp: vperp / v,
+    initialSpeed: v,
+    speed: v,
+    phi: Math.random() * Math.PI * 2,
+  };
+}
+
+function buildEmissionCloud(targetCount) {
+  const N = targetCount || CYCLE_PARTICLE_COUNT;
+  const positions = new Float32Array(N * 3);
+  const opacities = new Float32Array(N);
+  const particles = new Array(N);
+
+  for (let i = 0; i < N; i++) {
+    const p = spawnEmissionParticle();
+    particles[i] = p;
+  }
+
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geom.setAttribute('aOpacity', new THREE.BufferAttribute(opacities, 1));
+
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTex: { value: electronSpriteTexture() },
+      uColor: { value: new THREE.Color(0xdc373c) },
+      uPointSize: { value: 9.0 },
+    },
+    vertexShader: `
+      attribute float aOpacity;
+      varying float vOpacity;
+      uniform float uPointSize;
+      void main() {
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        gl_Position = projectionMatrix * mv;
+        gl_PointSize = uPointSize;
+        vOpacity = aOpacity;
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D uTex;
+      uniform vec3 uColor;
+      varying float vOpacity;
+      void main() {
+        vec4 t = texture2D(uTex, gl_PointCoord);
+        float a = t.a * vOpacity;
+        if (a < 0.005) discard;
+        gl_FragColor = vec4(uColor, a);
+      }
+    `,
+    transparent: true,
+    depthWrite: false,
+  });
+
+  const points = new THREE.Points(geom, mat);
+  points.renderOrder = 5;
+
+  // Initialize the cycle-start gyroradius reference so the source ring/disk
+  // scale correctly on the *first* cycle too (otherwise relativeRadius is NaN
+  // until the first cycle boundary, and ringScale stays pinned at 1).
+  let sumR = 0, n = 0;
+  for (const p of particles) {
+    sumR += CLOUD_SCALE * p.dirPerp * p.speed;
+    n++;
+  }
+  const peakGyroradius = n > 0 ? Math.max(1e-3, sumR / n) : 1;
+
+  return {
+    points,
+    particles,
+    cycleT: 0,
+    envelope: 0,
+    pendingRefresh: false,
+    peakGyroradius,
+    relativeRadius: 1,
+  };
+}
+
+function writeParticleToBuffers(p, i, positions, opacities, envelope) {
+  const vpar = p.dirPar * p.speed;
+  const vperp = p.dirPerp * p.speed;
+  const r = CLOUD_SCALE * vperp;
+  const y = CLOUD_SCALE * vpar;
+  const o = i * 3;
+  positions[o + 0] = r * Math.cos(p.phi);
+  positions[o + 1] = y;
+  positions[o + 2] = r * Math.sin(p.phi);
+  opacities[i] = CYCLE_PEAK_ALPHA * envelope;
+}
+
+function updateEmissionCloud(cloud, dt) {
+  if (!cloud) return;
+  cloud.cycleT += dt;
+  if (cloud.cycleT >= CYCLE_DURATION_S) {
+    cloud.cycleT -= CYCLE_DURATION_S;
+    if (cloud.pendingRefresh) {
+      for (let i = 0; i < cloud.particles.length; i++) {
+        cloud.particles[i] = spawnEmissionParticle();
+      }
+      cloud.pendingRefresh = false;
+    } else {
+      for (let i = 0; i < cloud.particles.length; i++) {
+        cloud.particles[i].speed = cloud.particles[i].initialSpeed;
+      }
+    }
+    // At the start of each cycle, capture the peak mean gyroradius. This is
+    // the reference against which we measure how the source ring should shrink
+    // as electrons drift inward. (The resonance ellipse is fixed by ω, k_∥ —
+    // but the active overlap with the gradient region migrates with f, and the
+    // orange ring tracks that overlap, not the ellipse.)
+    let sumR0 = 0, n0 = 0;
+    for (const p of cloud.particles) {
+      sumR0 += CLOUD_SCALE * p.dirPerp * p.speed;
+      n0++;
+    }
+    cloud.peakGyroradius = n0 > 0 ? Math.max(1e-3, sumR0 / n0) : 1;
+  }
+
+  const envelope = cycleEnvelope(cloud.cycleT);
+  cloud.envelope = envelope;
+
+  const positions = cloud.points.geometry.attributes.position;
+  const opacities = cloud.points.geometry.attributes.aOpacity;
+  const particles = cloud.particles;
+  const dPhi = GYRO_OMEGA * dt;
+  let sumR = 0, n = 0;
+  for (let i = 0; i < particles.length; i++) {
+    const p = particles[i];
+    p.speed *= Math.exp(-CLOUD_DECAY_RATE * dt);
+    p.phi += dPhi;
+    writeParticleToBuffers(p, i, positions.array, opacities.array, envelope);
+    // Mean gyroradius of currently-alive particles — drives the active source
+    // ring/disk size. Skip already-thermal particles so the average doesn't get
+    // dragged toward zero by dead weight in late phases.
+    if (p.speed > 0.03) {
+      sumR += CLOUD_SCALE * p.dirPerp * p.speed;
+      n++;
+    }
+  }
+  const meanR = n > 0 ? sumR / n : 0;
+  cloud.relativeRadius = (cloud.peakGyroradius || 1) > 0 ? meanR / cloud.peakGyroradius : 0;
+  positions.needsUpdate = true;
+  opacities.needsUpdate = true;
+}
+
+function ensureBeam3D(container, w, h) {
+  if (!beamView || beamView.container !== container || !container.querySelector('canvas')) {
+    container.replaceChildren();
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    container.appendChild(renderer.domElement);
+    const thetaLabel = document.createElement('div');
+    thetaLabel.className = 'beam-ui-label beam-theta-label';
+    container.appendChild(thetaLabel);
+    const cloudLabel = document.createElement('div');
+    cloudLabel.className = 'beam-ui-label beam-cloud-label';
+    container.appendChild(cloudLabel);
+    const hint = document.createElement('div');
+    hint.className = 'beam-ui-label beam-rotate-hint';
+    hint.textContent = 'drag · scroll to tilt';
+    container.appendChild(hint);
+    // Row of view-control buttons. Reset returns to the auto-precess
+    // baseline; X view = side view (B vertical, az=0, el=0); Z view = look
+    // down the magnetic-field axis (az≈0.62, el≈1.20 — derived from the
+    // camera direction (0.54, 0.36, 0.75) so rotated +Y aligns with the
+    // line of sight; only achievable because the group uses YXZ Euler order).
+    const btnRow = document.createElement('div');
+    btnRow.className = 'beam-view-btn-row';
+    const makeViewBtn = (label, onClick) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'beam-view-btn';
+      b.textContent = label;
+      b.addEventListener('pointerdown', (e) => e.stopPropagation());
+      b.addEventListener('click', (e) => { e.stopPropagation(); onClick(); });
+      btnRow.appendChild(b);
+    };
+    makeViewBtn('Reset', () => {
+      beamView.userAzimuth = -0.34;
+      beamView.userElevation = 0;
+      beamView.hasUserDragged = false;
+      hint.style.opacity = '';
+    });
+    makeViewBtn('X view', () => {
+      beamView.userAzimuth = 0;
+      beamView.userElevation = 0;
+      beamView.hasUserDragged = true;
+      hint.style.opacity = '0';
+    });
+    makeViewBtn('Z view', () => {
+      beamView.userAzimuth = 0.62;
+      beamView.userElevation = 1.20;
+      beamView.hasUserDragged = true;
+      hint.style.opacity = '0';
+    });
+    container.appendChild(btnRow);
+    const scene = new THREE.Scene();
+    const camera = new THREE.OrthographicCamera(-2.2, 2.2, 1.55, -1.55, -20, 20);
+    camera.position.set(3.0, 2.0, 4.2);
+    camera.lookAt(0, 0, 0);
+    const group = new THREE.Group();
+    // Euler order YXZ: elevation (Rx, around world-X) is applied first, then
+    // azimuth (Ry, around world-Y) last. With the default XYZ order the
+    // rotated B-axis is (0, cos(elev), sin(elev)) — no x component, so a true
+    // look-down-B view is unreachable. With YXZ it is (sin(az)·sin(el),
+    // cos(el), cos(az)·sin(el)), which can align with the camera direction
+    // (0.54, 0.36, 0.75) at az ≈ 0.62, el ≈ 1.20 rad.
+    group.rotation.order = 'YXZ';
+    scene.add(group);
+    beamView = {
+      container, renderer, scene, camera, group, thetaLabel, cloudLabel, hint,
+      // User-controlled rotation. azimuth=−0.34 matches the auto-rotate's
+      // baseline so the initial view doesn't snap when drag takes over.
+      userAzimuth: -0.34,
+      userElevation: 0,
+      hasUserDragged: false,
+      isDragging: false,
+    };
+    // Pointer events for orbit-around-B drag. Azimuth = horizontal drag,
+    // elevation = vertical drag. Both axes are unbounded so the user can flip
+    // to a top-down view (or beyond) and inspect the donut/cone from any
+    // angle. The "Reset view" button restores the auto-precess baseline.
+    // Delta-based drag (movementX/Y) + Pointer Lock. The previous absolute
+    // (clientX − startX) form silently capped at the viewport edge: once the
+    // OS cursor hit the screen bottom, clientY froze while clientX kept
+    // updating, so elevation stopped responding while azimuth still worked.
+    // Pointer Lock hides the cursor and emits raw deltas without bounds, so
+    // the user can spin the elevation through full revolutions in one drag.
+    // Sign convention: "nearest point follows the gesture" — drag right tilts
+    // the front face right (+azimuth), drag up tilts it up (+ elevation,
+    // which projects to screen-up on this camera).
+    const dragState = { pid: null };
+    renderer.domElement.style.cursor = 'grab';
+    renderer.domElement.style.touchAction = 'none';
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      beamView.isDragging = true;
+      dragState.pid = e.pointerId;
+      try { renderer.domElement.setPointerCapture(e.pointerId); } catch {}
+      if (renderer.domElement.requestPointerLock) {
+        try { renderer.domElement.requestPointerLock(); } catch {}
+      }
+      renderer.domElement.style.cursor = 'grabbing';
+      hint.style.opacity = '0';
+    });
+    renderer.domElement.addEventListener('pointermove', (e) => {
+      if (!beamView.isDragging) return;
+      // movementX/Y are deltas since the last move event. With Pointer Lock
+      // active they reflect raw mouse motion regardless of cursor screen
+      // position; without it they still work for in-window drags.
+      beamView.userAzimuth += e.movementX * 0.012;
+      beamView.userElevation += e.movementY * 0.020;
+      beamView.hasUserDragged = true;
+    });
+    const endDrag = (e) => {
+      if (e && dragState.pid != null && dragState.pid === e.pointerId) {
+        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch {}
+      }
+      if (document.pointerLockElement === renderer.domElement) {
+        try { document.exitPointerLock(); } catch {}
+      }
+      beamView.isDragging = false;
+      dragState.pid = null;
+      renderer.domElement.style.cursor = 'grab';
+    };
+    renderer.domElement.addEventListener('pointerup', endDrag);
+    renderer.domElement.addEventListener('pointercancel', endDrag);
+    // Handle ESC (or external lock-loss): pointerup may not fire because the
+    // user didn't release the mouse button — clean up state explicitly.
+    document.addEventListener('pointerlockchange', () => {
+      if (beamView && beamView.isDragging
+          && document.pointerLockElement !== renderer.domElement) {
+        endDrag();
+      }
+    });
+    // Wheel/scroll input is the robust fallback for full rotation: it doesn't
+    // depend on cursor position so it can never be capped at the viewport
+    // edge, and it works the same on a Mac trackpad (two-finger swipe) as on
+    // a mouse wheel. Default: deltaY → elevation, deltaX (or shift+deltaY)
+    // → azimuth. preventDefault stops the page from also scrolling.
+    renderer.domElement.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const dy = e.deltaY;
+      const dx = e.deltaX;
+      if (e.shiftKey) {
+        beamView.userAzimuth += dy * 0.005;
+      } else {
+        beamView.userElevation += dy * 0.005;
+        if (Math.abs(dx) > 0.5) beamView.userAzimuth += dx * 0.005;
+      }
+      beamView.hasUserDragged = true;
+      hint.style.opacity = '0';
+    }, { passive: false });
+  } else {
+    beamView.thetaLabel = container.querySelector('.beam-theta-label');
+    beamView.cloudLabel = container.querySelector('.beam-cloud-label');
+    beamView.hint = container.querySelector('.beam-rotate-hint');
+  }
+  // Equal world-units per pixel on both axes so x/y/z keep a 1:1 aspect ratio
+  // regardless of panel proportions (otherwise vertical/horizontal stretch
+  // distorts the cone and cloud).
+  const aspect = Math.max(1.0, w / Math.max(h, 1));
+  beamView.camera.left = -1.45 * aspect;
+  beamView.camera.right = 1.45 * aspect;
+  beamView.camera.top = 1.45;
+  beamView.camera.bottom = -1.45;
+  beamView.camera.updateProjectionMatrix();
+  beamView.renderer.setSize(w, h, false);
+  beamView.renderer.setPixelRatio(window.devicePixelRatio || 1);
+  beamView.renderer.setClearColor(0xf8fafc, 1);
+  return beamView;
+}
+
+function drawBeamFallback(container) {
+  let canvas = container.querySelector('canvas');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    container.replaceChildren(canvas);
+  }
+  const { ctx, w, h } = sizeCanvas(canvas);
+  const [cr, cg, cb] = beamColorRgb();
+  const op = beamOpacity();
+  const patch = patchOverlapProxy();
+  const theta = state.theta * Math.PI / 180;
+  const sourceR = 0.34;
+  const coneR = sourceR + 0.82 * Math.sin(theta);
+  const coneH = 1.02;
+  const scale = Math.min(w / 3.25, h / 2.85);
+  const cx = w * 0.52;
+  const cy = h * 0.52;
+  const project = (x, y, z) => [
+    cx + (x + 0.34 * z) * scale,
+    cy - y * scale + 0.16 * z * scale
+  ];
+  const ellipsePath = (y, rx, rz) => {
+    ctx.beginPath();
+    for (let i = 0; i <= 96; i++) {
+      const a = i / 96 * Math.PI * 2;
+      const [x2, y2] = project(Math.cos(a) * rx, y, Math.sin(a) * rz);
+      if (i === 0) ctx.moveTo(x2, y2);
+      else ctx.lineTo(x2, y2);
+    }
+    ctx.closePath();
+  };
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(0, 0, w, h);
+
+  const top = project(0, coneH, 0);
+  const bot = project(0, -coneH, 0);
+  const center = project(0, 0, 0);
+  ctx.save();
+  ctx.strokeStyle = 'rgba(100, 116, 139, 0.18)';
+  ctx.lineWidth = 0.8;
+  for (const x of [-0.9, -0.45, 0, 0.45, 0.9]) {
+    for (const z of [-0.85, -0.42, 0, 0.42, 0.85]) {
+      if (Math.abs(x) < 0.01 && Math.abs(z) < 0.01) continue;
+      const [x1, y1] = project(x, -1.16, z);
+      const [x2, y2] = project(x, 1.16, z);
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+  const frustumPath = (sign, a0, a1) => {
+    ctx.beginPath();
+    for (let i = 0; i <= 48; i++) {
+      const a = a0 + (i / 48) * (a1 - a0);
+      const [x2, y2] = project(Math.cos(a) * coneR, sign * coneH, Math.sin(a) * coneR * 0.62);
+      if (i === 0) ctx.moveTo(x2, y2);
+      else ctx.lineTo(x2, y2);
+    }
+    for (let i = 48; i >= 0; i--) {
+      const a = a0 + (i / 48) * (a1 - a0);
+      const [x2, y2] = project(Math.cos(a) * sourceR, 0, Math.sin(a) * sourceR * 0.62);
+      ctx.lineTo(x2, y2);
+    }
+    ctx.closePath();
+  };
+  ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${op})`;
+  frustumPath(1, Math.PI, Math.PI * 2);
+  ctx.fill();
+  frustumPath(-1, 0, Math.PI);
+  ctx.fill();
+
+  ctx.strokeStyle = `rgba(${cr}, ${cg}, ${cb}, ${growthAllowed() ? 0.48 : 0.16})`;
+  ctx.lineWidth = 1.2;
+  ellipsePath(coneH, coneR, coneR * 0.62);
+  ctx.stroke();
+  ellipsePath(-coneH, coneR, coneR * 0.62);
+  ctx.stroke();
+
+  ctx.fillStyle = `rgba(245, 158, 11, ${0.25 + 0.65 * patch})`;
+  ctx.beginPath();
+  ctx.ellipse(center[0], center[1], 0.34 * scale, 0.085 * scale, 0.06, 0, Math.PI * 2);
+  ctx.fill();
+
+  const alphaHeight = 0.24;
+  const alphaTip = project(-1.05, 0.02, 0.72);
+  const alphaBase = project(-1.05, 0.02 + alphaHeight, 0.72);
+  const alphaR = alphaHeight * Math.tan(state.alpha * Math.PI / 180) * scale;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(180, 83, 9, 0.68)';
+  ctx.fillStyle = 'rgba(245, 158, 11, 0.22)';
+  ctx.lineWidth = 0.9;
+  ctx.beginPath();
+  ctx.moveTo(alphaTip[0], alphaTip[1]);
+  ctx.lineTo(alphaBase[0] - alphaR, alphaBase[1]);
+  ctx.ellipse(alphaBase[0], alphaBase[1], alphaR, alphaR * 0.30, 0, Math.PI, Math.PI * 2);
+  ctx.lineTo(alphaTip[0], alphaTip[1]);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(180, 83, 9, 0.95)';
+  ctx.beginPath();
+  ctx.ellipse(alphaBase[0], alphaBase[1], alphaR, alphaR * 0.30, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.font = uiFont(9, '700');
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`αlc v-space = ${Math.round(state.alpha)}°`, alphaBase[0] - alphaR * 1.65, alphaBase[1] + alphaR * 0.55);
+  ctx.restore();
+
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(top[0], top[1] - 18);
+  ctx.lineTo(bot[0], bot[1] + 18);
+  ctx.stroke();
+  ctx.fillStyle = '#0f172a';
+  ctx.font = uiFont(13, '700');
+  ctx.fillText('B', top[0] + 8, top[1] - 8);
+  ctx.save();
+  ctx.font = uiFont(10, '700');
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(248, 250, 252, 0.9)';
+  ctx.fillStyle = growthAllowed() ? `rgb(${cr}, ${cg}, ${cb})` : '#94a3b8';
+  const thetaLabel = `θ_beam = ${Math.round(state.theta)}°`;
+  ctx.strokeText(thetaLabel, w * 0.19, h * 0.86);
+  ctx.fillText(thetaLabel, w * 0.19, h * 0.86);
+  ctx.restore();
+}
+
+// State inputs that change the *scene* (geometry, color, label text). Theta
+// is rounded to whole degrees so a smooth tween produces ~30 rebuilds across
+// a 30° swing instead of 60 per second; the cone radius is sin(theta), so
+// sub-degree changes are visually invisible.
+function beamSceneHash() {
+  return Math.round(state.theta) + '|' + state.mode + '|' + (growthAllowed() ? 1 : 0)
+       + '|' + state.B.toFixed(1) + '|' + state.s + '|' + state.xi.toFixed(2)
+       + '|' + state.lne.toFixed(2);
+}
+
+function buildBeamCone(view) {
+  const g = view.group;
+  // Preserve the existing electron cloud across rebuilds so slider drags don't
+  // reset the emission cycle. Detach before clearing, re-attach after.
+  const oldCloud = view.refs && view.refs.cloud;
+  if (oldCloud && oldCloud.points && oldCloud.points.parent === g) {
+    g.remove(oldCloud.points);
+  }
+  clearThreeGroup(g);
+
+  const [cr, cg, cb] = beamColorRgb();
+  const beamColor = (cr << 16) + (cg << 8) + cb;
+  const op = beamOpacity();
+  const patch = patchOverlapProxy();
+  const allowed = growthAllowed();
+  const theta = state.theta * Math.PI / 180;
+  const height = 1.04;
+  const sourceRadius = 0.34;
+  const outerRadius = sourceRadius + 0.78 * Math.sin(theta);
+
+  g.add(threeArrow([0, -1.20, 0], [0, 1.26, 0], 0x0f172a, 0.012, 0.12));
+
+  // Converging-field geometry. Real ECM sources (AKR, solar/stellar coronal
+  // bursts) sit on flux tubes that diverge upward (weak-field source region,
+  // open into space) and converge downward into the magnetic mirror, so the
+  // loss cone is one-sided and only the upward escape cone survives.
+  // r(y) is a flux-tube scale: smooth exponential exp(k·y/L) — C-infinity
+  // smooth (no slope discontinuity at the source plane), asymmetric in y so
+  // the lines diverge upward toward open space and converge downward toward
+  // the mirror point. Use a finer y-discretization (96 segments) so each
+  // rendered line is visually smooth, not faceted.
+  const fluxScale = (y) => Math.exp(0.60 * y / 1.18);
+  const fieldMat = new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.22 });
+  const fieldYs = [];
+  const FIELD_SEGS = 96;
+  for (let k = 0; k <= FIELD_SEGS; k++) fieldYs.push(-1.16 + (k / FIELD_SEGS) * 2.32);
+  for (const x of [-0.9, -0.45, 0, 0.45, 0.9]) {
+    for (const z of [-0.85, -0.42, 0, 0.42, 0.85]) {
+      if (Math.abs(x) < 0.01 && Math.abs(z) < 0.01) continue;
+      const pts = fieldYs.map(y => {
+        const s = fluxScale(y);
+        return new THREE.Vector3(x * s, y, z * s);
+      });
+      const geom = new THREE.BufferGeometry().setFromPoints(pts);
+      g.add(new THREE.Line(geom, fieldMat.clone()));
+    }
+  }
+
+  // Cones, source disk, source ring all stash their *base* opacities on the
+  // material's userData. animateBeamCone multiplies these by the cycle envelope
+  // so the entire emission system fades in/out together with the electron cloud.
+  // Mesh/ring references are also captured so the radial scale can shrink with
+  // the source — the cone aperture follows the active resonance patch as the
+  // electrons drain.
+  // Single (upward) emission cone. In a converging-field source the loss cone
+  // sits on the precipitating side, so the resonant patch and free-energy
+  // gradient are one-sided — emission escapes along the diverging field lines
+  // away from the mirror. The downward cone is not drawn because there is no
+  // matching upgoing electron supply to drive it.
+  const coneMats = [];
+  const coneMeshes = [];
+  const coneRings = [];
+  {
+    const cone = coneSurface(1, sourceRadius, outerRadius, height, beamColor, op * 0.75);
+    cone.material.userData.baseOpacity = op * 0.75;
+    g.add(cone);
+    coneMats.push(cone.material);
+    coneMeshes.push(cone);
+    const ring = coneRing(1, outerRadius, height, beamColor, allowed ? 0.50 : 0.16);
+    g.add(ring);
+    coneRings.push(ring);
+  }
+
+  const sourceMat = new THREE.MeshBasicMaterial({
+    color: 0xf59e0b,
+    transparent: true,
+    opacity: 0.18 + 0.58 * patch,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  sourceMat.userData.baseOpacity = 0.18 + 0.58 * patch;
+  const source = new THREE.Mesh(new THREE.CircleGeometry(1, 64), sourceMat);
+  source.rotation.x = Math.PI / 2;
+  source.position.y = 0.01;
+  g.add(source);
+
+  const sourceRingMat = new THREE.MeshBasicMaterial({
+    color: 0xf59e0b, transparent: true, opacity: 0.50 + 0.35 * patch, side: THREE.DoubleSide
+  });
+  sourceRingMat.userData.baseOpacity = 0.50 + 0.35 * patch;
+  const sourceRing = new THREE.Mesh(new THREE.RingGeometry(0.26, 0.36, 72), sourceRingMat);
+  sourceRing.rotation.x = Math.PI / 2;
+  sourceRing.position.y = 0.015;
+  g.add(sourceRing);
+
+  // Reuse the existing electron cloud (mark it for refresh at the next cycle
+  // boundary) or create a fresh one if there's none yet.
+  let cloud = oldCloud;
+  if (!cloud) {
+    cloud = buildEmissionCloud();
+  } else {
+    cloud.pendingRefresh = true;
+  }
+  g.add(cloud.points);
+
+  // Cloud caption is now rendered as an HTML overlay (see ensureBeam3D /
+  // drawBeamCone) so it stays the same size as the θ_kB readout regardless of
+  // 3D rotation. Only the in-scene 'B' label remains as a sprite.
+
+  // Small reference cone marking the loss-cone opening angle α_lc in v-space.
+  // It sits off to the side as a separate, fixed-scale indicator so the
+  // student can see how the half-angle relates to the slider value while the
+  // main beam-cone aperture is busy showing θ_kB. Kept independent of the
+  // emission cycle envelope — α_lc is geometry, not a population.
+  const alphaHeight = 0.24;
+  const alphaRadius = alphaHeight * Math.tan(state.alpha * Math.PI / 180);
+  const alphaCone = coneSurface(1, 0, alphaRadius, alphaHeight, 0xf59e0b, allowed ? 0.28 : 0.12);
+  alphaCone.position.set(-1.05, 0.02, 0.72);
+  alphaCone.renderOrder = 11;
+  alphaCone.material.depthTest = false;
+  g.add(alphaCone);
+  const alphaConeRing = coneRing(1, alphaRadius, alphaHeight, 0xb45309, allowed ? 0.68 : 0.28);
+  alphaConeRing.position.copy(alphaCone.position);
+  alphaConeRing.renderOrder = 12;
+  alphaConeRing.material.depthTest = false;
+  g.add(alphaConeRing);
+  const labelAlpha = beamTextSprite('αlc v-space = ' + Math.round(state.alpha) + '°', allowed ? '#b45309' : '#94a3b8', 0.18);
+  labelAlpha.position.set(-1.08, -0.08, 0.84);
+  g.add(labelAlpha);
+
+  const labelB = beamTextSprite('B', '#0f172a', 0.24);
+  labelB.position.set(0.16, 1.30, 0.06);
+  g.add(labelB);
+  if (!allowed) {
+    const suppressed = beamTextSprite('growth suppressed', '#ef4444', 0.13);
+    suppressed.position.set(0.25, 0.00, 0.65);
+    g.add(suppressed);
+  }
+
+  view.refs = { source, sourceRing, sourceMat, sourceRingMat, coneMats, coneMeshes, coneRings, coneOpBase: op, cloud, lastFrameT: 0 };
+}
+
+function animateBeamCone(view) {
+  const refs = view.refs;
+  if (!refs) return;
+  const t = state.spikePhase;
+  const pulse = 0.5 + 0.5 * Math.sin(t * 3.2);
+
+  // Auto-precess the group around B until the user grabs the scene; once they
+  // drag, lock to the user-set angle so they can examine the structure (e.g.
+  // top-down view to see the cloud's donut shape).
+  if (view.hasUserDragged) {
+    view.group.rotation.y = view.userAzimuth;
+    view.group.rotation.x = view.userElevation;
+  } else {
+    view.group.rotation.y = -0.34 + 0.10 * Math.sin(t * 0.45);
+    view.group.rotation.x = 0;
+  }
+
+  // Advance the emission cycle and read the shared envelope. The envelope
+  // gates the cloud, source ring/disk, and beam cones together so the whole
+  // emission system appears at the start of each cycle and fades at the end.
+  const dt = Math.min(0.1, Math.max(0.001, t - refs.lastFrameT));
+  refs.lastFrameT = t;
+  if (refs.cloud) updateEmissionCloud(refs.cloud, dt);
+  const envelope = (refs.cloud && refs.cloud.envelope) || 0;
+
+  // Active source-ring radius tracks the cloud's mean gyroradius — as
+  // electrons drift inward (lose v_⊥), the active resonant patch they form
+  // in real space shrinks toward the axis. The resonance ellipse itself is
+  // fixed by the wave (ω, k_∥); what migrates is the overlap with the
+  // gradient region of f, which is what the orange ring marks.
+  const ringScale = (refs.cloud && typeof refs.cloud.relativeRadius === 'number' && isFinite(refs.cloud.relativeRadius))
+    ? refs.cloud.relativeRadius
+    : 1.0;
+  // Source disk: keep the existing pulse breath, scale by ringScale.
+  refs.source.scale.setScalar((0.34 + 0.05 * pulse) * ringScale);
+  // Source ring: scale uniformly in the local XY plane (its world XZ after rotation).
+  if (refs.sourceRing) refs.sourceRing.scale.set(ringScale, ringScale, 1);
+
+  // Cones: scale radially with the source (the cone apex is at the source, so
+  // when the source shrinks the cone aperture follows). Keep axial extent
+  // fixed — the cone's HEIGHT along B is set by escape geometry, not by the
+  // particle population. World Y is the B axis, so scale only X and Z.
+  if (refs.coneMeshes) for (const m of refs.coneMeshes) m.scale.set(ringScale, 1, ringScale);
+  if (refs.coneRings) {
+    for (const r of refs.coneRings) {
+      r.scale.set(ringScale, 1, ringScale);
+      // Fade the outline rings with the envelope so they don't outlive the
+      // cone fill at the empty phase of the cycle.
+      if (r.material) {
+        if (r.material.userData.baseOpacity == null) {
+          r.material.userData.baseOpacity = r.material.opacity;
+        }
+        r.material.opacity = r.material.userData.baseOpacity * envelope;
+      }
+    }
+  }
+  for (const m of refs.coneMats) {
+    const base = m.userData.baseOpacity || refs.coneOpBase * 0.75;
+    m.opacity = base * (0.75 + 0.25 * pulse) * envelope;
+  }
+  // Source disk and ring fade with envelope.
+  if (refs.sourceMat) {
+    refs.sourceMat.opacity = (refs.sourceMat.userData.baseOpacity || 0) * envelope;
+  }
+  if (refs.sourceRingMat) {
+    refs.sourceRingMat.opacity = (refs.sourceRingMat.userData.baseOpacity || 0) * envelope;
+  }
+}
+
+function drawBeamCone() {
+  const container = document.getElementById('beam3d');
+  if (!container) return;
+  const rect = container.getBoundingClientRect();
+  const w = Math.max(1, rect.width);
+  const h = Math.max(1, rect.height);
+  if (!window.THREE) {
+    drawBeamFallback(container);
+    return;
+  }
+  try {
+    const view = ensureBeam3D(container, w, h);
+    const hash = beamSceneHash();
+    if (view.lastHash !== hash) {
+      buildBeamCone(view);
+      view.lastHash = hash;
+    }
+    animateBeamCone(view);
+    if (view.thetaLabel) {
+      const [cr, cg, cb] = beamColorRgb();
+      view.thetaLabel.innerHTML =
+        '<span class="math-i">θ<sub>beam</sub></span> = ' + Math.round(state.theta) + '°';
+      view.thetaLabel.style.color = growthAllowed() ? `rgb(${cr}, ${cg}, ${cb})` : '#94a3b8';
+    }
+    if (view.cloudLabel) {
+      view.cloudLabel.textContent = 'emission cycle: electrons → ring → cone → fade';
+    }
+    if (view.hint && view.hasUserDragged) {
+      view.hint.style.display = 'none';
+    }
+    view.renderer.render(view.scene, view.camera);
+  } catch (err) {
+    beamView = null;
+    drawBeamFallback(container);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Pills                                                                */
+/* ------------------------------------------------------------------ */
+function updatePills() {
+  const r = omegaRatio();
+  set('pill_nupe', formatFreq(nupe_MHz()));
+  set('pill_nuce', formatFreq(nuem_MHz()));
+  set('pill_growth', r.toFixed(2) + (growthAllowed() ? '  ·  ok' : '  ·  sup.'));
+  const dot = document.getElementById('pill_growth_dot');
+  dot.classList.toggle('bad', !growthAllowed());
+  set('pill_tb', formatRatio(tbRatio()));
+}
+
+function set(id, v) {
+  const el = document.getElementById(id);
+  if (el && el.textContent !== v) el.textContent = v;
+}
+
+/* Formatters */
+function formatFreq(mhz) {
+  if (!isFinite(mhz)) return '—';
+  if (mhz >= 1000) return (mhz / 1000).toFixed(2) + ' GHz';
+  if (mhz >= 1)    return mhz.toFixed(mhz < 10 ? 2 : (mhz < 100 ? 1 : 0)) + ' MHz';
+  return (mhz * 1000).toFixed(0) + ' kHz';
+}
+function formatRatio(x) {
+  if (!isFinite(x) || x < 1) return '≈ 1';
+  const exp = Math.floor(Math.log10(x));
+  const mant = x / Math.pow(10, exp);
+  if (exp < 2) return '× ' + x.toFixed(0);
+  return '× ' + mant.toFixed(1) + '·10' + sup(exp);
+}
+function sup(n) {
+  const map = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '.': '·' };
+  return String(n).split('').map(c => map[c] || c).join('');
+}
+
+/* ------------------------------------------------------------------ */
+/* Render loop + tween                                                  */
+/* ------------------------------------------------------------------ */
+function renderAll() {
+  updateSelectedBeamAngle();
+  drawHero();
+  drawRegime();
+  drawBeamCone();
+  drawConstructionScene();
+  updatePills();
+}
+
+function tweenStep(dtMs) {
+  const tgt = state.target;
+  const keys = ['alpha', 'lne', 'xi', 'B'];
+  const rate = 1 - Math.exp(-dtMs / 60);
+  let changed = false;
+  for (const k of keys) {
+    if (Math.abs(state[k] - tgt[k]) > 1e-4) {
+      state[k] += (tgt[k] - state[k]) * rate;
+      changed = true;
+    } else if (state[k] !== tgt[k]) {
+      state[k] = tgt[k];
+      changed = true;
+    }
+  }
+  // Keep the loop running while the auto-selected beam angle is still
+  // relaxing toward its target — otherwise it freezes mid-tween when the
+  // explicit slider tween settles, which is what makes the ellipse appear
+  // path-dependent.
+  if (Math.abs(state.theta - state.thetaTarget) > 0.05) changed = true;
+  return changed;
+}
+
+// Throttle the 3D beam-cone animation: drawBeamCone() disposes and rebuilds
+// ~30 Three.js objects per call, so running it at the display's 60+ FPS pegs
+// the GPU. Cap to ~30 FPS for animation; user-initiated state changes still
+// re-render immediately via tweenStep.
+const BEAM_FRAME_MS = 1000 / 30;
+let lastBeamFrameT = 0;
+let loopRafId = 0;
+
+function loop(tMs) {
+  loopRafId = 0;
+  const dt = state.lastT ? Math.min(100, tMs - state.lastT) : 16;
+  state.lastT = tMs;
+  const tweened = tweenStep(dt);
+  state.spikePhase = (state.spikePhase + dt / 1000) % 100;
+  if (tweened) {
+    renderAll();
+    lastBeamFrameT = tMs;
+  } else if (tMs - lastBeamFrameT >= BEAM_FRAME_MS) {
+    drawBeamCone();
+    drawConstructionScene();
+    lastBeamFrameT = tMs;
+  }
+  loopRafId = requestAnimationFrame(loop);
+}
+
+// Pause the rAF loop when the tab is hidden so the page stops burning GPU in
+// the background. Resume cleanly on visibility return (reset lastT so dt
+// doesn't spike and produce a huge spikePhase jump).
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (loopRafId) cancelAnimationFrame(loopRafId);
+    loopRafId = 0;
+  } else if (!loopRafId) {
+    state.lastT = 0;
+    loopRafId = requestAnimationFrame(loop);
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* Controls                                                             */
+/* ------------------------------------------------------------------ */
+function bindSlider(sId, nId, key, dec = 2) {
+  const s = document.getElementById(sId);
+  const n = document.getElementById(nId);
+  function commit(raw) {
+    const v = Number(raw);
+    if (!isFinite(v)) return;
+    state.target[key] = v;
+    s.value = String(v);
+    n.value = v.toFixed(dec);
+  }
+  s.addEventListener('input', e => commit(e.target.value));
+  n.addEventListener('input', e => commit(e.target.value));
+  commit(s.value);
+}
+
+bindSlider('s_alpha', 'n_alpha', 'alpha', 0);
+bindSlider('s_xi',    'n_xi',    'xi',    2);
+bindRatioSlider();
+bindNuceSlider();
+
+function bindRatioSlider() {
+  const s = document.getElementById('s_ratio');
+  const n = document.getElementById('n_ratio');
+  function commit(raw) {
+    const r = Number(raw);
+    if (!isFinite(r) || r <= 0) return;
+    const B = state.target.B;
+    state.target.lne = lneFromRatioAndB(r, B);
+    s.value = String(r);
+    n.value = r.toFixed(2);
+  }
+  s.addEventListener('input', e => commit(e.target.value));
+  n.addEventListener('input', e => commit(e.target.value));
+  commit(ratioFromValues(state.target.lne, state.target.B));
+}
+
+function bindNuceSlider() {
+  const s = document.getElementById('s_nuce');
+  const n = document.getElementById('n_nuce');
+  function commit(raw) {
+    const nuce = Number(raw);
+    if (!isFinite(nuce) || nuce <= 0) return;
+    const r = ratioFromValues(state.target.lne, state.target.B);
+    state.target.B = nuce / K_NUCE_MHZ_PER_G;
+    state.target.lne = lneFromRatioAndB(r, state.target.B);
+    s.value = String(nuce);
+    n.value = nuce.toFixed(0);
+  }
+  s.addEventListener('input', e => commit(e.target.value));
+  n.addEventListener('input', e => commit(e.target.value));
+  commit(nuce_MHz(1));
+}
+
+// Presets
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const p = PRESETS[btn.dataset.preset];
+    if (!p) return;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.target.alpha = p.alpha;
+    state.target.lne   = p.lne;
+    state.target.xi    = p.xi;
+    state.target.B     = p.B;
+    state.dist = p.dist;
+    state.s    = p.s;
+    state.mode = p.mode;
+    // reflect into UI
+    setSlider('s_alpha', 'n_alpha', p.alpha, 0);
+    setSlider('s_xi',    'n_xi',    p.xi, 2);
+    setSlider('s_ratio', 'n_ratio', ratioFromValues(p.lne, p.B), 2);
+    setSlider('s_nuce',  'n_nuce',  K_NUCE_MHZ_PER_G * p.B, 0);
+    updateDistSeg();
+    updateSSeg();
+    updateModeSeg();
+  });
+});
+function setSlider(sId, nId, v, dec) {
+  document.getElementById(sId).value = String(v);
+  document.getElementById(nId).value = v.toFixed(dec);
+}
+
+// Distribution segment
+document.querySelectorAll('#seg_dist .seg-btn').forEach(b => {
+  b.addEventListener('click', () => { state.dist = b.dataset.dist; updateDistSeg(); renderAll(); });
+});
+function updateDistSeg() {
+  document.querySelectorAll('#seg_dist .seg-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.dist === state.dist));
+}
+// Harmonic segment
+document.querySelectorAll('#seg_s .seg-btn').forEach(b => {
+  b.addEventListener('click', () => { state.s = Number(b.dataset.s); updateSSeg(); renderAll(); });
+});
+function updateSSeg() {
+  document.querySelectorAll('#seg_s .seg-btn').forEach(b =>
+    b.classList.toggle('active', Number(b.dataset.s) === state.s));
+}
+// Mode segment
+document.querySelectorAll('#seg_mode .seg-btn').forEach(b => {
+  b.addEventListener('click', () => { state.mode = b.dataset.mode; updateModeSeg(); renderAll(); });
+});
+function updateModeSeg() {
+  document.querySelectorAll('#seg_mode .seg-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.mode === state.mode));
+}
+
+// Window resize
+let resizeT;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeT);
+  resizeT = setTimeout(renderAll, 60);
+});
+
+updateDistSeg();
+updateSSeg();
+updateModeSeg();
+renderAll();
+loopRafId = requestAnimationFrame(loop);
+
+})();
+</script>
+  <div id="site-footer-root"></div>
+</body>
+</html>

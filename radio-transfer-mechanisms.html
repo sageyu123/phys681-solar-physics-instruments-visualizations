@@ -3,977 +3,1120 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Radio Transfer Mechanisms Explorer</title>
+    <meta name="description" content="Show how emissivity, opacity, source function, and background radiation produce observed brightness temperature." />
+  <meta name="author" content="Sijie Yu" />
+  <meta name="application-name" content="Phys 681 Solar Physics and Instruments Teaching Visualizations" />
+<title>Free-Free Radiative Transfer &amp; Planck Spectrum — PHYS 681</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --ui-font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      --ui-font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      --math-font: "STIX Two Text", "Cambria Math", "STIXGeneral", "Times New Roman", serif;
-      --bg: #edf2f7;
-      --bg-deep: #dde5ef;
-      --panel: rgba(255, 255, 255, 0.92);
-      --panel-strong: rgba(255, 255, 255, 0.98);
-      --line: rgba(30, 41, 59, 0.1);
-      --ink: #0f172a;
-      --muted: #5b677a;
-      --accent: #2563eb;
-      --accent-soft: rgba(37, 99, 235, 0.14);
-      --warm: #ea580c;
-      --warm-soft: rgba(234, 88, 12, 0.12);
-      --cool: #0f766e;
-      --cool-soft: rgba(15, 118, 110, 0.12);
-      --shadow: 0 16px 42px rgba(15, 23, 42, 0.09);
-      --shadow-soft: 0 8px 26px rgba(15, 23, 42, 0.06);
-      --radius: 20px;
-      --radius-sm: 10px;
+      --ui-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --ui-font-d: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --math: "STIX Two Text", "Cambria Math", "STIXGeneral", "Times New Roman", serif;
+      --panel-bg-top: #182b44;
+      --panel-bg: #13243a;
+      --panel-ink: #e7eef6;
+      --panel-muted: #9bb0c5;
+      --panel-border: rgba(148, 168, 191, 0.18);
+      --right-bg: #edf3f8;
+      --card-bg: rgba(252, 254, 255, 0.96);
+      --card-border: rgba(138, 157, 178, 0.24);
+      --card-shadow: 0 1px 4px rgba(20,32,49,0.05), 0 12px 28px rgba(20,32,49,0.07);
+      --text: #10243b;
+      --muted: #617487;
+      --blue: #2f7de1;
+      --warm: #d97b2d;
+      --teal: #19998c;
+      --indigo: #5a57d8;
+      --radius: 14px;
+      --radius-sm: 8px;
     }
 
-    * {
-      box-sizing: border-box;
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%; font-family: var(--ui-font);
+      color: var(--text); background: var(--right-bg);
+      overflow: hidden; font-size: 13px;
     }
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: var(--ui-font-text);
-      color: var(--ink);
-      background:
-        radial-gradient(circle at 15% 12%, rgba(255, 255, 255, 0.92), transparent 24%),
-        radial-gradient(circle at 85% 18%, rgba(37, 99, 235, 0.08), transparent 24%),
-        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
-    }
+    .app { display: flex; height: 100%; overflow: hidden; }
 
-    .page {
-      width: min(1360px, calc(100vw - 28px));
-      margin: 18px auto 28px;
-      display: grid;
-      gap: 20px;
+    /* ── Left panel ── */
+    .left-panel {
+      width: 310px; min-width: 280px; flex-shrink: 0;
+      overflow-y: auto; overflow-x: hidden; padding: 15px 15px 20px;
+      background: linear-gradient(180deg, var(--panel-bg-top) 0%, var(--panel-bg) 100%);
+      color: var(--panel-ink); scrollbar-width: thin;
+      scrollbar-color: rgba(148,163,184,0.32) transparent;
     }
+    .left-panel::-webkit-scrollbar { width: 5px; }
+    .left-panel::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.32); border-radius: 4px; }
 
-    .hero,
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      box-shadow: var(--shadow);
-      border-radius: var(--radius);
-      backdrop-filter: blur(12px);
+    .eyebrow { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; color: var(--panel-muted); margin-bottom: 5px; }
+    .panel-title { font-family: var(--ui-font-d); font-size: 17px; line-height: 1.1; letter-spacing: -.025em; color: #f8fbff; margin-bottom: 8px; }
+    .panel-copy { font-size: 12px; color: var(--panel-muted); line-height: 1.45; margin-bottom: 12px; }
+
+    .formula-box {
+      border-radius: var(--radius-sm); border: 1px solid var(--panel-border);
+      background: rgba(255,255,255,0.05); padding: 10px 12px;
+      font-family: var(--math); color: #d6e0eb; line-height: 1.7; margin-bottom: 10px;
     }
+    .formula-label { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--panel-muted); margin-bottom: 6px; font-family: var(--ui-font); }
+    .formula-line { font-size: 12.5px; margin-top: 5px; text-align: center; }
+    .formula-note { font-size: 11px; color: var(--panel-muted); margin-top: 6px; font-family: var(--ui-font); text-align: center; }
 
-    .hero {
-      padding: 28px 30px;
-      display: grid;
-      grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.95fr);
-      gap: 24px;
-      align-items: start;
+    .section { border-radius: var(--radius-sm); border: 1px solid var(--panel-border); background: rgba(255,255,255,0.05); padding: 10px 11px; margin-bottom: 10px; }
+    .section-head { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--panel-muted); margin-bottom: 7px; }
+
+    .segment-row { display: flex; gap: 5px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
+    .seg-btn {
+      border: 1px solid rgba(148,163,184,0.22); background: rgba(255,255,255,0.07);
+      color: var(--panel-ink); font: inherit; font-size: 11.5px; font-weight: 700;
+      padding: 5px 9px; border-radius: 999px; white-space: nowrap; cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s; flex-shrink: 0;
     }
+    .seg-btn.active { background: rgba(90,87,216,0.18); border-color: rgba(110,106,229,0.50); color: #d9ddff; }
 
-    .eyebrow,
-    .panel-label,
-    .metric-label,
-    .control-label {
-      font-size: 0.75rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      font-weight: 700;
-    }
-
-    h1,
-    h2,
-    h3,
-    p {
-      margin: 0;
-    }
-
-    h1 {
-      font-family: var(--ui-font-display);
-      font-size: clamp(2.4rem, 4vw, 4.1rem);
-      line-height: 0.92;
-      letter-spacing: -0.045em;
-      margin-top: 8px;
-      margin-bottom: 14px;
-    }
-
-    .hero p {
-      color: var(--muted);
-      line-height: 1.52;
-      max-width: 72ch;
-    }
-
-    .formula-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 16px;
-    }
-
-    .formula-pill {
-      padding: 12px 16px;
-      border-radius: 18px;
-      border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.96);
-      box-shadow: var(--shadow-soft);
-      font-family: var(--math-font);
-      color: var(--ink);
-      font-size: 1rem;
-    }
-
-    .hero-metrics {
-      display: grid;
-      gap: 12px;
-    }
-
-    .metric {
-      padding: 16px 18px;
-      border-radius: 18px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(246,248,252,0.94));
-      border: 1px solid var(--line);
-      box-shadow: var(--shadow-soft);
-      display: grid;
-      gap: 8px;
-    }
-
-    .metric-value {
-      font-family: var(--ui-font-display);
-      font-size: 1.6rem;
-      line-height: 1;
-      letter-spacing: -0.03em;
-    }
-
-    .metric-text {
-      color: var(--muted);
-      line-height: 1.45;
-      font-size: 0.95rem;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(300px, 350px) minmax(0, 1fr);
-      gap: 20px;
-      align-items: start;
-    }
-
-    .controls {
-      position: sticky;
-      top: 18px;
-      padding: 22px;
-      display: grid;
-      gap: 18px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.97), rgba(246,248,252,0.93));
-      box-shadow: var(--shadow-soft);
-    }
-
-    .controls h2,
-    .view h2 {
-      font-family: var(--ui-font-display);
-      font-size: 1.35rem;
-      line-height: 1;
-      letter-spacing: -0.02em;
-      margin-top: 6px;
-    }
-
-    .control-block {
-      display: grid;
-      gap: 8px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .control-block:last-child {
-      padding-bottom: 0;
-      border-bottom: 0;
-    }
-
-    .control-top {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .control-name {
-      font-weight: 700;
-    }
-
-    .control-units {
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .input-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 88px;
-      gap: 10px;
-      align-items: center;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      accent-color: var(--accent);
-    }
-
+    .row { display: grid; gap: 4px; margin-bottom: 8px; }
+    .row:last-child { margin-bottom: 0; }
+    .label-line { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+    .label-name { font-family: var(--math); color: #f7fbff; font-size: 12.5px; }
+    .label-desc { color: var(--panel-muted); font-size: 11px; }
+    .slider-line { display: grid; grid-template-columns: minmax(0,1fr) 68px; gap: 7px; align-items: center; }
+    input[type="range"] { width: 100%; height: 4px; accent-color: var(--blue); cursor: pointer; }
     input[type="number"] {
-      width: 100%;
-      border-radius: 10px;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,0.92);
-      color: var(--ink);
-      padding: 8px 10px;
-      font: inherit;
-      text-align: right;
+      width: 100%; padding: 4px 6px; border-radius: 6px;
+      border: 1px solid rgba(148,163,184,0.28); background: rgba(255,255,255,0.08);
+      color: var(--panel-ink); font: inherit; font-size: 11.5px; text-align: right; outline: none;
+    }
+    input[type="number"]:focus { border-color: rgba(47,125,225,0.65); }
+
+    .derived-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .small-card { border-radius: var(--radius-sm); border: 1px solid var(--panel-border); background: rgba(255,255,255,0.05); padding: 7px 9px; display: grid; gap: 2px; }
+    .small-label { font-size: 10px; letter-spacing: .07em; text-transform: uppercase; color: var(--panel-muted); font-weight: 700; font-family: var(--ui-font); }
+    .small-value { font-family: var(--ui-font-d); font-size: 13px; font-weight: 700; color: #f8fbff; }
+    .small-text { font-size: 11px; color: var(--panel-muted); line-height: 1.35; }
+    .full-span { grid-column: 1 / -1; }
+
+    /* ── Right panel ── */
+    .right-panel {
+      flex: 1; min-height: 0; overflow: hidden;
+      display: grid; grid-template-rows: auto minmax(0,1fr);
+      gap: 10px; padding: 12px;
     }
 
-    .toggle-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
+    /* Top bar */
+    .top-bar {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: var(--radius); box-shadow: var(--card-shadow);
+      display: grid; grid-template-columns: minmax(0,1fr) auto;
+      gap: 14px; padding: 10px 14px; align-items: center;
+    }
+    .topbar-title { display: grid; gap: 2px; }
+    .topbar-title h1 { font-family: var(--math); font-size: 16px; line-height: 1.15; letter-spacing: -.01em; color: var(--text); }
+    .topbar-title p { color: var(--muted); font-size: 11px; line-height: 1.35; font-family: var(--math); }
+
+    .pill-row { display: grid; grid-template-columns: repeat(4,minmax(72px,1fr)); gap: 7px; }
+    .pill { border-radius: 999px; border: 1px solid rgba(148,163,184,0.22); background: rgba(255,255,255,0.85); padding: 7px 10px; display: grid; gap: 1px; }
+    .pill-label { font-family: var(--math); font-size: 10px; color: var(--muted); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pill-value { font-family: var(--ui-font-d); font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Analysis grid: LOS (left) | Spectra (right) */
+    .analysis-grid {
+      min-height: 0; display: grid;
+      grid-template-columns: 1fr 1fr; gap: 10px;
     }
 
-    .toggle-row button {
-      flex: 1 1 130px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: rgba(255,255,255,0.9);
-      color: var(--ink);
-      font: inherit;
-      font-weight: 700;
-      padding: 9px 14px;
-      cursor: pointer;
-      transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+    /* Spectra column: Bν (top) | TB spectrum (bottom) */
+    .spectra-col {
+      min-height: 0; display: grid;
+      grid-template-rows: 1fr 1fr; gap: 10px; overflow: hidden;
     }
 
-    .toggle-row button.active {
-      background: var(--accent);
-      color: white;
-      border-color: rgba(37, 99, 235, 0.45);
+    /* Cards */
+    .card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: var(--radius); box-shadow: var(--card-shadow);
+      min-height: 0; overflow: hidden; padding: 10px;
+      display: grid; grid-template-rows: auto minmax(0,1fr); gap: 6px;
     }
+    .card-head { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .card-title { font-family: var(--math); font-size: 14px; font-weight: 700; color: var(--text); }
+    .card-sub { color: var(--muted); font-size: 11px; line-height: 1.3; }
 
-    .small {
-      color: var(--muted);
-      line-height: 1.45;
-      font-size: 0.94rem;
+    /* Canvas shells */
+    .canvas-shell {
+      min-height: 0; position: relative; overflow: hidden;
+      border-radius: 10px; border: 1px solid rgba(136,159,183,0.20); background: #f9fbfe;
     }
+    .canvas-shell canvas { width: 100%; height: 100%; display: block; }
 
-    .view {
-      padding: 24px;
-      display: grid;
-      gap: 18px;
-    }
-
-    .plot-card,
-    .diagnostics {
-      border-radius: 22px;
-      border: 1px solid var(--line);
-      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.92));
-      box-shadow: var(--shadow-soft);
-    }
-
-    .plot-card {
-      padding: 18px;
-      display: grid;
-      gap: 10px;
-    }
-
-    .plot-head {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: space-between;
-      align-items: baseline;
-    }
-
-    .plot-head strong {
-      font-family: var(--ui-font-display);
-      font-size: 1.08rem;
-      letter-spacing: -0.02em;
-    }
-
-    .plot-head span {
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-
-    .canvas-wrap {
-      position: relative;
-    }
-
-    canvas {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
-
-    #spectrumCanvas {
-      aspect-ratio: 16 / 7;
-    }
-
-    .bottom-grid {
-      display: grid;
-      grid-template-columns: minmax(320px, 1.25fr) minmax(270px, 0.9fr);
-      gap: 18px;
-      align-items: start;
-    }
-
-    #rayCanvas {
-      aspect-ratio: 7 / 5;
-    }
-
-    .diagnostics {
-      padding: 18px;
-      display: grid;
-      gap: 14px;
-    }
-
-    .diagnostic-card {
-      padding: 14px 15px;
-      border-radius: 16px;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,0.85);
-      display: grid;
-      gap: 6px;
-    }
-
-    .diagnostic-title {
-      font-size: 0.8rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      font-weight: 700;
-    }
-
-    .diagnostic-value {
-      font-family: var(--ui-font-display);
-      font-size: 1.35rem;
-      letter-spacing: -0.02em;
-    }
-
-    .diagnostic-text {
-      color: var(--muted);
-      line-height: 1.45;
-      font-size: 0.94rem;
-    }
-
+    /* Legend row (compact, below spectrum) */
     .legend-row {
-      display: flex;
-      gap: 14px;
-      flex-wrap: wrap;
-      color: var(--muted);
-      font-size: 0.9rem;
+      display: flex; gap: 12px; flex-wrap: wrap;
+      color: var(--muted); font-size: 11px; padding-top: 4px; flex-shrink: 0;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .swatch { width: 14px; height: 6px; border-radius: 999px; flex-shrink: 0; }
+    .swatch.total      { background: var(--blue); }
+    .swatch.source     { background: var(--warm); }
+    .swatch.background { background: var(--teal); }
+    .swatch.turnover   { background: var(--indigo); }
+
+    /* Spectrum card has 3 rows: head | canvas | legend */
+    .spectrum-card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: var(--radius); box-shadow: var(--card-shadow);
+      min-height: 0; overflow: hidden; padding: 10px;
+      display: grid; grid-template-rows: auto minmax(0,1fr) auto; gap: 5px;
     }
 
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
-
-    .swatch {
-      width: 12px;
-      height: 12px;
-      border-radius: 999px;
-    }
-
-    .caption {
-      color: var(--muted);
-      font-size: 0.92rem;
-      line-height: 1.45;
-    }
-
-    @media (max-width: 1100px) {
-      .hero,
-      .layout,
-      .bottom-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .controls {
-        position: static;
-      }
-    }
-
-    @media (max-width: 720px) {
-      body {
-        font-size: 15px;
-      }
-
-      .page {
-        width: min(100vw, calc(100vw - 16px));
-        margin: 8px auto 18px;
-        gap: 12px;
-      }
-
-      .hero,
-      .controls,
-      .view {
-        padding: 18px;
-      }
-
-      .input-row {
-        grid-template-columns: 1fr;
-      }
-    }
+    @media (max-width: 1200px) { .left-panel { width: 284px; } }
+    @media (max-width: 980px) { .analysis-grid { grid-template-columns: 1fr; } .spectra-col { grid-template-rows: 1fr 1fr; } }
+    @media (max-width: 760px) { html,body { overflow: auto; height: auto; } .app { display: block; } .left-panel { width: 100%; } .right-panel { height: auto; overflow-y: auto; } .analysis-grid { grid-template-columns: 1fr; } }
   </style>
+  <link rel="stylesheet" href="_site-shared.css" />
+  <script defer src="_site-manifest.js"></script>
+  <script defer src="_site-nav.js"></script>
 </head>
 <body>
-  <main class="page">
-    <section class="hero">
-      <div>
-        <div class="eyebrow">PHYS 681 · Radio Transfer</div>
-        <h1>Optical Depth Sets the First Read of a Radio Spectrum</h1>
-        <p>
-          This explorer keeps the physics deliberately simple: one emitting slab, one background, and a free-free opacity that falls toward high frequency. Move the controls until the same source changes from optically thick to optically thin, then watch how the spectrum, the line-of-sight cartoon, and the diagnostic summary update together.
-        </p>
-        <div class="formula-row">
-          <div class="formula-pill">dI<sub>&nu;</sub>/dl = j<sub>&nu;</sub> - &kappa;<sub>&nu;</sub>I<sub>&nu;</sub></div>
-          <div class="formula-pill">T<sub>B</sub> = T<sub>bg</sub>e<sup>-&tau;</sup> + T<sub>src</sub>(1 - e<sup>-&tau;</sup>)</div>
-          <div class="formula-pill">&tau;<sub>ff</sub> &prop; EM T<sup>-1.35</sup>&nu;<sup>-2.1</sup></div>
+  <div id="site-nav-root"></div>
+<div class="app">
+
+  <!-- ══════════════ LEFT PANEL ══════════════ -->
+  <aside class="left-panel">
+    <div class="eyebrow">PHYS 681 · Free-Free Transfer</div>
+    <div class="panel-title">Optical Depth Controls the Radio Brightness You See</div>
+    <p class="panel-copy">
+      One emitting slab, one optional background, and a free-free opacity that falls with frequency.
+      When <i style="font-family:var(--math);">&tau;</i> is large, <i style="font-family:var(--math);">T</i><sub>B</sub>
+      follows the source function; when small, only a thin fraction gets through.
+    </p>
+
+    <div class="formula-box">
+      <div class="formula-label">Core Relations</div>
+      <div class="formula-line"><i>T</i><sub>B</sub> = <i>T</i><sub>bg</sub>e<sup>&minus;&tau;</sup> + <i>T</i><sub>src</sub>(1&thinsp;&minus;&thinsp;e<sup>&minus;&tau;</sup>)</div>
+      <div class="formula-line"><i>&tau;</i><sub>ff</sub> &prop; EM&thinsp;&middot;&thinsp;<i>T</i><sup>&minus;1.35</sup><i>&nu;</i><sup>&minus;2.1</sup></div>
+      <div class="formula-line"><i>B</i><sub>&nu;</sub>(<i>T</i>) = <sup>2<i>h&nu;</i><sup>3</sup></sup>&frasl;<sub><i>c</i><sup>2</sup></sub>&thinsp;(e<sup><i>h&nu;</i>/<i>kT</i></sup>&minus;1)<sup>&minus;1</sup></div>
+      <div class="formula-note">Low &nu; → thick &thinsp;&middot;&thinsp; High &nu; → transparent</div>
+    </div>
+
+    <!-- Display -->
+    <div class="section">
+      <div class="section-head">Display</div>
+      <div class="row">
+        <div class="label-desc" style="font-size:11px;color:var(--panel-muted);">Line-of-sight</div>
+        <div class="segment-row">
+          <button id="withBackgroundBtn" class="seg-btn active" type="button">Include background</button>
+          <button id="freeFreeOnlyBtn"   class="seg-btn"        type="button">Source only</button>
         </div>
       </div>
-      <div class="hero-metrics">
-        <div class="metric">
-          <div class="metric-label">Current Regime</div>
-          <div class="metric-value" id="regimeHero">Transitional</div>
-          <div class="metric-text" id="regimeHeroText">The observing frequency is sitting near the turnover where the source changes from thick to thin.</div>
+      <div class="row" style="margin-bottom:0;">
+        <div class="label-desc" style="font-size:11px;color:var(--panel-muted);">Presets</div>
+        <div class="segment-row" id="presetRow">
+          <button class="seg-btn" data-preset="thick"    type="button">Thick slab</button>
+          <button class="seg-btn active" data-preset="turnover" type="button">Near &tau;=1</button>
+          <button class="seg-btn" data-preset="thin"     type="button">Thin slab</button>
         </div>
-        <div class="metric">
-          <div class="metric-label">What To Notice</div>
-          <div class="metric-text">
-            The low-frequency side tries to flatten toward the source temperature. The high-frequency side drops because the slab becomes transparent and only a fraction of the source function is sampled.
+      </div>
+    </div>
+
+    <!-- Transfer Setup -->
+    <div class="section">
+      <div class="section-head">Transfer Setup</div>
+
+      <div class="row">
+        <div class="label-line">
+          <div class="label-name"><i>&nu;</i></div>
+          <div class="label-desc">observing frequency (GHz)</div>
+        </div>
+        <div class="slider-line">
+          <input id="freqRange"  type="range"  min="1" max="18" step="0.1" value="5.0" />
+          <input id="freqNumber" type="number" min="1" max="18" step="0.1" value="5.0" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="label-line">
+          <div class="label-name">log EM</div>
+          <div class="label-desc">emission measure</div>
+        </div>
+        <div class="slider-line">
+          <input id="emRange"  type="range"  min="27.5" max="30.2" step="0.05" value="28.6" />
+          <input id="emNumber" type="number" min="27.5" max="30.2" step="0.05" value="28.6" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="label-line">
+          <div class="label-name"><i>T</i><sub>src</sub></div>
+          <div class="label-desc">source temperature (MK)</div>
+        </div>
+        <div class="slider-line">
+          <!-- range uses log10(MK); number displays the actual MK value -->
+          <input id="sourceTempRange"  type="range"  min="-1.70" max="1.48" step="0.02" value="0.079" />
+          <input id="sourceTempNumber" type="number" min="0.02" max="30.0" step="0.01" value="1.20" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="label-line">
+          <div class="label-name"><i>T</i><sub>bg</sub></div>
+          <div class="label-desc">background temperature (K)</div>
+        </div>
+        <div class="slider-line">
+          <!-- range uses log10(K); number displays the actual K value -->
+          <input id="backgroundTempRange"  type="range"  min="3.477" max="7.000" step="0.02" value="4.0" />
+          <input id="backgroundTempNumber" type="number" min="3000" max="10000000" step="100" value="10000" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Readout -->
+    <div class="section">
+      <div class="section-head">Live Readout</div>
+      <div class="derived-grid">
+        <div class="small-card">
+          <div class="small-label">Selected <i style="font-family:var(--math);">&tau;</i></div>
+          <div class="small-value" id="readTau">0.95</div>
+          <div class="small-text" id="readTauText">Near the turnover.</div>
+        </div>
+        <div class="small-card">
+          <div class="small-label">Selected <i style="font-family:var(--math);">T</i><sub>B</sub></div>
+          <div class="small-value" id="readTb">0.74 MK</div>
+          <div class="small-text" id="readTbText">Mixed thick/thin slab.</div>
+        </div>
+        <div class="small-card">
+          <div class="small-label"><i style="font-family:var(--math);">&nu;</i> where &tau;=1</div>
+          <div class="small-value" id="readTurnover">4.9 GHz</div>
+          <div class="small-text" id="readTurnoverText">Thick below, thin above.</div>
+        </div>
+        <div class="small-card">
+          <div class="small-label">Regime</div>
+          <div class="small-value" id="readRegime">Transitional</div>
+          <div class="small-text" id="readRegimeText">Most diagnostic region.</div>
+        </div>
+        <div class="small-card full-span">
+          <div class="small-label">Teaching cue</div>
+          <div class="small-text" id="readCue">Raise EM or lower T to push toward the turnover.</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════════ RIGHT PANEL ══════════════ -->
+  <main class="right-panel">
+
+    <!-- Top bar -->
+    <section class="top-bar">
+      <div class="topbar-title">
+        <div class="eyebrow" style="color:var(--muted);">Free-Free Transfer &amp; Planck Spectrum — PHYS 681</div>
+        <h1>Free-Free Radiative Transfer &amp; Planck Spectrum <i>B</i><sub>&nu;</sub>(<i>T</i>)</h1>
+        <p><i>T</i><sub>B</sub> = <i>T</i><sub>bg</sub>e<sup>&minus;&tau;</sup> + <i>T</i><sub>src</sub>(1&minus;e<sup>&minus;&tau;</sup>); &nbsp;
+           <i>B</i><sub>&nu;</sub>(<i>T</i>) = 2<i>h&nu;</i><sup>3</sup>/<i>c</i><sup>2</sup>&thinsp;(e<sup><i>h&nu;</i>/<i>kT</i></sup>&minus;1)<sup>&minus;1</sup></p>
+      </div>
+      <div>
+        <div class="pill-row">
+          <div class="pill">
+            <div class="pill-label">Optical depth <i>&tau;</i></div>
+            <div class="pill-value" id="pillTau" style="color:var(--indigo);">—</div>
+          </div>
+          <div class="pill">
+            <div class="pill-label">Selected <i>T</i><sub>B</sub></div>
+            <div class="pill-value" id="pillTb" style="color:var(--blue);">—</div>
+          </div>
+          <div class="pill">
+            <div class="pill-label"><i>&nu;</i> turnover (&tau;=1)</div>
+            <div class="pill-value" id="pillTurnover" style="color:var(--teal);">—</div>
+          </div>
+          <div class="pill">
+            <div class="pill-label"><i>T</i><sub>src</sub></div>
+            <div class="pill-value" id="pillTsrc" style="color:var(--warm);">1.20 MK</div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="layout">
-      <aside class="panel controls">
-        <div>
-          <div class="panel-label">Controls</div>
-          <h2>Transfer Setup</h2>
-        </div>
+    <!-- Analysis grid: LOS | Spectra -->
+    <div class="analysis-grid">
 
-        <div class="control-block">
-          <div class="control-label">Background treatment</div>
-          <div class="toggle-row">
-            <button id="withBackgroundBtn" class="active" type="button">Include Background</button>
-            <button id="freeFreeOnlyBtn" type="button">Free-Free Only</button>
-          </div>
-          <div class="small">Use the toggle to show how a cooler or hotter background layer changes the observed brightness once the slab becomes transparent.</div>
+      <!-- Line of Sight card -->
+      <section class="card">
+        <div class="card-head">
+          <div class="card-title">Line of Sight</div>
+          <div class="card-sub" id="raySub">τ controls what fraction of the background survives through the slab</div>
         </div>
-
-        <div class="control-block">
-          <div class="control-top">
-            <div>
-              <div class="control-label">Observing Frequency</div>
-              <div class="control-name">&nu;</div>
-            </div>
-            <div class="control-units">GHz</div>
-          </div>
-          <div class="input-row">
-            <input id="freqRange" type="range" min="1" max="18" step="0.1" value="5.0" />
-            <input id="freqNumber" type="number" min="1" max="18" step="0.1" value="5.0" />
-          </div>
+        <div class="canvas-shell">
+          <canvas id="rayCanvas" aria-label="Line of sight cartoon: background, free-free slab, observer"></canvas>
         </div>
+      </section>
 
-        <div class="control-block">
-          <div class="control-top">
-            <div>
-              <div class="control-label">Emission Measure Proxy</div>
-              <div class="control-name">log EM</div>
-            </div>
-            <div class="control-units">cm<sup>-5</sup></div>
-          </div>
-          <div class="input-row">
-            <input id="emRange" type="range" min="27.5" max="30.2" step="0.05" value="28.6" />
-            <input id="emNumber" type="number" min="27.5" max="30.2" step="0.05" value="28.6" />
-          </div>
-        </div>
+      <!-- Spectra column -->
+      <div class="spectra-col">
 
-        <div class="control-block">
-          <div class="control-top">
-            <div>
-              <div class="control-label">Source Temperature</div>
-              <div class="control-name">T<sub>src</sub></div>
-            </div>
-            <div class="control-units">MK</div>
+        <!-- Planck B_ν(T) — top -->
+        <section class="card">
+          <div class="card-head">
+            <div class="card-title">Planck Spectrum &thinsp;<i>B</i><sub>&nu;</sub>(<i>T</i>)</div>
+            <div class="card-sub"><i>T</i><sub>src</sub> highlighted in blue — log–log, 10⁸–10²⁰ Hz</div>
           </div>
-          <div class="input-row">
-            <input id="sourceTempRange" type="range" min="0.02" max="3.0" step="0.01" value="1.20" />
-            <input id="sourceTempNumber" type="number" min="0.02" max="3.0" step="0.01" value="1.20" />
-          </div>
-        </div>
-
-        <div class="control-block">
-          <div class="control-top">
-            <div>
-              <div class="control-label">Background Temperature</div>
-              <div class="control-name">T<sub>bg</sub></div>
-            </div>
-            <div class="control-units">K</div>
-          </div>
-          <div class="input-row">
-            <input id="backgroundTempRange" type="range" min="3000" max="20000" step="100" value="10000" />
-            <input id="backgroundTempNumber" type="number" min="3000" max="20000" step="100" value="10000" />
-          </div>
-        </div>
-
-        <div class="control-block">
-          <div class="control-label">Teaching Cue</div>
-          <div class="small">
-            To force a turnover near the current observing frequency, either raise the emission measure or lower the temperature. To make the slab transparent, move to higher frequency or reduce the emission measure.
-          </div>
-        </div>
-      </aside>
-
-      <section class="panel view">
-        <div>
-          <div class="panel-label">Main View</div>
-          <h2>Spectrum and Line of Sight</h2>
-        </div>
-
-        <section class="plot-card">
-          <div class="plot-head">
-            <strong>Brightness Temperature Spectrum</strong>
-            <span id="spectrumSummary">Current frequency: 5.0 GHz</span>
-          </div>
-          <div class="canvas-wrap">
-            <canvas id="spectrumCanvas" width="1100" height="480"></canvas>
-          </div>
-          <div class="legend-row">
-            <div class="legend-item"><span class="swatch" style="background: var(--accent);"></span> total observed brightness temperature</div>
-            <div class="legend-item"><span class="swatch" style="background: var(--warm);"></span> source temperature plateau</div>
-            <div class="legend-item"><span class="swatch" style="background: var(--cool);"></span> background contribution</div>
+          <div class="canvas-shell">
+            <canvas id="plotBnuCanvas" aria-label="Planck spectrum B_nu(T) vs frequency, log-log"></canvas>
           </div>
         </section>
 
-        <div class="bottom-grid">
-          <section class="plot-card">
-            <div class="plot-head">
-              <strong>Line-of-Sight Cartoon</strong>
-              <span id="raySummary">&tau; is moderate at the selected frequency</span>
-            </div>
-            <div class="canvas-wrap">
-              <canvas id="rayCanvas" width="760" height="540"></canvas>
-            </div>
-            <div class="caption">
-              The slab emits everywhere, but a transparent slab lets you see through it while an opaque slab erases the background and saturates near the source function.
-            </div>
-          </section>
+        <!-- T_B transfer spectrum — bottom -->
+        <section class="spectrum-card">
+          <div class="card-head">
+            <div class="card-title">Brightness Temperature &thinsp;<i>T</i><sub>B</sub>(<i>&nu;</i>)</div>
+            <div class="card-sub">Free-free transfer spectrum, 1–18 GHz</div>
+          </div>
+          <div class="canvas-shell">
+            <canvas id="spectrumCanvas" aria-label="T_B(nu) free-free transfer spectrum"></canvas>
+          </div>
+          <div class="legend-row">
+            <div class="legend-item"><span class="swatch total"></span>observed <i style="font-family:var(--math);">T</i><sub>B</sub></div>
+            <div class="legend-item"><span class="swatch source"></span>source ceiling</div>
+            <div class="legend-item"><span class="swatch background"></span>background level</div>
+            <div class="legend-item"><span class="swatch turnover"></span>&tau; = 1 turnover</div>
+          </div>
+        </section>
 
-          <aside class="diagnostics">
-            <div class="diagnostic-card">
-              <div class="diagnostic-title">Current Optical Depth</div>
-              <div class="diagnostic-value" id="tauValue">0.00</div>
-              <div class="diagnostic-text" id="tauText">The slab is close to the turnover.</div>
-            </div>
-            <div class="diagnostic-card">
-              <div class="diagnostic-title">Current Brightness Temperature</div>
-              <div class="diagnostic-value" id="tbValue">0.00 MK</div>
-              <div class="diagnostic-text" id="tbText">The observed brightness still remembers both the background and the source.</div>
-            </div>
-            <div class="diagnostic-card">
-              <div class="diagnostic-title">Likely Diagnostic</div>
-              <div class="diagnostic-value" id="diagnosticValue">Turnover</div>
-              <div class="diagnostic-text" id="diagnosticText">The spectrum is most constraining near the frequency where &tau; crosses unity.</div>
-            </div>
-          </aside>
-        </div>
-      </section>
-    </section>
+      </div><!-- /spectra-col -->
+    </div><!-- /analysis-grid -->
   </main>
 
-  <script>
-    const uiFont = '-apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif';
-    const state = {
-      includeBackground: true,
-      freqGHz: 5.0,
-      logEM: 28.6,
-      sourceTempMK: 1.2,
-      backgroundTempK: 10000
-    };
+</div><!-- /app -->
 
-    const spectrumCanvas = document.getElementById("spectrumCanvas");
-    const rayCanvas = document.getElementById("rayCanvas");
-    const spectrumCtx = spectrumCanvas.getContext("2d");
-    const rayCtx = rayCanvas.getContext("2d");
+<script>
+/* ═══════════════════════════════════════════════════
+   A. Physics constants + Planck functions
+═══════════════════════════════════════════════════ */
 
-    const elements = {
-      withBackgroundBtn: document.getElementById("withBackgroundBtn"),
-      freeFreeOnlyBtn: document.getElementById("freeFreeOnlyBtn"),
-      regimeHero: document.getElementById("regimeHero"),
-      regimeHeroText: document.getElementById("regimeHeroText"),
-      spectrumSummary: document.getElementById("spectrumSummary"),
-      raySummary: document.getElementById("raySummary"),
-      tauValue: document.getElementById("tauValue"),
-      tauText: document.getElementById("tauText"),
-      tbValue: document.getElementById("tbValue"),
-      tbText: document.getElementById("tbText"),
-      diagnosticValue: document.getElementById("diagnosticValue"),
-      diagnosticText: document.getElementById("diagnosticText")
-    };
+const h_P    = 6.6261e-34;   // J s
+const k_B    = 1.3806e-23;   // J K⁻¹
+const c_L    = 2.9979e8;     // m s⁻¹
+const NU_WIEN = 5.879e10;    // Hz K⁻¹  (Wien: ν_max = NU_WIEN × T)
 
-    const controls = [
-      { key: "freqGHz", range: "freqRange", number: "freqNumber", min: 1, max: 18, step: 0.1 },
-      { key: "logEM", range: "emRange", number: "emNumber", min: 27.5, max: 30.2, step: 0.05 },
-      { key: "sourceTempMK", range: "sourceTempRange", number: "sourceTempNumber", min: 0.02, max: 3.0, step: 0.01 },
-      { key: "backgroundTempK", range: "backgroundTempRange", number: "backgroundTempNumber", min: 3000, max: 20000, step: 100 }
-    ];
+const TEMP_CURVES = [3e3, 1e4, 3e4, 1e5, 3e5, 1e6, 3e6, 1e7];
+const TEMP_LABELS = ['3000 K', '10⁴ K', '3×10⁴ K', '10⁵ K', '3×10⁵ K', '1 MK', '3 MK', '10 MK'];
 
-    function clamp(value, min, max) {
-      return Math.min(max, Math.max(min, value));
+function planck(nu, T) {
+  const x   = h_P * nu / (k_B * T);
+  const pre = 2 * h_P * nu * nu * nu / (c_L * c_L);
+  if (x > 600) return pre * Math.exp(-x);
+  return pre / (Math.exp(x) - 1);
+}
+
+const SUP_CH = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+function sup(n) {
+  return String(Math.round(n)).split('').map(d => d === '-' ? '⁻' : SUP_CH[+d]).join('');
+}
+
+/* log-log scale constants */
+const LOG_NU_MIN = 8, LOG_NU_MAX = 20;
+const LOG_B_MIN  = -22, LOG_B_MAX = 2;
+
+function xScaleNu(nu, pw, ml) {
+  return ml + (Math.log10(nu) - LOG_NU_MIN) / (LOG_NU_MAX - LOG_NU_MIN) * pw;
+}
+function yScaleB(B, ph, mt) {
+  const logB = Math.log10(Math.max(B, 10 ** (LOG_B_MIN - 1)));
+  return mt + ph - (logB - LOG_B_MIN) / (LOG_B_MAX - LOG_B_MIN) * ph;
+}
+
+/* ═══════════════════════════════════════════════════
+   B. Transfer physics (existing)
+═══════════════════════════════════════════════════ */
+
+const PRESETS = {
+  thick:    { freqGHz: 3.0,  logEM: 29.35, sourceTempMK: 0.90, backgroundTempK: 10000, includeBackground: true },
+  turnover: { freqGHz: 5.0,  logEM: 28.60, sourceTempMK: 1.20, backgroundTempK: 10000, includeBackground: true },
+  thin:     { freqGHz: 12.0, logEM: 28.20, sourceTempMK: 1.20, backgroundTempK: 10000, includeBackground: true },
+};
+
+const state = {
+  includeBackground: true,
+  freqGHz: 5.0,
+  logEM: 28.6,
+  sourceTempMK: 1.2,
+  backgroundTempK: 10000,
+};
+
+const controls = [
+  { key: 'freqGHz',        range: 'freqRange',        number: 'freqNumber',        min: 1,    max: 18,    step: 0.1  },
+  { key: 'logEM',          range: 'emRange',          number: 'emNumber',          min: 27.5, max: 30.2,  step: 0.05 },
+  { key: 'sourceTempMK',    range: 'sourceTempRange',    number: 'sourceTempNumber',    min: 0.02, max: 30.0,     step: 0.01, logScale: true },
+  { key: 'backgroundTempK', range: 'backgroundTempRange', number: 'backgroundTempNumber', min: 3000, max: 1.0e7,    step: 100,  logScale: true },
+];
+
+function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+
+function computeTau(freqGHz) {
+  const emScale   = Math.pow(10, state.logEM - 28.6);
+  const tempScale = Math.pow(state.sourceTempMK / 1.2, -1.35);
+  return 0.95 * emScale * tempScale * Math.pow(freqGHz / 5.0, -2.1);
+}
+
+function computeBrightness(freqGHz) {
+  const tau         = computeTau(freqGHz);
+  const tSource     = state.sourceTempMK * 1e6;
+  const tBackground = state.includeBackground ? state.backgroundTempK : 0;
+  const tb          = tBackground * Math.exp(-tau) + tSource * (1 - Math.exp(-tau));
+  return { tau, tb, tSource, tBackground };
+}
+
+function computeTurnoverGHz() {
+  const tauAtFive = computeTau(5.0);
+  return 5.0 * Math.pow(Math.max(tauAtFive, 1e-8), 1 / 2.1);
+}
+
+function evaluateRegime(tau) {
+  if (tau > 3)  return { name: 'Optically Thick',  text: 'The slab erases the background; brightness flattens to the source function.', cue: 'Thick side tells you about temperature, not column density.' };
+  if (tau < 0.3) return { name: 'Optically Thin',  text: 'The slab is transparent; only a small fraction of the source function appears.', cue: 'Thin side tells you about the emission measure and line-of-sight amount.' };
+  return { name: 'Transitional', text: 'Near the turnover where optical depth changes the spectrum rapidly.', cue: 'Raise EM or lower temperature to force the cursor toward the turnover.' };
+}
+
+function deriveDiagnostic(tau) {
+  if (tau > 3)   return { title: 'Best Thick-Side Read', value: 'Source Function', text: 'In the thick regime, T_B mainly traces the local source function.' };
+  if (tau < 0.3) return { title: 'Best Thin-Side Read',  value: 'Emission Measure', text: 'In the thin regime, brightness scales with plasma column density and temperature.' };
+  return { title: 'Best Turnover Read', value: 'Turnover', text: 'The bend near τ=1 ties opacity, density, temperature, and path length together.' };
+}
+
+function formatKelvin(K) {
+  if (K >= 1e6) return (K / 1e6).toFixed(2) + ' MK';
+  if (K >= 1e3) return (K / 1e3).toFixed(1) + ' kK';
+  return K.toFixed(0) + ' K';
+}
+function formatGHz(v) { return v.toFixed(1) + ' GHz'; }
+
+/* ═══════════════════════════════════════════════════
+   C. Canvas / DOM
+═══════════════════════════════════════════════════ */
+
+const spectrumCanvas  = document.getElementById('spectrumCanvas');
+const rayCanvas       = document.getElementById('rayCanvas');
+const plotBnuCanvas   = document.getElementById('plotBnuCanvas');
+const spectrumCtx     = spectrumCanvas.getContext('2d');
+const rayCtx          = rayCanvas.getContext('2d');
+const plotBnuCtx      = plotBnuCanvas.getContext('2d');
+
+const mathFont = '"STIX Two Text","Cambria Math",serif';
+const uiFont   = '-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif';
+const MFONT    = (sz, w) => `${w||600} ${sz}px ${mathFont}`;
+const UIFONT   = (sz, w) => `${w||400} ${sz}px ${uiFont}`;
+
+const COLORS = {
+  blue: '#2f7de1', blueSoft: 'rgba(47,125,225,0.10)',
+  warm: '#d97b2d', warmSoft: 'rgba(217,123,45,0.12)',
+  teal: '#19998c', tealSoft: 'rgba(25,153,140,0.12)',
+  indigo: '#5a57d8',
+  text: '#10243b', muted: '#617487',
+  grid: 'rgba(90,110,131,0.12)', axis: 'rgba(68,86,106,0.22)',
+  halo: 'rgba(255,255,255,0.88)',
+  thickFill: 'rgba(217,123,45,0.08)', thinFill: 'rgba(47,125,225,0.06)',
+  ghost: 'rgba(90,110,140,0.32)', bg: '#f9fbfe',
+};
+
+function resizeCanvas(canvas, ctx) {
+  const dpr  = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(1, Math.round(rect.width  * dpr));
+  const h = Math.max(1, Math.round(rect.height * dpr));
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { width: rect.width, height: rect.height };
+}
+
+/* ═══════════════════════════════════════════════════
+   D. Draw Planck B_ν(T) — log-log
+═══════════════════════════════════════════════════ */
+
+function drawPlotBnu() {
+  const { width, height } = resizeCanvas(plotBnuCanvas, plotBnuCtx);
+  if (width < 10 || height < 10) return;
+  const ctx = plotBnuCtx;
+  const m   = { l: 46, r: 64, t: 18, b: 32 };
+  const pw  = width - m.l - m.r, ph = height - m.t - m.b;
+
+  ctx.fillStyle = COLORS.bg;
+  ctx.fillRect(0, 0, width + 4, height + 4);
+
+  const xTicks = [8, 10, 12, 14, 16, 18, 20];
+  const yTicks = [-20, -15, -10, -5, 0];
+  const yLbls  = ['10⁻²⁰', '10⁻¹⁵', '10⁻¹⁰', '10⁻⁵', '10⁰'];
+
+  /* Grid */
+  ctx.strokeStyle = 'rgba(90,110,131,0.10)'; ctx.lineWidth = 0.7; ctx.setLineDash([]);
+  xTicks.forEach(lognu => {
+    const x = xScaleNu(10 ** lognu, pw, m.l);
+    ctx.beginPath(); ctx.moveTo(x, m.t); ctx.lineTo(x, m.t + ph); ctx.stroke();
+  });
+  yTicks.forEach(logb => {
+    const y = m.t + ph - (logb - LOG_B_MIN) / (LOG_B_MAX - LOG_B_MIN) * ph;
+    ctx.beginPath(); ctx.moveTo(m.l, y); ctx.lineTo(m.l + pw, y); ctx.stroke();
+  });
+
+  /* Axes */
+  ctx.strokeStyle = COLORS.axis; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(m.l, m.t); ctx.lineTo(m.l, m.t + ph); ctx.lineTo(m.l + pw, m.t + ph); ctx.stroke();
+
+  /* X tick labels */
+  ctx.fillStyle = COLORS.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.font = MFONT(10);
+  xTicks.forEach(lognu => {
+    const x = xScaleNu(10 ** lognu, pw, m.l);
+    ctx.fillText('10' + sup(lognu), x, m.t + ph + 4);
+  });
+
+  /* Y tick labels */
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  yTicks.forEach((logb, i) => {
+    const y = m.t + ph - (logb - LOG_B_MIN) / (LOG_B_MAX - LOG_B_MIN) * ph;
+    ctx.fillText(yLbls[i], m.l - 4, y);
+  });
+
+  /* Axis labels */
+  ctx.fillStyle = COLORS.text; ctx.font = MFONT(11); ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText('Frequency ν  [Hz]', m.l + pw / 2, m.t + ph + 22);
+  ctx.save(); ctx.translate(11, m.t + ph / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Bν(T)  [W m⁻² Hz⁻¹ sr⁻¹]', 0, 0); ctx.restore();
+
+  const clipT = m.t, clipB = m.t + ph;
+  const activeT = state.sourceTempMK * 1e6;
+
+  /* Rectangular clip so curves terminate pixel-precisely at the plot boundary
+     (avoids sample-granularity quantization at the lower edge). */
+  ctx.save();
+  ctx.beginPath(); ctx.rect(m.l, m.t, pw, ph); ctx.clip();
+
+  /* Ghost curves */
+  TEMP_CURVES.forEach(T => {
+    if (Math.abs(Math.log10(T) - Math.log10(activeT)) < 0.05) return;
+    ctx.beginPath();
+    for (let i = 0; i <= 250; i++) {
+      const nu  = 10 ** (LOG_NU_MIN + (i / 250) * (LOG_NU_MAX - LOG_NU_MIN));
+      const B   = planck(nu, T);
+      const x   = xScaleNu(nu, pw, m.l);
+      const y   = yScaleB(B, ph, m.t);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
+    ctx.strokeStyle = COLORS.ghost; ctx.lineWidth = 0.9; ctx.setLineDash([]); ctx.stroke();
+  });
 
-    function formatKelvin(valueK) {
-      if (valueK >= 1e6) {
-        return `${(valueK / 1e6).toFixed(2)} MK`;
-      }
-      if (valueK >= 1e3) {
-        return `${(valueK / 1e3).toFixed(1)} kK`;
-      }
-      return `${valueK.toFixed(0)} K`;
+  /* Active curve (T_src) */
+  ctx.beginPath();
+  for (let i = 0; i <= 300; i++) {
+    const nu = 10 ** (LOG_NU_MIN + (i / 300) * (LOG_NU_MAX - LOG_NU_MIN));
+    const B  = planck(nu, activeT);
+    const x  = xScaleNu(nu, pw, m.l);
+    const y  = yScaleB(B, ph, m.t);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = COLORS.blue; ctx.lineWidth = 2.4; ctx.setLineDash([]); ctx.stroke();
+
+  /* RJ asymptote (dashed warm) */
+  ctx.beginPath();
+  for (let i = 0; i <= 200; i++) {
+    const nu  = 10 ** (LOG_NU_MIN + (i / 200) * (LOG_NU_MAX - LOG_NU_MIN));
+    const Brj = 2 * k_B * activeT * nu * nu / (c_L * c_L);
+    const x   = xScaleNu(nu, pw, m.l);
+    const y   = yScaleB(Brj, ph, m.t);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.setLineDash([5, 4]); ctx.strokeStyle = COLORS.warm; ctx.lineWidth = 1.3; ctx.stroke(); ctx.setLineDash([]);
+
+  ctx.restore();
+
+  /* Wien peak marker */
+  const nuPeak = NU_WIEN * activeT;
+  const BPeak  = planck(nuPeak, activeT);
+  const xPk    = xScaleNu(nuPeak, pw, m.l);
+  const yPk    = yScaleB(BPeak, ph, m.t);
+  if (xPk > m.l && xPk < m.l + pw && yPk > clipT && yPk < clipB) {
+    ctx.beginPath(); ctx.setLineDash([3, 4]);
+    ctx.strokeStyle = 'rgba(47,125,225,0.40)'; ctx.lineWidth = 1;
+    ctx.moveTo(xPk, yPk + 6); ctx.lineTo(xPk, clipB); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(xPk, yPk, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = COLORS.blue; ctx.fill();
+  }
+
+  /* Curve labels on right axis */
+  TEMP_CURVES.forEach((T, idx) => {
+    const yL = yScaleB(planck(NU_WIEN * T, T), ph, m.t);
+    if (yL < clipT || yL > clipB) return;
+    const isAct = Math.abs(Math.log10(T) - Math.log10(activeT)) < 0.05;
+    ctx.fillStyle = isAct ? COLORS.blue : 'rgba(80,100,130,0.65)';
+    ctx.font = isAct ? MFONT(10.5) : UIFONT(9.5);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    const xL = xScaleNu(NU_WIEN * T, pw, m.l);
+    if (xL > m.l + pw - 4) ctx.fillText(TEMP_LABELS[idx], m.l + pw + 3, yL);
+  });
+
+  /* Annotations */
+  ctx.font = MFONT(10); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = COLORS.warm; ctx.fillText('RJ: Bν ∝ ν²T', m.l + 4, clipB - 5);
+  ctx.fillStyle = 'rgba(80,100,130,0.7)'; ctx.textAlign = 'right';
+  ctx.fillText('Wien tail', m.l + pw - 4, clipT + 13);
+
+  /* T_src badge */
+  const Tstr = (activeT >= 1e6) ? (activeT / 1e6).toPrecision(3) + ' MK' : (activeT / 1e3).toPrecision(3) + ' kK';
+  ctx.fillStyle = 'rgba(47,125,225,0.12)';
+  const bw = 68, bh = 18;
+  ctx.fillRect(m.l + 3, m.t + 2, bw, bh);
+  ctx.fillStyle = COLORS.blue; ctx.font = MFONT(10.5); ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText('T = ' + Tstr, m.l + 6, m.t + 11);
+}
+
+/* ═══════════════════════════════════════════════════
+   E. Draw T_B spectrum (existing, adapted)
+═══════════════════════════════════════════════════ */
+
+function getSpectrumSamples() {
+  const samples = [];
+  for (let freq = 1; freq <= 18.0001; freq += 0.12) {
+    samples.push({ freq, ...computeBrightness(freq) });
+  }
+  return samples;
+}
+
+function drawSpectrum(samples, current, turnoverGHz) {
+  const { width, height } = resizeCanvas(spectrumCanvas, spectrumCtx);
+  if (width < 10 || height < 10) return;
+  const ctx = spectrumCtx;
+  const margin = { top: 18, right: 16, bottom: 44, left: 66 };
+  const plotWidth  = width  - margin.left - margin.right;
+  const plotHeight = height - margin.top  - margin.bottom;
+  const maxTb = Math.max(...samples.map(s => s.tb), current.tSource, state.includeBackground ? current.tBackground * 1.3 : 0);
+  const yMax  = maxTb * 1.08;
+  const xScale = freq => margin.left + ((freq - 1) / 17) * plotWidth;
+  const yScale = tb   => height - margin.bottom - (tb / Math.max(yMax, 1)) * plotHeight;
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = COLORS.bg; ctx.fillRect(0, 0, width, height);
+
+  const turnoverInBand = turnoverGHz >= 1 && turnoverGHz <= 18;
+  if (turnoverInBand) {
+    const tx = xScale(turnoverGHz);
+    ctx.fillStyle = COLORS.thickFill;
+    ctx.fillRect(margin.left, margin.top, Math.max(0, tx - margin.left), plotHeight);
+    ctx.fillStyle = COLORS.thinFill;
+    ctx.fillRect(tx, margin.top, Math.max(0, margin.left + plotWidth - tx), plotHeight);
+  } else {
+    ctx.fillStyle = turnoverGHz < 1 ? COLORS.thinFill : COLORS.thickFill;
+    ctx.fillRect(margin.left, margin.top, plotWidth, plotHeight);
+  }
+
+  ctx.strokeStyle = COLORS.axis; ctx.lineWidth = 1;
+  ctx.strokeRect(margin.left, margin.top, plotWidth, plotHeight);
+
+  /* Grid + x ticks */
+  ctx.fillStyle = COLORS.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.font = MFONT(10);
+  [1, 3, 5, 8, 12, 16, 18].forEach(tick => {
+    const x = xScale(tick);
+    ctx.strokeStyle = COLORS.grid; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(x, margin.top); ctx.lineTo(x, margin.top + plotHeight); ctx.stroke();
+    ctx.fillText(String(tick), x, margin.top + plotHeight + 5);
+  });
+
+  /* Y ticks */
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  [0, 0.25, 0.5, 0.75, 1.0].forEach(frac => {
+    const val = yMax * frac;
+    const y   = yScale(val);
+    ctx.strokeStyle = COLORS.grid; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(margin.left, y); ctx.lineTo(margin.left + plotWidth, y); ctx.stroke();
+    ctx.fillText((val / 1e6).toFixed(2), margin.left - 6, y);
+  });
+
+  /* Axis labels */
+  ctx.fillStyle = COLORS.text; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.font = MFONT(11);
+  ctx.fillText('Frequency ν  [GHz]', margin.left + plotWidth / 2, height - 10);
+  ctx.save(); ctx.translate(14, margin.top + plotHeight / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText('T\u209B  [MK]', 0, 0); ctx.restore();
+
+  /* τ=1 marker */
+  if (turnoverInBand) {
+    const tx = xScale(turnoverGHz);
+    ctx.strokeStyle = COLORS.indigo; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(tx, margin.top); ctx.lineTo(tx, margin.top + plotHeight); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = COLORS.indigo; ctx.font = MFONT(10, 700); ctx.textAlign = 'center';
+    ctx.fillText('τ = 1', tx, margin.top - 5);
+  }
+
+  /* Reference lines */
+  ctx.setLineDash([6, 5]); ctx.lineWidth = 1.4;
+  ctx.strokeStyle = COLORS.warm;
+  ctx.beginPath(); ctx.moveTo(margin.left, yScale(current.tSource)); ctx.lineTo(margin.left + plotWidth, yScale(current.tSource)); ctx.stroke();
+  if (state.includeBackground) {
+    ctx.strokeStyle = COLORS.teal;
+    ctx.beginPath(); ctx.moveTo(margin.left, yScale(current.tBackground)); ctx.lineTo(margin.left + plotWidth, yScale(current.tBackground)); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  /* T_B curve */
+  function traceCurve(lw, color) {
+    ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.beginPath();
+    samples.forEach((s, i) => { const y = yScale(s.tb); if (i === 0) ctx.moveTo(xScale(s.freq), y); else ctx.lineTo(xScale(s.freq), y); });
+    ctx.stroke();
+  }
+  traceCurve(5.2, COLORS.halo);
+  traceCurve(2.6, COLORS.blue);
+
+  /* Selected frequency marker */
+  const cx = xScale(state.freqGHz), cy = yScale(current.tb);
+  ctx.strokeStyle = 'rgba(90,87,216,0.40)'; ctx.lineWidth = 1.8;
+  ctx.beginPath(); ctx.moveTo(cx, margin.top); ctx.lineTo(cx, margin.top + plotHeight); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, 5.5, 0, Math.PI * 2);
+  ctx.fillStyle = COLORS.indigo; ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.8; ctx.stroke();
+
+  /* Side annotations — match which regimes are actually visible in-band */
+  ctx.font = MFONT(10, 700); ctx.textBaseline = 'top';
+  if (turnoverInBand) {
+    ctx.fillStyle = COLORS.warm; ctx.textAlign = 'left';  ctx.fillText('thick', margin.left + 6, margin.top + 5);
+    ctx.fillStyle = COLORS.blue; ctx.textAlign = 'right'; ctx.fillText('thin',  margin.left + plotWidth - 6, margin.top + 5);
+  } else if (turnoverGHz < 1) {
+    ctx.fillStyle = COLORS.blue; ctx.textAlign = 'left';  ctx.fillText('thin',  margin.left + 6, margin.top + 5);
+  } else {
+    ctx.fillStyle = COLORS.warm; ctx.textAlign = 'left';  ctx.fillText('thick', margin.left + 6, margin.top + 5);
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   F. Draw Line-of-Sight cartoon (existing, adapted)
+═══════════════════════════════════════════════════ */
+
+function drawArrow(ctx, x0, y0, x1, y1, color, lineW, alpha) {
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color; ctx.fillStyle = color;
+  ctx.lineWidth = lineW; ctx.lineCap = 'round';
+  // Shorten the shaft slightly so the fat arrowhead isn't piled on top of the stroked tip
+  const angleShaft = Math.atan2(y1 - y0, x1 - x0);
+  const head = Math.max(15, lineW * 4.2);   // noticeably larger than before
+  const headW = 0.46;                       // half-angle of the head in radians
+  const shaftX1 = x1 - head * 0.55 * Math.cos(angleShaft);
+  const shaftY1 = y1 - head * 0.55 * Math.sin(angleShaft);
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(shaftX1, shaftY1); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x1 - head * Math.cos(angleShaft - headW), y1 - head * Math.sin(angleShaft - headW));
+  ctx.lineTo(x1 - head * Math.cos(angleShaft + headW), y1 - head * Math.sin(angleShaft + headW));
+  ctx.closePath(); ctx.fill(); ctx.restore();
+}
+
+/* Small stable pseudo-random for bubble positions (seed in, 0..1 out). */
+function prand(n) {
+  const s = Math.sin(n * 12.9898) * 43758.5453;
+  return s - Math.floor(s);
+}
+
+/* Magma colormap (matplotlib), 6-stop piecewise-linear approximation.
+   Input t ∈ [0,1]. Returns [r,g,b] in 0..255. */
+const MAGMA_STOPS = [
+  [0.00, [  0,   0,   4]],
+  [0.20, [ 40,  11,  84]],
+  [0.40, [101,  21, 110]],
+  [0.60, [158,  47, 127]],
+  [0.80, [222,  73, 104]],
+  [1.00, [252, 253, 191]],
+];
+function magmaRGB(t) {
+  t = clamp(t, 0, 1);
+  for (let i = 0; i < MAGMA_STOPS.length - 1; i++) {
+    const [t0, c0] = MAGMA_STOPS[i];
+    const [t1, c1] = MAGMA_STOPS[i + 1];
+    if (t <= t1) {
+      const s = (t - t0) / (t1 - t0);
+      return [
+        Math.round(c0[0] + s * (c1[0] - c0[0])),
+        Math.round(c0[1] + s * (c1[1] - c0[1])),
+        Math.round(c0[2] + s * (c1[2] - c0[2])),
+      ];
     }
+  }
+  return MAGMA_STOPS[MAGMA_STOPS.length - 1][1];
+}
 
-    function computeTau(freqGHz) {
-      const emScale = Math.pow(10, state.logEM - 28.6);
-      const tempScale = Math.pow(state.sourceTempMK / 1.2, -1.35);
-      return 0.95 * emScale * tempScale * Math.pow(freqGHz / 5.0, -2.1);
-    }
+/* Temperature → color via magma, log-scaled over 10^3 K .. 10^7.5 K (≈32 MK).
+   Slider caps (30 MK for T_src, 10 MK for T_bg) both fit inside this range. */
+const TCOL_LOG_LO = 3.0;
+const TCOL_LOG_HI = 7.5;
+function tempColor(T, alpha) {
+  const t = (Math.log10(Math.max(T, 10)) - TCOL_LOG_LO) / (TCOL_LOG_HI - TCOL_LOG_LO);
+  const [r, g, b] = magmaRGB(t);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
 
-    function computeBrightness(freqGHz) {
-      const tau = computeTau(freqGHz);
-      const tSource = state.sourceTempMK * 1e6;
-      const tBackground = state.includeBackground ? state.backgroundTempK : 0;
-      const tb = tBackground * Math.exp(-tau) + tSource * (1 - Math.exp(-tau));
-      return { tau, tb, tSource, tBackground };
-    }
+/* Pick a readable ink color for text drawn on top of the magma-tinted slab.
+   Composites magma(T) at `alpha` over the page background (#f9fbfe) and
+   returns dark ink on light slabs, near-white ink on dark slabs. */
+function slabInkColor(T, alpha) {
+  const t = (Math.log10(Math.max(T, 10)) - TCOL_LOG_LO) / (TCOL_LOG_HI - TCOL_LOG_LO);
+  const [r, g, b] = magmaRGB(t);
+  const R = r * alpha + 249 * (1 - alpha);
+  const G = g * alpha + 251 * (1 - alpha);
+  const B = b * alpha + 254 * (1 - alpha);
+  const lum = 0.2126 * R + 0.7152 * G + 0.0722 * B;
+  return lum > 190 ? COLORS.muted : 'rgba(248,250,255,0.92)';
+}
 
-    function evaluateRegime(tau) {
-      if (tau > 3) {
-        return {
-          name: "Optically Thick",
-          text: "The background is mostly erased and the spectrum tries to flatten toward the source temperature."
-        };
-      }
-      if (tau < 0.3) {
-        return {
-          name: "Optically Thin",
-          text: "The slab is transparent, so the observed brightness is only a small fraction of the source function."
-        };
-      }
-      return {
-        name: "Transitional",
-        text: "You are near the turnover where the spectrum is most sensitive to optical depth."
-      };
-    }
+/* Render an `e^{exponent}` style math glyph onto a canvas at (x,y) (left, alphabetic baseline).
+   `exponent` is the superscript text (e.g. '−τ'). Returns total advance width. */
+function drawExpSuper(ctx, x, y, base, exponent) {
+  const savedFont = ctx.font;
+  const m = savedFont.match(/(\d+(\.\d+)?)px/);
+  const sz = m ? parseFloat(m[1]) : 11;
+  ctx.fillText(base, x, y);
+  const bw = ctx.measureText(base).width;
+  ctx.font = savedFont.replace(/(\d+(\.\d+)?)px/, (sz * 0.70).toFixed(2) + 'px');
+  ctx.fillText(exponent, x + bw + 0.5, y - sz * 0.38);
+  const ew = ctx.measureText(exponent).width;
+  ctx.font = savedFont;
+  return bw + ew + 1;
+}
 
-    function deriveDiagnostic(tau) {
-      if (tau > 3) {
-        return {
-          title: "Source Temperature",
-          text: "In the thick regime, brightness temperature is telling you more about the local source function than about the total emission measure."
-        };
-      }
-      if (tau < 0.3) {
-        return {
-          title: "Emission Measure",
-          text: "In the thin regime, brightness depends on how much plasma sits along the line of sight and how hot it is."
-        };
-      }
-      return {
-        title: "Turnover",
-        text: "The frequency where the spectrum bends is where free-free opacity, density, temperature, and path length meet most directly."
-      };
-    }
+/* Small horizontal colorbar for the temperature map inside the Line-of-Sight card.
+   Ticks positioned at their true log10(T) fraction of the bar, not at left/mid/right. */
+function drawTempLegend(ctx, x, y, w, h) {
+  const lo = TCOL_LOG_LO, hi = TCOL_LOG_HI;
+  const grad = ctx.createLinearGradient(x, y, x + w, y);
+  const stops = 12;
+  for (let i = 0; i <= stops; i++) {
+    const s = i / stops;
+    const logT = lo + s * (hi - lo);
+    grad.addColorStop(s, tempColor(Math.pow(10, logT), 1.0));
+  }
+  ctx.fillStyle = grad;
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = 'rgba(30,50,80,0.35)'; ctx.lineWidth = 0.7;
+  ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+  ctx.fillStyle = COLORS.muted; ctx.font = MFONT(9.5); ctx.textBaseline = 'top';
+  const ticks = [
+    { logT: 3, label: '10³ K', align: 'left'   },
+    { logT: 5, label: '10⁵ K', align: 'center' },
+    { logT: 7, label: '10⁷ K', align: 'right'  },
+  ];
+  ticks.forEach(({ logT, label, align }) => {
+    const frac = (logT - lo) / (hi - lo);
+    const tx = x + frac * w;
+    // Short tick mark on top of the bar
+    ctx.strokeStyle = 'rgba(30,50,80,0.55)'; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(tx, y + h); ctx.lineTo(tx, y + h + 3); ctx.stroke();
+    ctx.textAlign = align;
+    ctx.fillText(label, tx, y + h + 4);
+  });
+}
 
-    function getSpectrumSamples() {
-      const samples = [];
-      for (let freq = 1; freq <= 18.0001; freq += 0.12) {
-        samples.push({ freq, ...computeBrightness(freq) });
-      }
-      return samples;
-    }
+function drawRayCartoon(current) {
+  const { width, height } = resizeCanvas(rayCanvas, rayCtx);
+  if (width < 10 || height < 10) return;
+  const ctx = rayCtx;
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = COLORS.bg; ctx.fillRect(0, 0, width, height);
 
-    function setupControl(control) {
-      const range = document.getElementById(control.range);
-      const number = document.getElementById(control.number);
+  const slabX    = width * 0.32, slabW = width * 0.30;
+  const slabY    = height * 0.18, slabH = height * 0.54;
+  const bgX      = width * 0.08, bgW  = slabX - bgX - 18;
+  const obsX     = width * 0.88;
+  const trans    = Math.exp(-current.tau);
+  const emFrac   = 1 - trans;
+  const opAlpha  = clamp(0.28 + 0.50 * Math.log10(current.tau + 1) / Math.log10(7), 0.22, 0.85);
 
-      function pushValue(rawValue) {
-        const value = clamp(parseFloat(rawValue), control.min, control.max);
-        state[control.key] = value;
-        range.value = value;
-        number.value = value;
-        render();
-      }
+  /* Background slab — edgeless, square corners, filled by T_bg colormap */
+  if (state.includeBackground) {
+    ctx.fillStyle = tempColor(current.tBackground, 0.85);
+    ctx.fillRect(bgX, slabY, bgW, slabH);
+  } else {
+    // No background: draw a faint neutral rectangle to preserve layout
+    ctx.fillStyle = 'rgba(120,135,155,0.10)';
+    ctx.fillRect(bgX, slabY, bgW, slabH);
+  }
 
-      range.addEventListener("input", () => pushValue(range.value));
-      number.addEventListener("input", () => {
-        if (number.value === "") {
-          return;
-        }
-        pushValue(number.value);
-      });
-    }
+  /* FF slab — edgeless, square corners, hue = T_src, alpha = f(τ) */
+  ctx.fillStyle = tempColor(current.tSource, opAlpha);
+  ctx.fillRect(slabX, slabY, slabW, slabH);
 
-    controls.forEach(setupControl);
+  /* Labels */
+  ctx.fillStyle = COLORS.text; ctx.font = MFONT(12, 700);
+  ctx.textAlign = 'left';   ctx.fillText('Background',   bgX,              slabY - 9);
+  ctx.textAlign = 'center'; ctx.fillText('Free-free slab', slabX + slabW / 2, slabY - 9);
+  ctx.textAlign = 'right';  ctx.fillText('Observer',      width - 12,       slabY - 9);
 
-    elements.withBackgroundBtn.addEventListener("click", () => {
-      state.includeBackground = true;
-      elements.withBackgroundBtn.classList.add("active");
-      elements.freeFreeOnlyBtn.classList.remove("active");
-      render();
-    });
+  const yBg  = slabY + slabH * 0.74;
+  const yFf  = slabY + slabH * 0.22;
 
-    elements.freeFreeOnlyBtn.addEventListener("click", () => {
-      state.includeBackground = false;
-      elements.freeFreeOnlyBtn.classList.add("active");
-      elements.withBackgroundBtn.classList.remove("active");
-      render();
-    });
+  /* Background arrow — entering slab from the left, exiting with transmitted fraction */
+  drawArrow(ctx, bgX + 10, yBg, slabX - 6, yBg, COLORS.teal, 3.5, 0.95);
+  drawArrow(ctx, slabX + slabW + 6, yBg, obsX - 18, yBg, COLORS.teal, 3.5, clamp(trans, 0.10, 1));
 
-    function resizeCanvas(canvas, ctx) {
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
-      const width = Math.max(1, Math.round(rect.width * dpr));
-      const height = Math.max(1, Math.round(rect.height * dpr));
-      if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
-      }
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
+  /* Slab emission arrow — emerging from the slab's right edge */
+  drawArrow(ctx, slabX + slabW * 0.35, yFf, obsX - 18, yFf, COLORS.blue, 4.5, clamp(0.20 + emFrac * 0.85, 0.24, 1));
 
-    function drawAxes(ctx, width, height, margin, xTicks, yTicks, yLabelFormatter) {
-      ctx.strokeStyle = "rgba(15, 23, 42, 0.14)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.rect(margin.left, margin.top, width - margin.left - margin.right, height - margin.top - margin.bottom);
-      ctx.stroke();
+  /* Bubbles inside slab — count ∝ τ (homogeneous-slab cartoon). Deterministic positions so the pattern doesn't flicker. */
+  const nBubbles = Math.min(60, Math.round(current.tau * 5));
+  const br = 3.0;
+  const pad = br + 2;
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  for (let i = 0; i < nBubbles; i++) {
+    const bx = slabX + pad + prand(i * 2 + 1) * (slabW - 2 * pad);
+    const by = slabY + pad + prand(i * 2 + 2) * (slabH - 2 * pad);
+    ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2); ctx.fill();
+  }
 
-      ctx.font = `12px ${uiFont}`;
-      ctx.fillStyle = "#5b677a";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      xTicks.forEach((tick) => {
-        ctx.beginPath();
-        ctx.moveTo(tick.x, margin.top);
-        ctx.lineTo(tick.x, height - margin.bottom);
-        ctx.strokeStyle = "rgba(15, 23, 42, 0.08)";
-        ctx.stroke();
-        ctx.fillText(tick.label, tick.x, height - margin.bottom + 10);
-      });
+  /* Quantity labels — render the exp(−τ) pieces with real superscripts.
+     Ink adapts to the slab's composite brightness so it stays readable at any T_src. */
+  ctx.fillStyle = slabInkColor(current.tSource, opAlpha);
+  ctx.font = MFONT(11); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  // "Source term: (1 − e^{−τ}) = 0.63"
+  let lx = slabX + 8, ly = yFf - 14;
+  ctx.fillText('Source term: (1 − ', lx, ly);
+  lx += ctx.measureText('Source term: (1 − ').width;
+  lx += drawExpSuper(ctx, lx, ly, 'e', '−τ');
+  ctx.fillText(`) = ${emFrac.toFixed(2)}`, lx, ly);
+  // "Transmitted: e^{−τ} = 0.39"
+  lx = slabX + 8; ly = yBg - 14;
+  ctx.fillText('Transmitted: ', lx, ly);
+  lx += ctx.measureText('Transmitted: ').width;
+  lx += drawExpSuper(ctx, lx, ly, 'e', '−τ');
+  ctx.fillText(` = ${trans.toFixed(2)}`, lx, ly);
 
-      ctx.textAlign = "right";
-      ctx.textBaseline = "middle";
-      yTicks.forEach((tick) => {
-        ctx.beginPath();
-        ctx.moveTo(margin.left, tick.y);
-        ctx.lineTo(width - margin.right, tick.y);
-        ctx.strokeStyle = "rgba(15, 23, 42, 0.08)";
-        ctx.stroke();
-        ctx.fillText(yLabelFormatter(tick.value), margin.left - 10, tick.y);
-      });
-    }
+  /* Temperature legend (compact) */
+  const legW = Math.min(150, width * 0.30), legH = 9;
+  drawTempLegend(ctx, width - legW - 10, height - legH - 22, legW, legH, 1e3, 1e7);
 
-    function drawSpectrum(samples) {
-      resizeCanvas(spectrumCanvas, spectrumCtx);
-      const width = spectrumCanvas.getBoundingClientRect().width;
-      const height = spectrumCanvas.getBoundingClientRect().height;
-      const ctx = spectrumCtx;
-      const margin = { top: 16, right: 18, bottom: 48, left: 78 };
+  /* τ footer */
+  ctx.fillStyle = COLORS.text; ctx.font = MFONT(13, 700); ctx.textAlign = 'left';
+  ctx.fillText(`τ = ${current.tau.toFixed(2)} at ${state.freqGHz.toFixed(1)} GHz`, bgX, height - 12);
+}
 
-      ctx.clearRect(0, 0, width, height);
+/* ═══════════════════════════════════════════════════
+   G. Readout updates
+═══════════════════════════════════════════════════ */
 
-      const maxTb = Math.max(...samples.map((sample) => sample.tb), state.sourceTempMK * 1e6, state.backgroundTempK * 1.3);
-      const xMin = 1;
-      const xMax = 18;
-      const yMin = 0;
-      const yMax = maxTb * 1.08;
+function updateReadout(current, regime, diagnostic, turnoverGHz) {
+  const turnoverInBand = turnoverGHz >= 1 && turnoverGHz <= 18;
+  const turnoverLabel  = turnoverInBand ? formatGHz(turnoverGHz) : turnoverGHz < 1 ? '< 1 GHz' : '> 18 GHz';
 
-      const plotWidth = width - margin.left - margin.right;
-      const plotHeight = height - margin.top - margin.bottom;
-      const xScale = (freq) => margin.left + ((freq - xMin) / (xMax - xMin)) * plotWidth;
-      const yScale = (tb) => height - margin.bottom - ((tb - yMin) / (yMax - yMin)) * plotHeight;
+  /* Left panel */
+  document.getElementById('readTau').textContent      = current.tau.toFixed(2);
+  document.getElementById('readTauText').textContent  = regime.text;
+  document.getElementById('readTb').textContent       = formatKelvin(current.tb);
+  document.getElementById('readTbText').textContent   = state.includeBackground ? 'Blending slab emission + background.' : 'Source-only mode active.';
+  document.getElementById('readTurnover').textContent = turnoverLabel;
+  document.getElementById('readTurnoverText').textContent = turnoverInBand
+    ? 'Thick below, thin above this frequency.'
+    : (turnoverGHz < 1 ? 'Turnover below the band — full thin window.' : 'Turnover above the band — full thick window.');
+  document.getElementById('readRegime').textContent     = regime.name;
+  document.getElementById('readRegimeText').textContent = regime.cue;
+  document.getElementById('readCue').textContent        = 'Raise EM or lower T to push toward the turnover. Higher ν → thin regime.';
 
-      drawAxes(
-        ctx,
-        width,
-        height,
-        margin,
-        [1, 3, 5, 8, 12, 16, 18].map((value) => ({ x: xScale(value), label: `${value}` })),
-        [0, 0.25, 0.5, 0.75, 1].map((fraction) => ({ value: yMin + fraction * (yMax - yMin), y: yScale(yMin + fraction * (yMax - yMin)) })),
-        (value) => `${(value / 1e6).toFixed(2)}`
-      );
+  /* Top pills */
+  document.getElementById('pillTau').textContent      = current.tau.toFixed(2);
+  document.getElementById('pillTb').textContent       = formatKelvin(current.tb);
+  document.getElementById('pillTurnover').textContent = turnoverLabel;
+  document.getElementById('pillTsrc').textContent     = state.sourceTempMK.toFixed(2) + ' MK';
 
-      ctx.fillStyle = "#5b677a";
-      ctx.font = `12px ${uiFont}`;
-      ctx.textAlign = "center";
-      ctx.fillText("Frequency (GHz)", margin.left + plotWidth / 2, height - 12);
-      ctx.save();
-      ctx.translate(18, margin.top + plotHeight / 2);
-      ctx.rotate(-Math.PI / 2);
-      ctx.fillText("Brightness Temperature (MK)", 0, 0);
-      ctx.restore();
+  /* Ray subtitle — render math glyphs with italic + superscript in STIX (the .card-sub math span) */
+  const mathSpan = (html) => `<span style="font-family:var(--math);">${html}</span>`;
+  const expMinusTau = mathSpan('<i>e</i><sup>&minus;&tau;</sup>');
+  document.getElementById('raySub').innerHTML = state.includeBackground
+    ? `Background transmitted: ${expMinusTau} = ${Math.exp(-current.tau).toFixed(2)}; slab adds ${formatKelvin(current.tSource * (1 - Math.exp(-current.tau)))}`
+    : 'Source-only mode — background term suppressed.';
+}
 
-      ctx.strokeStyle = "rgba(234, 88, 12, 0.9)";
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([6, 6]);
-      ctx.beginPath();
-      ctx.moveTo(margin.left, yScale(state.sourceTempMK * 1e6));
-      ctx.lineTo(width - margin.right, yScale(state.sourceTempMK * 1e6));
-      ctx.stroke();
+/* ═══════════════════════════════════════════════════
+   H. Master render
+═══════════════════════════════════════════════════ */
 
-      if (state.includeBackground) {
-        ctx.strokeStyle = "rgba(15, 118, 110, 0.9)";
-        ctx.beginPath();
-        ctx.moveTo(margin.left, yScale(state.backgroundTempK));
-        ctx.lineTo(width - margin.right, yScale(state.backgroundTempK));
-        ctx.stroke();
-      }
-      ctx.setLineDash([]);
+function render() {
+  const samples     = getSpectrumSamples();
+  const current     = computeBrightness(state.freqGHz);
+  const turnoverGHz = computeTurnoverGHz();
+  const regime      = evaluateRegime(current.tau);
+  const diagnostic  = deriveDiagnostic(current.tau);
 
-      ctx.strokeStyle = "#2563eb";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      samples.forEach((sample, index) => {
-        const x = xScale(sample.freq);
-        const y = yScale(sample.tb);
-        if (index === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-      });
-      ctx.stroke();
+  drawPlotBnu();
+  drawSpectrum(samples, current, turnoverGHz);
+  drawRayCartoon(current);
+  updateReadout(current, regime, diagnostic, turnoverGHz);
+}
 
-      const current = computeBrightness(state.freqGHz);
-      const currentX = xScale(state.freqGHz);
-      const currentY = yScale(current.tb);
+/* ═══════════════════════════════════════════════════
+   I. Controls
+═══════════════════════════════════════════════════ */
 
-      ctx.strokeStyle = "rgba(37, 99, 235, 0.38)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(currentX, margin.top);
-      ctx.lineTo(currentX, height - margin.bottom);
-      ctx.stroke();
+function syncControls() {
+  controls.forEach(({ key, range, number, logScale, step }) => {
+    const v = state[key];
+    document.getElementById(range).value  = logScale ? Math.log10(Math.max(v, 1e-12)) : v;
+    // Log-scale sliders yield non-round state values; snap number-input display to step so
+    // the readout reads like "9900" or "1.20" instead of "9931.1529…".
+    document.getElementById(number).value = logScale ? (Math.round(v / step) * step) : v;
+  });
+}
 
-      ctx.fillStyle = "#2563eb";
-      ctx.beginPath();
-      ctx.arc(currentX, currentY, 5.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
+function clearPresetSelection() {
+  document.querySelectorAll('#presetRow .seg-btn').forEach(b => b.classList.remove('active'));
+}
 
-    function drawRayCartoon(current) {
-      resizeCanvas(rayCanvas, rayCtx);
-      const width = rayCanvas.getBoundingClientRect().width;
-      const height = rayCanvas.getBoundingClientRect().height;
-      const ctx = rayCtx;
-      ctx.clearRect(0, 0, width, height);
+function syncBackgroundButtons() {
+  document.getElementById('withBackgroundBtn').classList.toggle('active',  state.includeBackground);
+  document.getElementById('freeFreeOnlyBtn').classList.toggle('active', !state.includeBackground);
+}
 
-      const slabX = width * 0.28;
-      const slabWidth = width * 0.42;
-      const slabY = height * 0.18;
-      const slabHeight = height * 0.64;
-      const backgroundX = width * 0.08;
-      const observerX = width * 0.88;
-      const centerY = height * 0.5;
-      const opacityAlpha = clamp(0.15 + 0.25 * Math.log10(current.tau + 1) / Math.log10(6), 0.12, 0.55);
+function applyPreset(name) {
+  const p = PRESETS[name]; if (!p) return;
+  Object.assign(state, p);
+  syncControls(); syncBackgroundButtons();
+  document.querySelectorAll('#presetRow .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.preset === name));
+  render();
+}
 
-      ctx.fillStyle = "rgba(15, 118, 110, 0.12)";
-      ctx.fillRect(backgroundX, slabY, slabX - backgroundX - 8, slabHeight);
-      ctx.strokeStyle = "rgba(15, 118, 110, 0.5)";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(backgroundX, slabY, slabX - backgroundX - 8, slabHeight);
+controls.forEach(ctrl => {
+  const range  = document.getElementById(ctrl.range);
+  const number = document.getElementById(ctrl.number);
+  function push(raw, fromRange) {
+    if (raw === '') return;
+    let v = parseFloat(raw);
+    if (!isFinite(v)) return;
+    if (ctrl.logScale && fromRange) v = Math.pow(10, v);
+    state[ctrl.key] = clamp(v, ctrl.min, ctrl.max);
+    syncControls(); clearPresetSelection(); render();
+  }
+  range.addEventListener('input',  () => push(range.value,  true));
+  number.addEventListener('input', () => push(number.value, false));
+});
 
-      ctx.fillStyle = `rgba(37, 99, 235, ${opacityAlpha})`;
-      ctx.fillRect(slabX, slabY, slabWidth, slabHeight);
-      ctx.strokeStyle = "rgba(37, 99, 235, 0.55)";
-      ctx.strokeRect(slabX, slabY, slabWidth, slabHeight);
+document.getElementById('withBackgroundBtn').addEventListener('click', () => {
+  state.includeBackground = true;  clearPresetSelection(); syncBackgroundButtons(); render();
+});
+document.getElementById('freeFreeOnlyBtn').addEventListener('click', () => {
+  state.includeBackground = false; clearPresetSelection(); syncBackgroundButtons(); render();
+});
+document.querySelectorAll('#presetRow .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => applyPreset(btn.dataset.preset));
+});
 
-      ctx.fillStyle = "#0f172a";
-      ctx.font = `700 13px ${uiFont}`;
-      ctx.textAlign = "center";
-      ctx.fillText("Background layer", backgroundX + (slabX - backgroundX - 8) / 2, slabY - 10);
-      ctx.fillText("Free-free slab", slabX + slabWidth / 2, slabY - 10);
-      ctx.fillText("Observer", observerX, slabY - 10);
+/* ═══════════════════════════════════════════════════
+   J. Init
+═══════════════════════════════════════════════════ */
 
-      function arrow(x0, y0, x1, y1, color, widthPx, alpha) {
-        ctx.save();
-        ctx.globalAlpha = alpha;
-        ctx.strokeStyle = color;
-        ctx.fillStyle = color;
-        ctx.lineWidth = widthPx;
-        ctx.beginPath();
-        ctx.moveTo(x0, y0);
-        ctx.lineTo(x1, y1);
-        ctx.stroke();
-        const angle = Math.atan2(y1 - y0, x1 - x0);
-        const head = 10;
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x1 - head * Math.cos(angle - 0.35), y1 - head * Math.sin(angle - 0.35));
-        ctx.lineTo(x1 - head * Math.cos(angle + 0.35), y1 - head * Math.sin(angle + 0.35));
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-      }
+const ro = new ResizeObserver(() => render());
+ro.observe(spectrumCanvas.parentElement);
+ro.observe(rayCanvas.parentElement);
+ro.observe(plotBnuCanvas.parentElement);
 
-      arrow(backgroundX + 6, centerY, slabX - 10, centerY, "#0f766e", 4, 1);
-      arrow(slabX + 14, centerY - 78, observerX - 18, centerY - 78, "#2563eb", 5, 0.95);
-      arrow(backgroundX + 8, centerY + 72, observerX - 20, centerY + 72, "#0f766e", 3, clamp(Math.exp(-current.tau), 0.08, 1));
-
-      ctx.fillStyle = "#5b677a";
-      ctx.font = `12px ${uiFont}`;
-      ctx.textAlign = "left";
-      ctx.fillText(`Source emission strength ~ ${formatKelvin(current.tSource)}`, slabX + 16, centerY - 88);
-      ctx.fillText(`Transmitted background ~ e^{-tau} = ${Math.exp(-current.tau).toFixed(2)}`, slabX + 16, centerY + 60);
-
-      ctx.fillStyle = "rgba(37, 99, 235, 0.12)";
-      for (let i = 0; i < 12; i += 1) {
-        const localX = slabX + 22 + i * (slabWidth - 44) / 11;
-        const amplitude = 22 + 18 * Math.sin(i * 0.55);
-        ctx.beginPath();
-        ctx.arc(localX, centerY - 12, 6 + amplitude * 0.08, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      ctx.fillStyle = "#0f172a";
-      ctx.font = `700 15px ${uiFont}`;
-      ctx.textAlign = "left";
-      ctx.fillText(`Selected optical depth: tau = ${current.tau.toFixed(2)}`, backgroundX, height - 24);
-    }
-
-    function updateReadout(current, regime, diagnostic) {
-      elements.regimeHero.textContent = regime.name;
-      elements.regimeHeroText.textContent = regime.text;
-      elements.spectrumSummary.textContent = `Current frequency: ${state.freqGHz.toFixed(1)} GHz`;
-      elements.raySummary.textContent = `tau = ${current.tau.toFixed(2)} at ${state.freqGHz.toFixed(1)} GHz`;
-      elements.tauValue.textContent = current.tau.toFixed(2);
-      elements.tauText.textContent = regime.text;
-      elements.tbValue.textContent = formatKelvin(current.tb);
-      elements.tbText.textContent = state.includeBackground
-        ? "Both the source and the background are contributing. The balance depends on optical depth."
-        : "The slab is being treated as the only emitter along the line of sight.";
-      elements.diagnosticValue.textContent = diagnostic.title;
-      elements.diagnosticText.textContent = diagnostic.text;
-    }
-
-    function render() {
-      const samples = getSpectrumSamples();
-      const current = computeBrightness(state.freqGHz);
-      const regime = evaluateRegime(current.tau);
-      const diagnostic = deriveDiagnostic(current.tau);
-      drawSpectrum(samples);
-      drawRayCartoon(current);
-      updateReadout(current, regime, diagnostic);
-    }
-
-    const resizeObserver = new ResizeObserver(() => render());
-    resizeObserver.observe(spectrumCanvas);
-    resizeObserver.observe(rayCanvas);
-
-    render();
-  </script>
+syncControls();
+syncBackgroundButtons();
+render();
+</script>
+  <div id="site-footer-root"></div>
 </body>
 </html>

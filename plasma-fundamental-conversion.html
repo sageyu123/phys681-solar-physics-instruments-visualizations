@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Explain scattering or mode conversion from electrostatic Langmuir waves to transverse escaping radiation." />
+  <meta name="author" content="Sijie Yu" />
+  <meta name="application-name" content="Phys 681 Solar Physics and Instruments Teaching Visualizations" />
+<title>Fundamental Plasma Conversion — Phys 681</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="plasma-conversion-shared.css" />
+  <style>
+    .three-cartoon {
+      width: 100%;
+      height: 100%;
+      min-height: 220px;
+      display: block;
+      background: #f8fafc;
+    }
+    .three-cartoon canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link rel="stylesheet" href="_site-shared.css" />
+  <script defer src="_site-manifest.js"></script>
+  <script defer src="_site-nav.js"></script>
+</head>
+<body class="fundamental-page">
+  <div id="site-nav-root"></div>
+  <div class="app">
+    <aside class="rail">
+      <div class="eyebrow">Fundamental branch</div>
+      <h2 class="rail-title">Scattering / Mode Conversion</h2>
+      <p class="rail-lede">
+        A primary Langmuir wave cannot escape directly. A low-frequency density
+        or ion-sound fluctuation supplies an opposite-directed wavevector and
+        scatters the energy onto the transverse electromagnetic branch.
+      </p>
+
+      <section class="rail-section">
+        <div class="rail-section-head">How to read this page</div>
+        <div class="story-card">
+          <div class="story-step"><div class="story-key">1</div><div class="story-text"><span class="math-i">L</span> starts as an electrostatic Langmuir wave: strong plasma oscillation, poor direct escape.</div></div>
+          <div class="story-step"><div class="story-key">2</div><div class="story-text"><span class="math-i">S</span> is a slow density or ion-sound ripple. In this geometry it points opposite to <span class="math-i">L</span>, changing the wavevector much more than the frequency.</div></div>
+          <div class="story-step"><div class="story-key">3</div><div class="story-text">The scattered wave lands on the transverse branch as <span class="math-i">T</span>, so it can propagate as fundamental radio emission near <span class="math-i">ω<sub>pe</sub></span>.</div></div>
+        </div>
+      </section>
+
+      <section class="rail-section">
+        <div class="rail-section-head">Matching</div>
+        <div class="equation-card">
+          <div>L + S → T</div>
+          <div>ω<sub>L</sub> + ω<sub>S</sub> = ω<sub>T</sub></div>
+          <div>k<sub>L</sub> + k<sub>S</sub> = k<sub>T</sub></div>
+        </div>
+      </section>
+
+      <section class="rail-section">
+        <div class="rail-section-head">Controls</div>
+        <div class="control-row" id="stepButtons">
+          <button class="step-btn" data-step="1">1</button>
+          <button class="step-btn" data-step="2">2</button>
+          <button class="step-btn active" data-step="3">3</button>
+          <button class="play-btn" id="play">Pause</button>
+        </div>
+        <div class="slider-row">
+          <div class="slider-head">
+            <span class="slider-name">c<sub>s</sub> / v<sub>te</sub></span>
+            <span class="slider-desc">sound-wave slope</span>
+          </div>
+          <div class="slider-line">
+            <input type="range" id="strength" min="0.03" max="0.18" step="0.005" value="0.08" />
+            <output id="strengthOut">0.08</output>
+          </div>
+        </div>
+        <div class="toggle-row">
+          <label for="vectors">Show matching vectors</label>
+          <div class="switch on" id="vectors" role="switch" aria-checked="true"></div>
+        </div>
+      </section>
+
+      <section class="rail-section">
+        <div class="rail-section-head">Navigation</div>
+        <div class="nav-card">
+          <a href="plasma-radiation-conversion-map.html">Conversion map</a>
+          <a href="plasma-backscattering-decay.html">Backscattering / decay</a>
+          <a href="plasma-harmonic-coalescence.html">Harmonic coalescence</a>
+        </div>
+      </section>
+    </aside>
+
+    <main class="main">
+      <section class="topbar">
+        <div class="topbar-title">
+          <h1>Fundamental emission: <span class="math-i">L + S → T</span></h1>
+          <p><span class="math-i">S</span> supplies a negative <span class="math-i">k</span> shift; <span class="math-i">Δω</span> stays small, so <span class="math-i">T</span> escapes near <span class="math-i">ω<sub>pe</sub></span>.</p>
+        </div>
+        <div class="pill-row">
+          <div class="pill"><span class="pill-label">Initial</span><span class="pill-value">L(ω≈ω<sub>pe</sub>)</span></div>
+          <div class="pill"><span class="pill-label">Mediator</span><span class="pill-value">S: k<sub>S</sub> &lt; 0</span></div>
+          <div class="pill"><span class="pill-label">Output</span><span class="pill-value">T(ω≳ω<sub>pe</sub>)</span></div>
+        </div>
+      </section>
+
+      <section class="mechanism-grid">
+        <div class="card main-plot">
+          <div class="card-head">
+            <div>
+              <div class="card-title">A · Branch matching in <span class="math-i">ω-k</span> space</div>
+              <div class="card-sub"><span class="math-i">L + S → T</span>, with <span class="math-i">S</span> providing the large wavevector shift</div>
+            </div>
+          </div>
+          <div class="card-body"><canvas id="branchPlot"></canvas></div>
+        </div>
+        <div class="card support-a">
+          <div class="card-head">
+            <div>
+              <div class="card-title">B · Mode conversion</div>
+              <div class="card-sub">opposite-directed density ripple converts longitudinal <span class="math-i">L</span> into transverse <span class="math-i">T</span></div>
+            </div>
+          </div>
+          <div class="card-body"><div id="cartoon3d" class="three-cartoon" aria-label="Animated real-space picture of Langmuir mode conversion"></div></div>
+        </div>
+        <div class="card support-b">
+          <div class="card-head">
+            <div>
+              <div class="card-title">C · Fundamental escape</div>
+              <div class="card-sub">near-cutoff transverse emission; escape improves outward</div>
+            </div>
+          </div>
+          <div class="card-body"><canvas id="escapePlot"></canvas></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const state = { step: 3, playing: true, vectors: true, sound: 0.08, phase: 0 };
+    const colors = { L: "#e45757", S: "#22a46f", Svec: "#047857", T: "#3b82f6", ink: "#0f172a", muted: "#667085" };
+    const LANGMUIR_CURVATURE = 0.012;
+    const EM_CURVATURE = 1.35;
+
+    function setCanvas(canvas) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.max(1, Math.round(rect.width * dpr));
+      canvas.height = Math.max(1, Math.round(rect.height * dpr));
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { ctx, w: rect.width, h: rect.height };
+    }
+    function mathFont(size, weight = "") { return `${weight ? weight + " " : ""}${size}px "STIX Two Math", "STIX Two Text", "Cambria Math", "Latin Modern Math", serif`; }
+    function drawMathRuns(ctx, runs, x, y, size, color, weight = "") {
+      let dx = 0;
+      ctx.save();
+      ctx.textBaseline = "alphabetic";
+      for (const run of runs) {
+        const runSize = run.sub ? size * 0.68 : size;
+        ctx.font = mathFont(runSize, run.weight || weight);
+        ctx.fillStyle = run.color || color;
+        const dy = run.sub ? size * 0.28 : 0;
+        ctx.fillText(run.text, x + dx, y + dy);
+        dx += ctx.measureText(run.text).width;
+      }
+      ctx.restore();
+      return dx;
+    }
+    function measureMathRuns(ctx, runs, size, weight = "") {
+      let width = 0;
+      ctx.save();
+      for (const run of runs) {
+        const runSize = run.sub ? size * 0.68 : size;
+        ctx.font = mathFont(runSize, run.weight || weight);
+        width += ctx.measureText(run.text).width;
+      }
+      ctx.restore();
+      return width;
+    }
+    function uiFont(size, weight = "") { return `${weight ? weight + " " : ""}${size}px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif`; }
+    function arrow(ctx, x1, y1, x2, y2, color, dashed = false, opts = {}) {
+      ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = opts.lineWidth || 2.2;
+      if (dashed) ctx.setLineDash(opts.dash || [7, 6]);
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.setLineDash([]);
+      const a = Math.atan2(y2 - y1, x2 - x1);
+      const head = opts.head || 9;
+      ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - head * Math.cos(a - 0.45), y2 - head * Math.sin(a - 0.45)); ctx.lineTo(x2 - head * Math.cos(a + 0.45), y2 - head * Math.sin(a + 0.45)); ctx.closePath(); ctx.fill(); ctx.restore();
+    }
+    function labelBox(ctx, text, x, y, color, opts = {}) {
+      const font = opts.font || uiFont(14, "700");
+      const padX = opts.padX ?? 8;
+      const padY = opts.padY ?? 5;
+      ctx.save();
+      ctx.font = font;
+      const w = ctx.measureText(text).width;
+      const h = opts.height || 22;
+      ctx.fillStyle = opts.fill || "rgba(255,255,255,0.86)";
+      ctx.strokeStyle = opts.stroke || "rgba(15,23,42,0.08)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(x - padX, y - h + padY, w + padX * 2, h, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.fillText(text, x, y);
+      ctx.restore();
+    }
+    function labelBoxMath(ctx, runs, x, y, color, opts = {}) {
+      const size = opts.size || 14;
+      const weight = opts.weight || "700";
+      const padX = opts.padX ?? 8;
+      const padY = opts.padY ?? 5;
+      const h = opts.height || 22;
+      const w = measureMathRuns(ctx, runs, size, weight);
+      ctx.save();
+      ctx.fillStyle = opts.fill || "rgba(255,255,255,0.86)";
+      ctx.strokeStyle = opts.stroke || "rgba(15,23,42,0.08)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(x - padX, y - h + padY, w + padX * 2, h, 8);
+      ctx.fill();
+      ctx.stroke();
+      drawMathRuns(ctx, runs, x, y, size, color, weight);
+      ctx.restore();
+      return w;
+    }
+    function setupPlot(w, h) {
+      const compact = w < 520;
+      const m = { l: compact ? 58 : 78, r: compact ? 22 : 42, t: compact ? 42 : 50, b: compact ? 58 : 66 };
+      const kMin = 0, kMax = 1.1, omMin = 0.88, omMax = 1.64;
+      const plotW = w - m.l - m.r;
+      const plotH = h - m.t - m.b;
+      return {
+        m,
+        x0: m.l,
+        y0: h - m.b,
+        x1: w - m.r,
+        y1: m.t,
+        kMin,
+        kMax,
+        omMin,
+        omMax,
+        X: k => m.l + ((k - kMin) / (kMax - kMin)) * plotW,
+        Y: om => h - m.b - ((om - omMin) / (omMax - omMin)) * plotH,
+      };
+    }
+    function drawBranches(ctx, geom) {
+      const { x0, y0, x1, y1, X, Y, kMax } = geom;
+      ctx.fillStyle = "#f8fafc"; ctx.fillRect(x0, y1, x1 - x0, y0 - y1);
+      ctx.strokeStyle = "rgba(15,23,42,0.055)";
+      ctx.lineWidth = 1;
+      for (let om = 1.0; om <= 1.5; om += 0.25) {
+        ctx.beginPath();
+        ctx.moveTo(x0, Y(om));
+        ctx.lineTo(x1, Y(om));
+        ctx.stroke();
+      }
+      ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+      ctx.font = mathFont(19); ctx.fillStyle = colors.ink;
+      drawMathRuns(ctx, [{ text: "ω / ω" }, { text: "pe", sub: true }], Math.max(12, x0 - 56), y1 + 22, 19, colors.ink);
+      ctx.fillText("k", x1 - 10, y0 + 34);
+      drawMathRuns(ctx, [{ text: "0" }], x0 - 4, y0 + 24, 13, colors.ink, "700");
+      ctx.strokeStyle = colors.L; ctx.lineWidth = 3; ctx.beginPath();
+      for (let i = 0; i <= 220; i++) { const k = i * kMax / 220; const om = Math.sqrt(1 + LANGMUIR_CURVATURE * k * k); const x = X(k), y = Y(om); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke();
+      ctx.strokeStyle = colors.T; ctx.beginPath();
+      for (let i = 0; i <= 220; i++) { const k = i * kMax / 220; const om = Math.sqrt(1 + EM_CURVATURE * k * k); const x = X(k), y = Y(om); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke();
+      // Do not draw S as a +k branch on this one-sided teaching axis.
+      // For this geometry S is represented by the leftward matching vector.
+      const compact = (x1 - x0) < 430;
+      const branchLabelFont = uiFont(compact ? 12 : 14, "800");
+      const lLabel = compact ? "L: E // k" : "Langmuir L: E // k";
+      const tLabel = compact ? "T: E ⊥ k" : "EM T: E ⊥ k";
+      ctx.save();
+      ctx.font = branchLabelFont;
+      const tLabelWidth = ctx.measureText(tLabel).width + 18;
+      ctx.restore();
+      labelBox(ctx, lLabel, X(0.06), Y(1.12), colors.L, { font: branchLabelFont });
+      labelBox(ctx, tLabel, Math.min(X(0.48), x1 - tLabelWidth), Y(1.42), colors.T, { font: branchLabelFont });
+      return { X, Y };
+    }
+    function drawBranchPlot() {
+      const { ctx, w, h } = setCanvas(document.getElementById("branchPlot"));
+      const geom = setupPlot(w, h); const { X, Y } = drawBranches(ctx, geom);
+      const compact = w < 520;
+      const kL = compact ? 0.78 : 0.96;
+      const kT = compact ? 0.14 : 0.16;
+      const L = { k: kL, om: Math.sqrt(1 + LANGMUIR_CURVATURE * kL * kL) };
+      const T = { k: kT, om: Math.sqrt(1 + EM_CURVATURE * kT * kT) };
+      const S = { k: T.k - L.k, om: T.om - L.om };
+      const showS = state.step >= 2; const showT = state.step >= 3;
+      ctx.fillStyle = colors.L; ctx.shadowColor = "rgba(228,87,87,0.35)"; ctx.shadowBlur = 18;
+      ctx.beginPath(); ctx.arc(X(L.k), Y(L.om), 7, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+      ctx.font = mathFont(20, "700"); ctx.fillText("L", Math.min(X(L.k) + 12, geom.x1 - 22), Y(L.om) - 10);
+      if (showS && state.vectors) {
+        arrow(ctx, X(L.k), Y(L.om), X(T.k), Y(T.om), colors.Svec, false, { lineWidth: 3.2, head: 10 });
+        const sLabelRuns = [
+          { text: "k" },
+          { text: "S", sub: true },
+          { text: " = k" },
+          { text: "T", sub: true },
+          { text: " − k" },
+          { text: "L", sub: true },
+          { text: " < 0" }
+        ];
+        const sLabelSize = compact ? 13 : 15;
+        const sLabelWidth = measureMathRuns(ctx, sLabelRuns, sLabelSize, "700");
+        const lx = Math.max(geom.x0 + 12, Math.min((X(L.k) + X(T.k)) / 2 - sLabelWidth / 2, geom.x1 - sLabelWidth - 20));
+        const ly = Math.min(Y(T.om) - 24, geom.y0 - 116);
+        labelBoxMath(ctx, sLabelRuns, lx, ly, colors.Svec, { size: sLabelSize, weight: "700" });
+      }
+      if (showT) {
+        ctx.fillStyle = colors.T; ctx.shadowColor = "rgba(59,130,246,0.35)"; ctx.shadowBlur = 18;
+        ctx.beginPath(); ctx.arc(X(T.k), Y(T.om), 7, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+        ctx.font = mathFont(20, "700"); ctx.fillText("T", X(T.k) + 9, Y(T.om) - 12);
+      }
+      ctx.save();
+      ctx.strokeStyle = "rgba(15,23,42,0.24)";
+      ctx.lineWidth = 1.1;
+      ctx.setLineDash([4, 5]);
+      [[T, colors.T, "k", "T"], [L, colors.L, "k", "L"]].forEach(([pt, color, main, sub]) => {
+        ctx.beginPath();
+        ctx.moveTo(X(pt.k), Y(pt.om) + 9);
+        ctx.lineTo(X(pt.k), geom.y0);
+        ctx.stroke();
+        drawMathRuns(ctx, [{ text: main }, { text: sub, sub: true, color }], X(pt.k) - 8, geom.y0 + 24, compact ? 14 : 16, color, "700");
+      });
+      ctx.setLineDash([]);
+      if (!compact) {
+        drawMathRuns(ctx, [
+          { text: "k" },
+          { text: "T", sub: true },
+          { text: " ≪ k" },
+          { text: "L", sub: true }
+        ], X(T.k) + 28, geom.y0 + 24, 15, colors.ink, "700");
+      }
+      ctx.restore();
+      if (showS && state.vectors) {
+        const yKs = geom.y0 - (compact ? 30 : 46);
+        ctx.save();
+        ctx.shadowColor = "rgba(4, 120, 87, 0.25)";
+        ctx.shadowBlur = 8;
+        arrow(ctx, X(L.k), yKs, X(T.k), yKs, colors.Svec, false, { lineWidth: 3.4, head: 11 });
+        ctx.shadowBlur = 0;
+        const ksAxisRuns = [{ text: "k" }, { text: "S", sub: true }, { text: " < 0" }];
+        const ksAxisSize = compact ? 13 : 14;
+        const textW = measureMathRuns(ctx, ksAxisRuns, ksAxisSize, "700");
+        labelBoxMath(ctx, ksAxisRuns, (X(L.k) + X(T.k)) / 2 - textW / 2, yKs - 9, colors.Svec, {
+          size: ksAxisSize,
+          weight: "700",
+          fill: "rgba(255,255,255,0.78)",
+          height: 22,
+          padX: 5
+        });
+        ctx.restore();
+      }
+      const label = state.step === 1 ? "Step 1: primary Langmuir wave" : state.step === 2 ? "Step 2: S supplies the mismatch" : "Step 3: T lands on the EM branch";
+      labelBox(ctx, label, geom.x0 + 18, geom.y1 + 30, colors.ink, { font: uiFont(compact ? 12 : 14, "800"), fill: "rgba(255,255,255,0.78)" });
+    }
+
+    function drawEscapePlot() {
+      const canvas = document.getElementById("escapePlot");
+      if (!canvas) return;
+      const { ctx, w, h } = setCanvas(canvas);
+      const compact = w < 520;
+      const m = { l: compact ? 44 : 58, r: compact ? 22 : 34, t: compact ? 26 : 34, b: compact ? 38 : 48 };
+      const x0 = m.l, x1 = w - m.r, y0 = h - m.b, y1 = m.t;
+      const plotW = x1 - x0, plotH = y0 - y1;
+      const X = x => x0 + x * plotW;
+      const Y = y => y0 - y * plotH;
+
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(x0, y1, plotW, plotH);
+      ctx.strokeStyle = "#0f172a";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x0, y1);
+      ctx.lineTo(x0, y0);
+      ctx.lineTo(x1, y0);
+      ctx.stroke();
+
+      const cutoffY = Y(0.58);
+      ctx.setLineDash([6, 7]);
+      ctx.strokeStyle = "rgba(100,116,139,0.42)";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(x0, cutoffY);
+      ctx.lineTo(x1, cutoffY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      drawMathRuns(ctx, [{ text: "ω" }, { text: "pe", sub: true }, { text: " cutoff" }], x0 + 8, cutoffY - 8, compact ? 12 : 14, colors.ink);
+
+      const packetXs = [0.48, 0.66, 0.82];
+      packetXs.forEach((x, i) => {
+        const px = X(x);
+        const top = Y(0.72 + i * 0.04);
+        const bot = cutoffY + 2;
+        const grad = ctx.createLinearGradient(0, top, 0, bot);
+        grad.addColorStop(0, "rgba(59,130,246,0.72)");
+        grad.addColorStop(1, "rgba(59,130,246,0.10)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(px - (compact ? 11 : 15), top, compact ? 22 : 30, bot - top);
+      });
+
+      drawMathRuns(ctx, [
+        { text: "T(ω" },
+        { text: "T", sub: true },
+        { text: " ≳ ω" },
+        { text: "pe", sub: true },
+        { text: ")" }
+      ], X(0.48), Y(0.82), compact ? 16 : 19, colors.T, "700");
+      drawMathRuns(ctx, [
+        { text: "near source: small k" },
+        { text: "T", sub: true },
+        { text: "; outward density fall lets k" },
+        { text: "T", sub: true },
+        { text: " grow" }
+      ], x0 + 8, y0 - 12, compact ? 11 : 13, colors.muted, "700");
+    }
+
+    let cartoon3D = null;
+    let cartoonFallbackWarned = false;
+
+    function disposeThreeObject(object) {
+      for (const child of object.children || []) disposeThreeObject(child);
+      if (object.geometry) object.geometry.dispose();
+      if (!object.material) return;
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      for (const material of materials) {
+        if (material.map) material.map.dispose();
+        material.dispose();
+      }
+    }
+
+    function clearThreeGroup(group) {
+      while (group.children.length) {
+        const child = group.children.pop();
+        disposeThreeObject(child);
+      }
+    }
+
+    function textSprite(text, color, scale = 0.18) {
+      const c = document.createElement("canvas");
+      const ctx = c.getContext("2d");
+      ctx.font = '700 38px "STIX Two Text", serif';
+      const width = Math.ceil(ctx.measureText(text).width + 28);
+      c.width = width;
+      c.height = 58;
+      ctx.font = '700 38px "STIX Two Text", serif';
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "rgba(255,255,255,0.86)";
+      ctx.roundRect(0, 5, width, 46, 12);
+      ctx.fill();
+      ctx.fillStyle = color;
+      ctx.fillText(text, 14, 30);
+      const texture = new THREE.CanvasTexture(c);
+      const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+      const sprite = new THREE.Sprite(material);
+      sprite.scale.set(scale * width / 58, scale, 1);
+      return sprite;
+    }
+
+    function mathSprite(text, color, scale = 0.18) {
+      const c = document.createElement("canvas");
+      const ctx = c.getContext("2d");
+      ctx.font = '700 40px "STIX Two Math", "STIX Two Text", serif';
+      const width = Math.ceil(ctx.measureText(text).width + 28);
+      c.width = width;
+      c.height = 60;
+      ctx.font = '700 40px "STIX Two Math", "STIX Two Text", serif';
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "rgba(255,255,255,0.88)";
+      ctx.roundRect(0, 5, width, 48, 12);
+      ctx.fill();
+      ctx.fillStyle = color;
+      ctx.fillText(text, 14, 31);
+      const texture = new THREE.CanvasTexture(c);
+      const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+      const sprite = new THREE.Sprite(material);
+      sprite.scale.set(scale * width / 60, scale, 1);
+      return sprite;
+    }
+
+    function threeArrow(from, to, color, radius = 0.012, head = 0.075) {
+      const group = new THREE.Group();
+      const start = new THREE.Vector3(...from);
+      const end = new THREE.Vector3(...to);
+      const dir = new THREE.Vector3().subVectors(end, start);
+      const len = dir.length();
+      if (len <= head) return group;
+      const mat = new THREE.MeshBasicMaterial({ color });
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, len - head, 16), mat);
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(radius * 3.5, head, 18), mat);
+      const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+      shaft.position.copy(mid).addScaledVector(dir.clone().normalize(), -head * 0.5);
+      cone.position.copy(end).addScaledVector(dir.clone().normalize(), -head * 0.5);
+      const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+      shaft.quaternion.copy(q);
+      cone.quaternion.copy(q);
+      group.add(shaft, cone);
+      return group;
+    }
+
+    function lineObject(points, color, opacity = 1, width = 2) {
+      const geom = new THREE.BufferGeometry().setFromPoints(points.map(p => new THREE.Vector3(...p)));
+      const mat = new THREE.LineBasicMaterial({ color, transparent: opacity < 1, opacity, linewidth: width });
+      return new THREE.Line(geom, mat);
+    }
+
+    function vectorLabel(text, color, x, y, scale = 0.24) {
+      const label = mathSprite(text, color, scale);
+      label.position.set(x, y, 0.14);
+      return label;
+    }
+
+    function ensureCartoon3D(container, w, h) {
+      if (!cartoon3D || cartoon3D.container !== container) {
+        container.replaceChildren();
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        container.appendChild(renderer.domElement);
+        const scene = new THREE.Scene();
+        const camera = new THREE.OrthographicCamera(-3, 3, 1.8, -1.8, -10, 10);
+        const group = new THREE.Group();
+        scene.add(group);
+        cartoon3D = { container, renderer, scene, camera, group };
+      }
+      const aspect = Math.max(1.14, w / Math.max(h, 1));
+      cartoon3D.camera.left = -1.96 * aspect;
+      cartoon3D.camera.right = 1.96 * aspect;
+      cartoon3D.camera.top = 1.58;
+      cartoon3D.camera.bottom = -1.50;
+      cartoon3D.camera.updateProjectionMatrix();
+      cartoon3D.renderer.setSize(w, h, false);
+      cartoon3D.renderer.setPixelRatio(window.devicePixelRatio || 1);
+      cartoon3D.renderer.setClearColor(0xf8fafc, 1);
+      return cartoon3D;
+    }
+
+    function drawCartoon() {
+      if (!window.THREE) {
+        drawCartoonFallback();
+        return;
+      }
+      const container = document.getElementById("cartoon3d");
+      const rect = container.getBoundingClientRect();
+      const w = Math.max(1, rect.width);
+      const h = Math.max(1, rect.height);
+      const view = ensureCartoon3D(container, w, h);
+      const g = view.group;
+      clearThreeGroup(g);
+
+      const red = 0xe45757;
+      const green = 0x22a46f;
+      const greenDark = 0x047857;
+      const blue = 0x3b82f6;
+      const orange = 0xc2691e;
+      const ink = 0x334155;
+      const t = state.phase;
+      const cycle = ((t * 0.018) % 1 + 1) % 1;
+      const smoothstep = (edge0, edge1, x) => {
+        const u = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+        return u * u * (3 - 2 * u);
+      };
+      const overlap = Math.max(0, Math.min(1, (cycle - 0.36) / 0.26));
+      const blueAlpha = state.step >= 3 ? overlap * overlap * (3 - 2 * overlap) : 0;
+
+      g.add(lineObject([[-2.45, -0.35, -0.04], [2.45, -0.35, -0.04]], ink, 0.16));
+
+      if (state.step >= 1) {
+        const packetAlpha = smoothstep(0.02, 0.14, cycle) * (1 - smoothstep(0.82, 0.96, cycle));
+        const packetCenter = -2.25 + cycle * 2.45;
+        for (let i = 0; i < 26; i++) {
+          const u = (i - 12.5) / 12.5;
+          const bunch = Math.pow(0.5 + 0.5 * Math.cos(15 * u - t * 1.15), 1.6);
+          const x = packetCenter + u * 0.58 + Math.sin(15 * u - t * 1.15) * 0.035;
+          if (x < -2.55 || x > 0.18) continue;
+          const opacity = packetAlpha * (0.68 + 0.24 * (bunch > 0.5 ? 1 : 0));
+          const mat = new THREE.MeshBasicMaterial({ color: red, transparent: true, opacity });
+          const dot = new THREE.Mesh(new THREE.SphereGeometry(0.034 + 0.034 * bunch, 18, 10), mat);
+          dot.position.set(x, -0.35, 0.02);
+          g.add(dot);
+        }
+        g.add(threeArrow([-2.35, 0.22, 0], [-0.35, 0.22, 0], red, 0.01, 0.075));
+        const label = textSprite("1  Langmuir L packet", colors.L, 0.21);
+        label.position.set(-1.58, 0.96, 0.1);
+        g.add(label);
+        const kLabel = mathSprite("kₗ", colors.L, 0.17);
+        kLabel.position.set(-1.08, 0.40, 0.1);
+        g.add(kLabel);
+      }
+
+      if (state.step >= 2) {
+        const stripeSpacing = 0.16;
+        const envelope = x => Math.max(0, Math.min(1, 1 - Math.abs((x - 0.05) / 1.02)));
+        for (let i = -7; i <= 7; i++) {
+          const x = 0.05 + i * stripeSpacing;
+          const phase = Math.cos(i * 0.95 + t * 0.9);
+          const opacity = (0.26 + 0.50 * (0.5 + 0.5 * phase)) * envelope(x);
+          const matS = new THREE.MeshBasicMaterial({ color: green, transparent: true, opacity, side: THREE.DoubleSide });
+          const bar = new THREE.Mesh(new THREE.PlaneGeometry(0.055, 0.86), matS);
+          bar.position.set(x, -0.16, 0.01);
+          bar.rotation.z = -0.18;
+          g.add(bar);
+        }
+        g.add(threeArrow([0.46, 0.42, 0.05], [-0.46, 0.42, 0.05], greenDark, 0.01, 0.075));
+        const label = textSprite("2  density ripple S", colors.Svec, 0.19);
+        label.position.set(-0.12, 0.72, 0.12);
+        g.add(label);
+        const kSLabel = mathSprite("kₛ < 0", colors.Svec, 0.15);
+        kSLabel.position.set(0.38, 0.55, 0.12);
+        g.add(kSLabel);
+      }
+
+      if (state.step >= 3) {
+        const eMat = new THREE.LineBasicMaterial({ color: blue, transparent: true, opacity: 0.22 + 0.78 * blueAlpha });
+        const pts = [];
+        for (let i = 0; i <= 64; i++) {
+          const u = i / 64;
+          const x = 0.62 + u * 1.62;
+          const y = 0.18 + Math.sin(u * Math.PI * 4.0 - t * 1.4) * 0.16 * blueAlpha;
+          pts.push(new THREE.Vector3(x, y, 0.08));
+        }
+        g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), eMat));
+        g.add(threeArrow([0.58, 0.18, 0.08], [2.30, 0.18, 0.08], blue, 0.009, 0.075));
+        for (let i = 0; i < 4; i++) {
+          const x = 0.82 + i * 0.38;
+          const sign = i % 2 ? -1 : 1;
+          g.add(threeArrow([x, 0.18, 0.1], [x, 0.18 + sign * (0.22 * blueAlpha + 0.04), 0.1], blue, 0.008, 0.055));
+        }
+        const energy = threeArrow([-0.28, 0.62, 0.05], [0.86, 0.62, 0.05], orange, 0.008, 0.06);
+        energy.children.forEach(child => {
+          child.material.transparent = true;
+          child.material.opacity = 0.35 + 0.45 * blueAlpha;
+        });
+        g.add(energy);
+        const label = textSprite("3  transverse T", colors.T, 0.18);
+        label.position.set(1.42, 0.92, 0.12);
+        g.add(label);
+        const transverse = mathSprite("E ⊥ kₜ", colors.T, 0.13);
+        transverse.position.set(1.68, 0.73, 0.12);
+        g.add(transverse);
+        const energyLabel = textSprite("energy L → T", "#c2691e", 0.14);
+        energyLabel.position.set(0.12, 1.18, 0.12);
+        g.add(energyLabel);
+      }
+
+      if (state.step >= 2) {
+        const y = -0.62;
+        const start = -1.58;
+        const kLHead = 0.52;
+        const kTHead = -1.22;
+        const insetMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 });
+        const inset = new THREE.Mesh(new THREE.PlaneGeometry(3.10, 0.72), insetMat);
+        inset.position.set(-0.34, y - 0.08, 0.02);
+        g.add(inset);
+
+        g.add(threeArrow([start, y + 0.15, 0.14], [kLHead, y + 0.15, 0.14], red, 0.012, 0.085));
+        g.add(threeArrow([kLHead, y - 0.08, 0.14], [kTHead, y - 0.08, 0.14], greenDark, 0.012, 0.085));
+        g.add(threeArrow([start, y - 0.33, 0.14], [kTHead, y - 0.33, 0.14], blue, 0.012, 0.085));
+        g.add(lineObject([[start, y + 0.24, 0.13], [start, y - 0.42, 0.13]], 0x0f172a, 0.22));
+        g.add(lineObject([[kTHead, y + 0.02, 0.13], [kTHead, y - 0.43, 0.13]], blue, 0.22));
+        g.add(lineObject([[kLHead, y + 0.24, 0.13], [kLHead, y - 0.17, 0.13]], red, 0.22));
+        g.add(vectorLabel("kₗ", colors.L, (start + kLHead) / 2, y + 0.33, 0.19));
+        g.add(vectorLabel("kₛ ≈ −kₗ", colors.Svec, (kLHead + kTHead) / 2, y + 0.05, 0.18));
+        g.add(vectorLabel("small kₜ", colors.T, (start + kTHead) / 2, y - 0.49, 0.17));
+        const eq = mathSprite("kₗ + kₛ = kₜ", colors.ink, 0.18);
+        eq.position.set(1.08, y - 0.08, 0.14);
+        g.add(eq);
+      }
+
+      view.renderer.render(view.scene, view.camera);
+    }
+
+    function drawCartoonFallback() {
+      const container = document.getElementById("cartoon3d");
+      let canvas = container.querySelector("canvas");
+      if (!canvas) {
+        canvas = document.createElement("canvas");
+        container.replaceChildren(canvas);
+      }
+      const { ctx, w, h } = setCanvas(canvas);
+      ctx.fillStyle = "#f8fafc"; ctx.fillRect(0, 0, w, h);
+      const compact = w < 320;
+      const left = compact ? 24 : 34;
+      const right = w - (compact ? 22 : 30);
+      const xS = w * 0.52;
+      const yL = h * 0.58;
+      const yT = h * 0.35;
+      const yBroker = h * 0.72;
+      const lStart = left + 8;
+      const lEnd = xS - (compact ? 34 : 46);
+      const tStart = xS + (compact ? 36 : 48);
+      const tEnd = right - 8;
+
+      ctx.strokeStyle = "rgba(15,23,42,0.10)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(left, yL);
+      ctx.lineTo(right, yL);
+      ctx.stroke();
+
+      // Incoming L: short-scale longitudinal bunching, so its k is large.
+      const n = compact ? 17 : 23;
+      for (let i = 0; i < n; i++) {
+        const f = i / (n - 1);
+        const phase = 2 * Math.PI * (2.25 * f) - state.phase;
+        const bunch = Math.pow(0.5 + 0.5 * Math.cos(phase), 1.6);
+        const x = lStart + f * (lEnd - lStart) + Math.sin(phase) * (compact ? 4 : 6);
+        ctx.fillStyle = `rgba(228,87,87,${0.28 + 0.62 * bunch})`;
+        ctx.beginPath();
+        ctx.arc(x, yL, (compact ? 2.2 : 2.8) + 1.3 * bunch, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      for (let i = 0; i < 3; i++) {
+        const f = 0.22 + i * 0.28;
+        const x = lStart + f * (lEnd - lStart);
+        const eSign = Math.cos(2 * Math.PI * (2.25 * f) - state.phase) >= 0 ? 1 : -1;
+        const len = compact ? 18 : 24;
+        arrow(ctx, x - eSign * len * 0.45, yL - (compact ? 17 : 22), x + eSign * len * 0.55, yL - (compact ? 17 : 22), colors.L);
+      }
+      arrow(ctx, lStart, yL - (compact ? 44 : 54), lEnd, yL - (compact ? 44 : 54), colors.L);
+      drawMathRuns(ctx, [{ text: "L: large k" }, { text: "L", sub: true }], lStart, yL + (compact ? 32 : 40), compact ? 11 : 13, colors.L, "700");
+
+      // S is an opposite-directed density grating. It supplies wavevector, not the wave energy.
+      const sTop = yT + (compact ? 20 : 24);
+      const sBottom = yL + (compact ? 22 : 28);
+      ctx.save();
+      ctx.strokeStyle = "rgba(34,164,111,0.38)";
+      ctx.lineWidth = compact ? 5 : 7;
+      ctx.lineCap = "round";
+      for (let i = -2; i <= 2; i++) {
+        const x = xS + i * (compact ? 8 : 11) + Math.sin(state.phase * 0.4 + i) * 2;
+        ctx.beginPath();
+        ctx.moveTo(x, sTop);
+        ctx.lineTo(x + (compact ? 5 : 7), sBottom);
+        ctx.stroke();
+      }
+      ctx.restore();
+      ctx.fillStyle = colors.S;
+      ctx.beginPath();
+      ctx.arc(xS, yL - (compact ? 3 : 5), compact ? 4 : 5, 0, Math.PI * 2);
+      ctx.fill();
+      labelBoxMath(ctx, [
+        { text: "S: k" },
+        { text: "S", sub: true },
+        { text: " < 0" }
+      ], xS - (compact ? 38 : 46), sTop - (compact ? 5 : 8), colors.S, {
+        size: compact ? 12 : 15,
+        weight: "800",
+        fill: "rgba(255,255,255,0.86)",
+        height: compact ? 24 : 28
+      });
+      const sArrowY = sBottom + (compact ? 14 : 18);
+      arrow(ctx, xS + (compact ? 38 : 50), sArrowY, xS - (compact ? 38 : 50), sArrowY, colors.S, true);
+      drawMathRuns(ctx, [
+        { text: "k" },
+        { text: "S", sub: true },
+        { text: " opposite k" },
+        { text: "L", sub: true }
+      ], xS - (compact ? 48 : 61), sArrowY + (compact ? 18 : 22), compact ? 10 : 12, colors.S, "800");
+      ctx.fillStyle = colors.S;
+      ctx.font = uiFont(compact ? 10 : 12, "800");
+      ctx.fillText("wavevector broker", xS - (compact ? 42 : 52), yBroker);
+
+      // Energy follows L into T; S redirects by providing the missing k.
+      ctx.save();
+      ctx.strokeStyle = "rgba(194,105,30,0.72)";
+      ctx.fillStyle = "rgba(194,105,30,0.72)";
+      ctx.lineWidth = compact ? 1.8 : 2.1;
+      const energyY = yT - (compact ? 18 : 24);
+      arrow(ctx, lEnd + (compact ? 6 : 10), energyY, tStart - (compact ? 8 : 12), energyY, "rgba(194,105,30,0.72)", true);
+      drawMathRuns(ctx, [
+        { text: "same ω; new k" }
+      ], lEnd - (compact ? 22 : 34), energyY - (compact ? 8 : 10), compact ? 10 : 12, "rgba(194,105,30,0.72)", "800");
+      ctx.restore();
+
+      if (state.step >= 3) {
+        // Outgoing T: straight propagation with transverse electric-field arrows.
+        arrow(ctx, tStart, yT, tEnd, yT, colors.T);
+        ctx.strokeStyle = "rgba(59,130,246,0.25)";
+        ctx.lineWidth = compact ? 1.2 : 1.5;
+        ctx.beginPath();
+        ctx.moveTo(tStart, yT);
+        ctx.lineTo(tEnd, yT);
+        ctx.stroke();
+        const fieldCount = compact ? 3 : 4;
+        for (let i = 0; i < fieldCount; i++) {
+          const f = (i + 0.55) / fieldCount;
+          const x = tStart + f * (tEnd - tStart);
+          const sign = i % 2 === 0 ? -1 : 1;
+          const amp = sign * (compact ? 17 : 23);
+          arrow(ctx, x, yT, x, yT + amp, colors.T);
+        }
+        drawMathRuns(ctx, [{ text: "T: EM wave" }], tStart + (compact ? 10 : 14), yT + (compact ? 34 : 42), compact ? 11 : 13, colors.T, "700");
+        drawMathRuns(ctx, [{ text: "E " }, { text: "⊥" }, { text: " k" }], tStart + (compact ? 4 : 8), yT - (compact ? 32 : 40), compact ? 11 : 13, colors.T, "700");
+      }
+    }
+    function render() {
+      drawBranchPlot();
+      try {
+        drawCartoon();
+      } catch (err) {
+        if (!cartoonFallbackWarned) {
+          console.warn("Panel B WebGL render failed; using canvas fallback.", err);
+          cartoonFallbackWarned = true;
+        }
+        drawCartoonFallback();
+      }
+      drawEscapePlot();
+    }
+    // Throttle the heavy redraw to ~30 FPS (drawCartoon rebuilds the entire
+    // Three.js scene each call) and pause when the tab is hidden.
+    const FRAME_MS = 1000 / 30;
+    let lastFrameMs = 0;
+    let rafId = 0;
+    function tick(tMs) {
+      rafId = 0;
+      if (state.playing) state.phase += 0.045;
+      const now = tMs || performance.now();
+      if (now - lastFrameMs >= FRAME_MS) {
+        render();
+        lastFrameMs = now;
+      }
+      rafId = requestAnimationFrame(tick);
+    }
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) { if (rafId) cancelAnimationFrame(rafId); rafId = 0; }
+      else if (!rafId) { lastFrameMs = 0; rafId = requestAnimationFrame(tick); }
+    });
+    document.getElementById("stepButtons").addEventListener("click", e => { if (!e.target.dataset.step) return; state.step = Number(e.target.dataset.step); document.querySelectorAll(".step-btn").forEach(b => b.classList.toggle("active", Number(b.dataset.step) === state.step)); render(); });
+    document.getElementById("play").addEventListener("click", e => { state.playing = !state.playing; e.target.textContent = state.playing ? "Pause" : "Play"; });
+    document.getElementById("strength").addEventListener("input", e => { state.sound = Number(e.target.value); document.getElementById("strengthOut").textContent = state.sound.toFixed(2); render(); });
+    document.getElementById("vectors").addEventListener("click", e => { state.vectors = !state.vectors; e.currentTarget.classList.toggle("on", state.vectors); e.currentTarget.setAttribute("aria-checked", String(state.vectors)); render(); });
+    new ResizeObserver(render).observe(document.querySelector(".mechanism-grid"));
+    rafId = requestAnimationFrame(tick);
+  </script>
+  <div id="site-footer-root"></div>
+</body>
+</html>

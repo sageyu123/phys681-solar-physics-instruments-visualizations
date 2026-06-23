@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EOVSA Multiband and Inband Delay Explorer</title>
+    <meta name="description" content="Separate multiband delay offsets from inband phase slopes." />
+  <meta name="author" content="Sijie Yu" />
+  <meta name="application-name" content="Phys 681 Solar Physics and Instruments Teaching Visualizations" />
+<title>EOVSA Multiband and Inband Delay Explorer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
@@ -122,6 +125,23 @@
       justify-content: center;
       align-items: center;
       min-width: 0;
+    }
+
+    .formula mjx-container {
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    .formula .katex-mathml,
+    .formula .katex-mathml math,
+    .formula .katex-mathml semantics {
+      position: absolute;
+      width: 0;
+      max-width: 0;
+      height: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
     }
 
     .layout {
@@ -405,6 +425,13 @@
 
       .formula-wrap {
         justify-content: flex-start;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+      }
+
+      .formula {
+        min-width: 0;
       }
 
       .layout {
@@ -418,14 +445,21 @@
 
     @media (max-width: 640px) {
       .page {
-        width: min(100vw - 14px, 1240px);
+        width: min(100vw - 28px, 1240px);
         margin: 10px auto 18px;
       }
 
       .hero,
       .controls,
       .view {
-        padding: 16px;
+        min-width: 0;
+        padding: 14px;
+      }
+
+      .plots,
+      .plot-card,
+      .concept-row {
+        min-width: 0;
       }
 
       canvas {
@@ -448,8 +482,12 @@
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
     onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false})"></script>
+  <link rel="stylesheet" href="_site-shared.css" />
+  <script defer src="_site-manifest.js"></script>
+  <script defer src="_site-nav.js"></script>
 </head>
 <body>
+  <div id="site-nav-root"></div>
   <div class="page">
     <section class="hero">
       <div class="eyebrow">Delay Diagnostics</div>
@@ -1776,5 +1814,6 @@
     syncBandControls();
     render();
   </script>
+  <div id="site-footer-root"></div>
 </body>
 </html>

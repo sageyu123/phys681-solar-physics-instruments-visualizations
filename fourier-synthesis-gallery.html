@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UV Synthesis Gallery</title>
+    <meta name="description" content="Compare uv coverage and synthesized image behavior across sampling patterns." />
+  <meta name="author" content="Sijie Yu" />
+  <meta name="application-name" content="Phys 681 Solar Physics and Instruments Teaching Visualizations" />
+<title>UV Synthesis Gallery</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -246,8 +249,12 @@
       .hero h1 { font-size: clamp(1.9rem, 10vw, 3rem); }
     }
   </style>
+  <link rel="stylesheet" href="_site-shared.css" />
+  <script defer src="_site-manifest.js"></script>
+  <script defer src="_site-nav.js"></script>
 </head>
 <body>
+  <div id="site-nav-root"></div>
 <div class="shell">
   <div class="hero">
     <div class="eyebrow">Interferometric Imaging</div>
@@ -575,5 +582,6 @@
 
   switchSet();
 </script>
+  <div id="site-footer-root"></div>
 </body>
 </html>

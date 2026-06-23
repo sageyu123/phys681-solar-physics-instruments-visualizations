@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Zeeman Components Illustration</title>
+    <meta name="description" content="Illustrate Zeeman splitting components and their polarization signatures." />
+  <meta name="author" content="Sijie Yu" />
+  <meta name="application-name" content="Phys 681 Solar Physics and Instruments Teaching Visualizations" />
+<title>Zeeman Components Illustration</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -374,8 +377,12 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="_site-shared.css" />
+  <script defer src="_site-manifest.js"></script>
+  <script defer src="_site-nav.js"></script>
 </head>
 <body>
+  <div id="site-nav-root"></div>
   <div class="shell">
     <section class="hero">
       <h1>Formation of <span class="math-text" style="color:var(--sigma-blue)">σ<sub>+</sub></span>, <span class="math-text" style="color:var(--pi)">π</span>, and <span class="math-text" style="color:var(--sigma-red)">σ<sub>−</sub></span> Zeeman components</h1>
@@ -1452,5 +1459,6 @@
       <text x="${x + 128}" y="${y}" text-anchor="start" font-size="17" font-weight="700" fill="#1f2430">${dm}</text>`;
     }
   </script>
+  <div id="site-footer-root"></div>
 </body>
 </html>

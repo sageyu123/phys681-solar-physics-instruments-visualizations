@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you cite the evolving teaching collection, use the concept DOI. If you need the exact v1.0.0 archived files, use the version DOI 10.5281/zenodo.20820902."
+title: "NJIT PHYS 681 Spring 2026: Solar Physics and Instruments Teaching Visualizations"
+abstract: "A subset of the NJIT PHYS 681 Spring 2026 Solar Physics and Instruments teaching materials, containing interactive static HTML visualizations and narrative notes for solar physics, emission, propagation, interferometry, and instrumentation topics: radiometry, radiative transfer, magnetoionic propagation, emission mechanisms, plasma emission, ECM, gyrosynchrotron emission, bremsstrahlung, radio interferometry, and instrumentation."
+authors:
+  - family-names: "Yu"
+    given-names: "Sijie"
+    affiliation: "Assistant Professor, NJIT"
+  - name: "Codex"
+  - name: "Claude Code"
+type: educational-resource
+doi: "10.5281/zenodo.20820901"
+url: "https://doi.org/10.5281/zenodo.20820901"
+version: "1.0.0"
+date-released: "2026-04-28"
+license: "CC-BY-4.0"
+keywords:
+  - NJIT
+  - PHYS 681
+  - Spring 2026
+  - solar physics
+  - solar instruments
+  - solar instrumentation
+  - radio astronomy
+  - plasma emission
+  - gyrosynchrotron emission
+  - electron cyclotron maser
+  - radio interferometry
+  - teaching visualization
+  - open educational resources

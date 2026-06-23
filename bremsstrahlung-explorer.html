@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Connect Coulomb acceleration, thermal free-free emissivity, and thick-thin radio transfer." />
+  <meta name="author" content="Sijie Yu" />
+  <meta name="application-name" content="Phys 681 Solar Physics and Instruments Teaching Visualizations" />
+<title>Bremsstrahlung Explorer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ui-font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --ui-font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --math-font: "STIX Two Text", "Cambria Math", "STIXGeneral", "Times New Roman", serif;
+      --panel-bg-top: #182b44;
+      --panel-bg: #13243a;
+      --panel-ink: #e7eef6;
+      --panel-muted: #9bb0c5;
+      --panel-border: rgba(148, 168, 191, 0.18);
+      --right-bg: #edf3f8;
+      --card-bg: rgba(252, 254, 255, 0.96);
+      --card-border: rgba(138, 157, 178, 0.24);
+      --card-shadow: 0 1px 4px rgba(20, 32, 49, 0.05), 0 12px 28px rgba(20, 32, 49, 0.07);
+      --text: #10243b;
+      --muted: #617487;
+      --blue: #2f7de1;
+      --warm: #d97b2d;
+      --teal: #19998c;
+      --indigo: #5a57d8;
+      --rose: #d33b6f;
+      --amber: #e29a15;
+      --grid: rgba(90, 110, 131, 0.12);
+      --axis: rgba(68, 86, 106, 0.22);
+      --radius: 14px;
+      --radius-sm: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: var(--ui-font-text);
+      color: var(--text);
+      background: var(--right-bg);
+      overflow: hidden;
+    }
+
+    body { font-size: 13px; }
+
+    .app {
+      display: flex;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .left-panel {
+      width: 330px;
+      min-width: 300px;
+      flex-shrink: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 18px 18px 22px;
+      background: linear-gradient(180deg, var(--panel-bg-top) 0%, var(--panel-bg) 100%);
+      color: var(--panel-ink);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148, 163, 184, 0.32) transparent;
+    }
+    .left-panel::-webkit-scrollbar { width: 6px; }
+    .left-panel::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.32); border-radius: 4px; }
+
+    .eyebrow, .section-head, .formula-label, .small-label, .panel-label {
+      font-size: 10px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--panel-muted);
+    }
+
+    .eyebrow { margin-bottom: 8px; }
+
+    .panel-title {
+      font-family: var(--ui-font-display);
+      font-size: 22px;
+      line-height: 1.04;
+      letter-spacing: -0.03em;
+      color: #f8fbff;
+      margin-bottom: 10px;
+    }
+
+    .panel-copy {
+      font-size: 12.5px;
+      color: var(--panel-muted);
+      line-height: 1.45;
+      margin-bottom: 14px;
+    }
+
+    .formula-box, .section, .small-card {
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--panel-border);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .formula-box {
+      padding: 12px 13px;
+      color: #d8e3ee;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .formula-line {
+      font-family: var(--math-font);
+      font-size: 13px;
+      margin-top: 7px;
+      text-align: center;
+    }
+
+    .formula-note {
+      margin-top: 8px;
+      color: var(--panel-muted);
+      font-size: 11.5px;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    .section {
+      padding: 12px 13px;
+      margin-bottom: 10px;
+    }
+
+    .section-head { margin-bottom: 10px; }
+
+    .row { display: grid; gap: 5px; margin-bottom: 10px; }
+    .row:last-child { margin-bottom: 0; }
+
+    .label-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+    }
+
+    .label-name {
+      font-family: var(--math-font);
+      color: #f7fbff;
+      font-size: 13px;
+    }
+
+    .label-desc {
+      color: var(--panel-muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .slider-line {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 86px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 4px;
+      accent-color: var(--blue);
+      cursor: pointer;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 5px 7px;
+      border-radius: 6px;
+      border: 1px solid rgba(148,163,184,0.28);
+      background: rgba(255,255,255,0.08);
+      color: var(--panel-ink);
+      font: inherit;
+      text-align: right;
+      outline: none;
+    }
+
+    input[type="number"]:focus { border-color: rgba(47,125,225,0.65); }
+
+    .segment-row {
+      display: flex;
+      gap: 5px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .seg-btn {
+      border: 1px solid rgba(148,163,184,0.22);
+      background: rgba(255,255,255,0.07);
+      color: var(--panel-ink);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 9px;
+      border-radius: 999px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .seg-btn.active {
+      background: rgba(90,87,216,0.22);
+      border-color: rgba(110,106,229,0.55);
+      color: #d9ddff;
+    }
+
+    .small-note {
+      color: var(--panel-muted);
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+
+    .derived-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .small-card {
+      padding: 8px 10px;
+      display: grid;
+      gap: 3px;
+    }
+
+    .small-value {
+      font-family: var(--ui-font-display);
+      font-size: 14px;
+      font-weight: 700;
+      color: #f8fbff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .small-text {
+      color: var(--panel-muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .full-span { grid-column: 1 / -1; }
+
+    .right-panel {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      grid-auto-rows: min-content;
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px 14px 12px;
+      overflow: hidden;
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .card-title {
+      font-family: var(--ui-font-display);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .card-sub {
+      color: var(--muted);
+      font-size: 11.5px;
+      line-height: 1.35;
+      max-width: 58ch;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.1fr);
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .canvas-shell {
+      position: relative;
+      overflow: hidden;
+      border-radius: 10px;
+      border: 1px solid rgba(136,159,183,0.20);
+      background: #f9fbfe;
+    }
+
+    .canvas-shell canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #collisionCanvas    { aspect-ratio: 1 / 1; }
+    #singleSpectrumCanvas { aspect-ratio: 1 / 1; }
+    #distributionCanvas { aspect-ratio: 1 / 1; }
+    #thermalSpectrumCanvas { aspect-ratio: 1 / 1; }
+
+    .legend-row {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 11.5px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 8px;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+
+    .caption {
+      color: var(--muted);
+      font-size: 11.5px;
+      line-height: 1.45;
+    }
+
+    .footnote {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+      padding: 10px 12px;
+      background: rgba(90, 110, 131, 0.06);
+      border-radius: 10px;
+      border: 1px solid rgba(136,159,183,0.18);
+    }
+
+    .footnote .v { font-family: var(--math-font); font-style: italic; }
+    .footnote b { color: var(--text); }
+
+    .v {
+      font-family: var(--math-font);
+      font-style: italic;
+    }
+
+    .math-text {
+      font-family: var(--math-font);
+    }
+
+    sub, sup {
+      font-size: 0.72em;
+      line-height: 0;
+      font-family: inherit;
+    }
+
+    @media (max-width: 1120px) {
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 980px) {
+      html, body {
+        overflow: hidden;
+        height: 100%;
+      }
+      .app {
+        height: 100%;
+        min-height: 0;
+        flex-direction: row;
+        overflow: hidden;
+      }
+      .right-panel {
+        order: 2;
+        height: 100%;
+        overflow-y: auto;
+        padding: 12px 12px 8px;
+      }
+      .left-panel {
+        order: 1;
+        width: clamp(250px, 34vw, 300px);
+        min-width: 240px;
+        height: 100%;
+        overflow-y: auto;
+      }
+    }
+
+    @media (max-width: 720px) {
+      body { font-size: 15px; }
+      .left-panel, .right-panel { padding-left: 10px; padding-right: 10px; }
+      .slider-line { grid-template-columns: 1fr; }
+    }
+  </style>
+  <link rel="stylesheet" href="_site-shared.css" />
+  <script defer src="_site-manifest.js"></script>
+  <script defer src="_site-nav.js"></script>
+</head>
+<body>
+  <div id="site-nav-root"></div>
+  <div class="app">
+    <aside class="left-panel">
+      <div class="eyebrow">PHYS 681 · BREMSSTRAHLUNG</div>
+      <div class="panel-title">From one close encounter to the free-free continuum</div>
+      <p class="panel-copy">
+        An electron flying past an ion is pulled off its straight line for a fleeting moment;
+        that acceleration radiates. Section A visualizes a single encounter.
+        Section B integrates many of them over a Maxwellian population to build the thermal spectrum.
+      </p>
+
+      <div class="formula-box">
+        <div class="formula-label">Single-collision spectrum</div>
+        <div class="formula-line">d<span class="v">W</span>/d&omega; &asymp; (8<span class="v">Z</span><sup>2</sup><span class="v">e</span><sup>6</sup>) / (3&pi; <span class="v">c</span><sup>3</sup><span class="v">m</span><sub>e</sub><sup>2</sup><span class="v">v</span><sup>2</sup><span class="v">b</span><sup>2</sup>)</div>
+        <div class="formula-line" style="font-size:11.5px; color:var(--panel-muted);">flat for &omega;<span class="v">b</span>/<span class="v">v</span> &ll; 1; suppressed once &omega; reaches the encounter scale <span class="v">v</span>/<span class="v">b</span></div>
+        <div class="formula-label" style="margin-top:10px;">Thermal free-free emissivity</div>
+        <div class="formula-line">&epsilon;<sub>&nu;</sub> &prop; <span class="v">Z</span><sup>2</sup><span class="v">n</span><sub>e</sub><span class="v">n</span><sub>i</sub><span class="v">T</span><sup>-1/2</sup>e<sup>-<span class="v">h&nu;</span>/<span class="v">kT</span></sup><span class="v">g</span><sub>ff</sub></div>
+      </div>
+
+      <section class="section">
+        <div class="section-head">Section A · Single electron</div>
+
+        <div class="row">
+          <div class="label-desc">Ion species (presets)</div>
+          <div class="segment-row" id="zPresetRow">
+            <button class="seg-btn" data-zpre="1"  type="button">H  (Z=1)</button>
+            <button class="seg-btn" data-zpre="2"  type="button">He (2)</button>
+            <button class="seg-btn" data-zpre="6"  type="button">C  (6)</button>
+            <button class="seg-btn" data-zpre="26" type="button">Fe (26)</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="label-line">
+            <div class="label-name"><span class="v">Z</span></div>
+            <div class="label-desc">ion charge; emission scales as <span class="v">Z</span><sup>2</sup></div>
+          </div>
+          <div class="slider-line">
+            <input id="zRange"  type="range"  min="1" max="30" step="1" value="1" />
+            <input id="zNumber" type="number" min="1" max="30" step="1" value="1" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="label-line">
+            <div class="label-name">log<sub>10</sub> <span class="v">E</span><sub>k</sub> (eV)</div>
+            <div class="label-desc">electron kinetic energy sets its speed <span class="v">v</span></div>
+          </div>
+          <div class="slider-line">
+            <input id="keRange"  type="range"  min="1" max="5" step="0.02" value="3" />
+            <input id="keNumber" type="number" min="1" max="5" step="0.02" value="3" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="label-line">
+            <div class="label-name">log<sub>10</sub> <span class="v">b</span> (cm)</div>
+            <div class="label-desc">impact parameter; smaller <span class="v">b</span> means stronger kick</div>
+          </div>
+          <div class="slider-line">
+            <input id="bRange"  type="range"  min="-10" max="-5" step="0.02" value="-8" />
+            <input id="bNumber" type="number" min="-10" max="-5" step="0.02" value="-8" />
+          </div>
+        </div>
+
+        <div class="derived-grid" style="margin-top:4px;">
+          <div class="small-card">
+            <div class="small-label">Electron speed</div>
+            <div class="small-value" id="readV">—</div>
+            <div class="small-text" id="readVText">&beta; = <span class="v">v</span>/<span class="v">c</span></div>
+          </div>
+          <div class="small-card">
+            <div class="small-label">Deflection angle</div>
+            <div class="small-value" id="readTheta">—</div>
+            <div class="small-text math-text" id="readThetaText">tan(&theta;/2) = <span class="v">Ze</span><sup>2</sup>/(<span class="v">m</span><sub>e</sub><span class="v">v</span><sup>2</sup><span class="v">b</span>)</div>
+          </div>
+          <div class="small-card">
+            <div class="small-label">Cutoff &omega;<sub>max</sub> ~ <span class="v">v</span>/<span class="v">b</span></div>
+            <div class="small-value" id="readOmegaMax">—</div>
+            <div class="small-text math-text" id="readOmegaMaxText">&tau;<sub>enc</sub> ~ <span class="v">b</span>/<span class="v">v</span> sets this scale</div>
+          </div>
+          <div class="small-card">
+            <div class="small-label">Per-collision &Delta;<span class="v">W</span></div>
+            <div class="small-value" id="readDeltaW">—</div>
+            <div class="small-text">integrated over all frequencies</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">Section B · Thermal ensemble</div>
+
+        <div class="row">
+          <div class="label-line">
+            <div class="label-name">log<sub>10</sub> <span class="v">T</span><sub>e</sub> (K)</div>
+            <div class="label-desc">electron temperature sets <span class="v">v</span><sub>th</sub> and the cutoff</div>
+          </div>
+          <div class="slider-line">
+            <input id="teRange"  type="range"  min="4" max="8" step="0.02" value="7" />
+            <input id="teNumber" type="number" min="4" max="8" step="0.02" value="7" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="label-line">
+            <div class="label-name">log<sub>10</sub> EM (cm<sup>-5</sup>)</div>
+            <div class="label-desc">emission measure rescales amplitude</div>
+          </div>
+          <div class="slider-line">
+            <input id="emRange"  type="range"  min="26" max="32" step="0.05" value="29" />
+            <input id="emNumber" type="number" min="26" max="32" step="0.05" value="29" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="label-line">
+            <div class="label-name">log<sub>10</sub> &nu;<sub>ref</sub> (Hz)</div>
+            <div class="label-desc">readout frequency marker</div>
+          </div>
+          <div class="slider-line">
+            <input id="nuRange"  type="range"  min="8" max="19" step="0.05" value="10" />
+            <input id="nuNumber" type="number" min="8" max="19" step="0.05" value="10" />
+          </div>
+        </div>
+
+        <div class="derived-grid" style="margin-top:4px;">
+          <div class="small-card">
+            <div class="small-label">Radio optical depth &tau;<sub>&nu;ref</sub></div>
+            <div class="small-value" id="readVth">—</div>
+            <div class="small-text" id="readVthText">thick / thin at the reference frequency</div>
+          </div>
+          <div class="small-card">
+            <div class="small-label">Turnover &nu;<sub>&tau;&asymp;1</sub></div>
+            <div class="small-value" id="readTurnover">—</div>
+            <div class="small-text">transition between thick and thin regimes</div>
+          </div>
+          <div class="small-card">
+            <div class="small-label">Brightness <span class="v">T</span><sub>b</sub>(&nu;<sub>ref</sub>)</div>
+            <div class="small-value" id="readEps">—</div>
+            <div class="small-text">Rayleigh-Jeans brightness temperature</div>
+          </div>
+          <div class="small-card">
+            <div class="small-label">Flux proxy <span class="v">S</span><sub>&nu;</sub>(&nu;<sub>ref</sub>)</div>
+            <div class="small-value" id="readGff">—</div>
+            <div class="small-text">arbitrary units for fixed source area</div>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <main class="right-panel">
+
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <div class="panel-label">Section A · One encounter</div>
+            <div class="card-title">A single electron deflects past an ion and radiates</div>
+          </div>
+          <div class="card-sub" id="collisionSummary">Smaller <span class="v">b</span>, slower <span class="v">v</span>, or higher <span class="v">Z</span> makes the bend stronger. The strongest acceleration, and therefore the brightest burst, occurs near closest approach.</div>
+        </div>
+
+        <div class="two-col">
+          <div>
+            <div class="canvas-shell">
+              <canvas id="collisionCanvas"></canvas>
+            </div>
+            <div class="caption" style="margin-top:6px;">
+              The ion sits at the origin. The electron arrives from the left at impact parameter <span class="v">b</span>.
+              The shaded annulus has area 2&pi;<span class="v">b</span> d<span class="v">b</span> — the geometric element
+              students integrate over to get the cross section. The rose two-lobed fan marks the nonrelativistic dipole pattern,
+              strongest perpendicular to the instantaneous acceleration toward the ion. Distances use a light display compression so the full
+              <span class="v">b</span> slider range remains visible.
+            </div>
+          </div>
+          <div>
+            <div class="canvas-shell">
+              <canvas id="singleSpectrumCanvas"></canvas>
+            </div>
+            <div class="legend-row" style="margin-top:6px;">
+              <div class="legend-item"><span class="swatch" style="background:var(--blue)"></span>current (<span class="v">b</span>, <span class="v">v</span>, <span class="v">Z</span>)</div>
+              <div class="legend-item"><span class="swatch" style="background:rgba(47,125,225,0.35)"></span>ghosts: <span class="v">b</span>/2 and 2<span class="v">b</span></div>
+              <div class="legend-item"><span class="swatch" style="background:var(--rose)"></span>encounter-time cutoff &omega; ~ <span class="v">v</span>/<span class="v">b</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <div class="panel-label">Section B · Thermal ensemble</div>
+            <div class="card-title">Thermal bremsstrahlung in the Dulk-style thick/thin view</div>
+          </div>
+          <div class="card-sub">At low radio frequency the source is thick, so <span class="v">T</span><sub>b</sub> saturates near <span class="v">T</span><sub>e</sub> and <span class="v">S</span><sub>&nu;</sub> rises like &nu;<sup>2</sup>. At high frequency it becomes thin, so <span class="v">T</span><sub>b</sub> falls and <span class="v">S</span><sub>&nu;</sub> flattens.</div>
+        </div>
+
+        <div class="two-col">
+          <div>
+            <div class="canvas-shell">
+              <canvas id="distributionCanvas"></canvas>
+            </div>
+            <div class="caption" style="margin-top:6px;">
+              Left panel: <span class="v">T</span><sub>b</sub>(&nu;) for a uniform thermal free-free source.
+              The low-frequency plateau is the optically thick limit <span class="v">T</span><sub>b</sub> &asymp; <span class="v">T</span><sub>e</sub>;
+              above the turnover, <span class="v">T</span><sub>b</sub> drops as the optical depth falls below unity.
+            </div>
+          </div>
+          <div>
+            <div class="canvas-shell">
+              <canvas id="thermalSpectrumCanvas"></canvas>
+            </div>
+            <div class="legend-row" style="margin-top:6px;">
+              <div class="legend-item"><span class="swatch" style="background:var(--blue)"></span><span class="v">T</span><sub>b</sub> or <span class="v">S</span><sub>&nu;</sub> curve</div>
+              <div class="legend-item"><span class="swatch" style="background:var(--indigo)"></span>&nu;<sub>ref</sub></div>
+              <div class="legend-item"><span class="swatch" style="background:var(--rose)"></span>&nu;<sub>&tau;&asymp;1</sub></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="footnote">
+          <b>Dulk-style radio model used.</b> The radio optical depth is approximated as
+          <span class="v">&tau;</span><sub>&nu;</sub> &prop; <span class="v">Z</span><sup>2</sup><span class="v">EM</span><span class="v">T</span><sup>-3/2</sup><span class="v">&nu;</span><sup>-2</sup><span class="v">g</span><sub>ff,radio</sub>.
+          We then plot <span class="v">T</span><sub>b</sub> = <span class="v">T</span><sub>e</sub>(1 - e<sup>-<span class="v">&tau;</span><sub>&nu;</sub></sup>) and
+          a fixed-area flux proxy <span class="v">S</span><sub>&nu;</sub> &prop; <span class="v">&nu;</span><sup>2</sup><span class="v">T</span><sub>b</sub>.
+          That is the thermal-bremsstrahlung shape in Dulk 1985: low-frequency <span class="v">&nu;</span><sup>2</sup> rise in flux,
+          a nearly flat high-frequency tail, and a brightness temperature that saturates at <span class="v">T</span><sub>e</sub> when thick.
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    // ------------------------------------------------------------------
+    // Physical constants (CGS)
+    // ------------------------------------------------------------------
+    const E_CHARGE     = 4.80320e-10;    // esu
+    const M_ELECTRON   = 9.1093837e-28;  // g
+    const C_LIGHT      = 2.99792458e10;  // cm/s
+    const K_BOLTZ      = 1.380649e-16;   // erg/K
+    const H_PLANCK     = 6.62607015e-27; // erg s
+    const HBAR         = H_PLANCK / (2 * Math.PI);
+    const EV_TO_ERG    = 1.602176634e-12;
+    const GAMMA_EULER  = 1.78107241799;  // exp(Euler-Mascheroni)
+
+    const uiFont = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif';
+    const mathFont = '"STIX Two Text", "Cambria Math", "STIXGeneral", "Times New Roman", serif';
+
+    const COLORS = {
+      blue:   '#2f7de1',
+      blueHalo:'rgba(255,255,255,0.85)',
+      warm:   '#d97b2d',
+      teal:   '#19998c',
+      indigo: '#5a57d8',
+      rose:   '#d33b6f',
+      amber:  '#e29a15',
+      ion:    '#b64d2a',
+      electron:'#1c4ea0',
+      text:   '#10243b',
+      muted:  '#617487',
+      grid:   'rgba(90,110,131,0.12)',
+      axis:   'rgba(68,86,106,0.30)',
+      ghost:  'rgba(47,125,225,0.30)',
+      ghostCut:'rgba(211,59,111,0.20)',
+    };
+
+    // ------------------------------------------------------------------
+    // State + controls
+    // ------------------------------------------------------------------
+    const state = {
+      Z: 1,
+      logKeV_log10eV: 3.0,   // log10 of Ek in eV, slider range 1..5 → 10 eV .. 100 keV
+      logB: -8.0,            // log10 of b in cm, range -10..-5
+      logTe: 7.0,            // log10 of T in K, range 4..8
+      logEM: 29.0,           // log10 of n_e·n_i·L in cm^-5
+      logNuRef: 10.0,        // log10 of nu_ref in Hz (10^10 Hz = 10 GHz)
+    };
+
+    const B_DISPLAY_REF = 1e-8;
+    const B_DISPLAY_EXP = 0.22;
+    const pageParams = new URLSearchParams(window.location.search);
+    const pauseCollisionAnim = pageParams.get('pause') === '1';
+
+    const collisionCanvas   = document.getElementById('collisionCanvas');
+    const singleSpecCanvas  = document.getElementById('singleSpectrumCanvas');
+    const distCanvas        = document.getElementById('distributionCanvas');
+    const thermSpecCanvas   = document.getElementById('thermalSpectrumCanvas');
+    const collisionCtx      = collisionCanvas.getContext('2d');
+    const singleSpecCtx     = singleSpecCanvas.getContext('2d');
+    const distCtx           = distCanvas.getContext('2d');
+    const thermSpecCtx      = thermSpecCanvas.getContext('2d');
+
+    const controls = [
+      { key: 'Z',           range: 'zRange',  number: 'zNumber',  min: 1,   max: 30,  step: 1    },
+      { key: 'logKeV_log10eV', range: 'keRange', number: 'keNumber', min: 1, max: 5,   step: 0.02 },
+      { key: 'logB',        range: 'bRange',  number: 'bNumber',  min: -10, max: -5,  step: 0.02 },
+      { key: 'logTe',       range: 'teRange', number: 'teNumber', min: 4,   max: 8,   step: 0.02 },
+      { key: 'logEM',       range: 'emRange', number: 'emNumber', min: 26,  max: 32,  step: 0.05 },
+      { key: 'logNuRef',    range: 'nuRange', number: 'nuNumber', min: 8,   max: 19,  step: 0.05 },
+    ];
+
+    function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+
+    function syncControls() {
+      controls.forEach(({ key, range, number }) => {
+        const v = state[key];
+        document.getElementById(range).value = v;
+        document.getElementById(number).value = v;
+      });
+    }
+
+    controls.forEach((ctrl) => {
+      const r = document.getElementById(ctrl.range);
+      const n = document.getElementById(ctrl.number);
+      function push(raw) {
+        if (raw === '' || raw === null) return;
+        const val = parseFloat(raw);
+        if (Number.isNaN(val)) return;
+        state[ctrl.key] = clamp(val, ctrl.min, ctrl.max);
+        syncControls();
+        if (ctrl.key === 'Z') syncZPresets();
+        render();
+      }
+      r.addEventListener('input', () => push(r.value));
+      n.addEventListener('input', () => push(n.value));
+    });
+
+    function syncZPresets() {
+      document.querySelectorAll('#zPresetRow .seg-btn').forEach((btn) => {
+        btn.classList.toggle('active', parseInt(btn.dataset.zpre, 10) === state.Z);
+      });
+    }
+
+    document.querySelectorAll('#zPresetRow .seg-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.Z = parseInt(btn.dataset.zpre, 10);
+        syncControls();
+        syncZPresets();
+        render();
+      });
+    });
+
+    // ------------------------------------------------------------------
+    // Physics helpers
+    // ------------------------------------------------------------------
+    function derivedKinematics() {
+      const Ek_erg = Math.pow(10, state.logKeV_log10eV) * EV_TO_ERG;
+      // Cap v at 0.95 c for stability; we are nominally non-relativistic
+      let v = Math.sqrt(2 * Ek_erg / M_ELECTRON);
+      if (v > 0.95 * C_LIGHT) v = 0.95 * C_LIGHT;
+      const b = Math.pow(10, state.logB);
+      const alpha = (state.Z * E_CHARGE * E_CHARGE) / (M_ELECTRON * v * v * b);  // tan(theta/2)
+      const theta = 2 * Math.atan(alpha);
+      const omegaMax = v / b;
+      // Per-collision integrated energy (with exp(-2 omega b/v) cutoff): dW/dω × ∫ exp(-2u) du = 0.5 × v/b
+      const A = (8 * state.Z * state.Z * Math.pow(E_CHARGE, 6))
+              / (3 * Math.PI * Math.pow(C_LIGHT, 3) * M_ELECTRON * M_ELECTRON * v * v * b * b);
+      const deltaW = A * 0.5 * omegaMax;  // erg per collision
+      return { v, b, alpha, theta, omegaMax, A, deltaW, Ek_erg };
+    }
+
+    // Single-collision spectrum: dW/dω ≈ A · S(ω b / v)
+    // Using soft exponential cutoff S(u) = exp(-2u) — a simple pedagogical form
+    // that captures the flat plateau below ω = v/b and fall-off above.
+    function dWdOmega(omega, b, v, Z) {
+      const A = (8 * Z * Z * Math.pow(E_CHARGE, 6))
+              / (3 * Math.PI * Math.pow(C_LIGHT, 3) * M_ELECTRON * M_ELECTRON * v * v * b * b);
+      const u = omega * b / v;
+      return A * Math.exp(-2 * u);
+    }
+
+    // Thermal emissivity (analytic closed form, erg s^-1 cm^-3 Hz^-1):
+    // ε_ν = 6.842e-38 · Z² · n_e · n_i · T^-1/2 · exp(-hν/kT) · g_ff
+    // (Rybicki & Lightman Eq. 5.14b; standard CGS prefactor)
+    function emissivityAnalytic(nu_Hz, T_K, Z, ne_ni) {
+      const kT = K_BOLTZ * T_K;
+      const expFac = Math.exp(-H_PLANCK * nu_Hz / kT);
+      const gff = kramersGaunt(nu_Hz, T_K);
+      const prefac = 6.8418e-38;
+      return prefac * Z * Z * ne_ni * Math.pow(T_K, -0.5) * expFac * gff;
+    }
+
+    // Kramers-Gaunt non-relativistic approximation, clamped ≥ 1.
+    function kramersGaunt(nu_Hz, T_K) {
+      const kT = K_BOLTZ * T_K;
+      const arg = 4 * kT / (GAMMA_EULER * H_PLANCK * nu_Hz);
+      if (arg <= 1.001) return 1.0;
+      const g = (Math.sqrt(3) / Math.PI) * Math.log(arg);
+      return Math.max(1.0, g);
+    }
+
+    // Maxwell-Boltzmann speed distribution, normalized so ∫ f(v) dv = 1
+    function maxwellian(v, T_K) {
+      const a = M_ELECTRON / (2 * K_BOLTZ * T_K);
+      const pref = 4 * Math.PI * Math.pow(a / Math.PI, 1.5);
+      return pref * v * v * Math.exp(-a * v * v);
+    }
+
+    // Numerical integration of single-collision emissivity over a Maxwellian,
+    // for cross-checking the analytic expression.
+    // ε_ν = n_e n_i · (16/3) · Z²e⁶/(c³ m_e²) · (2π) · ∫ [f(v)/v] · ln(b_max/b_min)(v,ν) dv
+    //       (with the b-integral evaluated analytically using a cutoff; we use the
+    //        standard non-relativistic bmin = max(Ze²/(m_e v²), ℏ/(m_e v)) and
+    //        bmax such that h ν ≤ ½ m_e v² — only electrons above v_min contribute).
+    // Note: with a soft cutoff exp(-2ωb/v), ∫ (db/b) exp(-2ωb/v) converges at b_max → ∞
+    // and diverges at b_min → 0, so we insert b_min explicitly. The factor
+    // ∫_bmin^∞ (db/b) exp(-2ωb/v) ≈ -γ_E - ln(2ω b_min/v) + O(ωb/v) for small 2ωb_min/v,
+    // i.e. a logarithm (this is where the Gaunt factor comes from).
+    function emissivityNumerical(nu_Hz, T_K, Z, ne_ni) {
+      const omega = 2 * Math.PI * nu_Hz;
+      const v_min_for_emission = Math.sqrt(2 * H_PLANCK * nu_Hz / M_ELECTRON);
+      const v_th = Math.sqrt(2 * K_BOLTZ * T_K / M_ELECTRON);
+      const v_max = Math.max(8 * v_th, 3 * v_min_for_emission);
+      if (v_max <= v_min_for_emission) return 0;
+      const N = 80;
+      const dv = (v_max - v_min_for_emission) / N;
+      let integrand_sum = 0;
+      for (let i = 0; i <= N; i++) {
+        const v = v_min_for_emission + i * dv;
+        if (v <= 0) continue;
+        const bmin_classical = state.Z * E_CHARGE * E_CHARGE / (M_ELECTRON * v * v);
+        const bmin_quantum   = HBAR / (M_ELECTRON * v);
+        const bmin = Math.max(bmin_classical, bmin_quantum);
+        // ∫_bmin^∞ (db/b) exp(-2 ω b/v) = E_1(2 ω bmin/v)  (exponential integral)
+        // We use the small-argument expansion: E_1(x) ≈ -ln(x) - γ_E for x → 0
+        // and E_1(x) ≈ exp(-x)/x for x >> 1. Switch between them.
+        const x = 2 * omega * bmin / v;
+        let logInt;
+        if (x < 0.1) {
+          logInt = -Math.log(x) - 0.5772156649 + x;
+        } else if (x < 3) {
+          // crude but smooth interpolation
+          const small = -Math.log(x) - 0.5772156649 + x;
+          const large = Math.exp(-x) / x;
+          const w = (x - 0.1) / (3 - 0.1);
+          logInt = small * (1 - w) + large * w;
+        } else {
+          logInt = Math.exp(-x) / x;
+        }
+        if (logInt < 0) logInt = 0;
+        const fv = maxwellian(v, T_K);
+        // dε/dv per electron-density per ion-density:
+        //   = (32π Z² e⁶)/(3 c³ m_e²) · (f(v)/v) · logInt
+        // and we convert ε_ω → ε_ν by multiplying by 2π:
+        const wt = (i === 0 || i === N) ? 0.5 : 1.0;
+        integrand_sum += wt * (fv / v) * logInt * dv;
+      }
+      // Energy per ω per s per volume: ε_ω = n_e n_i · (16 Z²e⁶)/(3 c³ m_e²) · ∫(f/v)·I dv
+      // ε_ν = 2π ε_ω (since dω = 2π dν). So the prefactor is (32π Z²e⁶)/(3 c³ m_e²).
+      const prefac = (32 * Math.PI * Z * Z * Math.pow(E_CHARGE, 6))
+                   / (3 * Math.pow(C_LIGHT, 3) * M_ELECTRON * M_ELECTRON);
+      return ne_ni * prefac * integrand_sum;
+    }
+
+    // Radio free-free transfer approximation used for the Dulk-style view.
+    // We keep the same controls (T_e, EM, Z, nu_ref) but switch Section B to
+    // brightness temperature and flux-shape plots rather than optically thin emissivity.
+    function radioGauntFactor(nu_Hz, T_K) {
+      return Math.max(1.0, 24.5 + Math.log(T_K) - Math.log(nu_Hz));
+    }
+
+    function radioTau(nu_Hz, T_K, Z, EM_cm5) {
+      return 9.78e-3 * Z * Z * EM_cm5 * Math.pow(T_K, -1.5) * Math.pow(nu_Hz, -2) * radioGauntFactor(nu_Hz, T_K);
+    }
+
+    function radioBrightnessTemperature(nu_Hz, T_K, Z, EM_cm5) {
+      const tau = radioTau(nu_Hz, T_K, Z, EM_cm5);
+      const attenuation = tau < 1e-3 ? tau - 0.5 * tau * tau : 1 - Math.exp(-tau);
+      return T_K * attenuation;
+    }
+
+    function radioFluxProxy(nu_Hz, T_K, Z, EM_cm5) {
+      return Math.pow(nu_Hz, 2) * radioBrightnessTemperature(nu_Hz, T_K, Z, EM_cm5);
+    }
+
+    function findTauTurnoverHz(T_K, Z, EM_cm5) {
+      const lo = 1e7;
+      const hi = 1e18;
+      const tauLo = radioTau(lo, T_K, Z, EM_cm5);
+      const tauHi = radioTau(hi, T_K, Z, EM_cm5);
+      if (tauLo < 1) return lo;
+      if (tauHi > 1) return hi;
+
+      let a = Math.log10(lo);
+      let b = Math.log10(hi);
+      for (let i = 0; i < 60; i++) {
+        const m = 0.5 * (a + b);
+        const tau = radioTau(Math.pow(10, m), T_K, Z, EM_cm5);
+        if (tau > 1) a = m;
+        else b = m;
+      }
+      return Math.pow(10, 0.5 * (a + b));
+    }
+
+    // ------------------------------------------------------------------
+    // Trajectory — exact Rutherford hyperbola in dimensionless units
+    // (b = 1, v_infinity = 1, time unit = b/v).
+    // For U = -α/r, the orbit is r(ν) = p / (1 + e cos ν) with
+    // p = 1/α and e = sqrt(1 + 1/α²), rotated so the incoming asymptote
+    // is the horizontal line y = +1 from the left.
+    // ------------------------------------------------------------------
+    function computeTrajectory(alpha) {
+      const safeAlpha = Math.max(alpha, 1e-4);
+      const e = Math.sqrt(1 + 1 / (safeAlpha * safeAlpha));
+      const nuInf = Math.PI / 2 + Math.atan(safeAlpha);
+      const nuLimit = Math.max(0.12, nuInf - 0.0025);
+      const rot = nuInf;
+      const N = 420;
+      const points = [];
+      let totalT = 0;
+      let closestIndex = 0;
+      let prev = null;
+
+      for (let i = 0; i < N; i++) {
+        const s = -1 + 2 * i / (N - 1);
+        const u = 2.7 * s;
+        const nu = nuLimit * Math.tanh(u) / Math.tanh(2.7);
+        const r = 1 / (safeAlpha * (1 + e * Math.cos(nu)));
+        const X = r * Math.cos(nu);
+        const Y = r * Math.sin(nu);
+
+        // Rotate into the plotting frame and mirror in x so the trajectory
+        // enters from the left with impact parameter y = +1.
+        const x = -(X * Math.cos(rot) - Y * Math.sin(rot));
+        const y =  (X * Math.sin(rot) + Y * Math.cos(rot));
+        const aMag = safeAlpha / (r * r);
+        const vLoc = Math.sqrt(1 + 2 * safeAlpha / r);
+
+        if (prev) {
+          const ds = Math.hypot(x - prev.x, y - prev.y);
+          totalT += ds / Math.max(vLoc, 1e-6);
+        }
+
+        const pt = { x, y, r, a: aMag, t: totalT };
+        points.push(pt);
+        if (pt.r < points[closestIndex].r) closestIndex = i;
+        prev = pt;
+      }
+
+      for (const pt of points) pt.tNorm = totalT > 0 ? pt.t / totalT : 0;
+      points.closestIndex = closestIndex;
+      points.closestTNorm = points[closestIndex]?.tNorm ?? 0.5;
+      return points;
+    }
+
+    function sampleTrajectoryAtPhase(traj, phase) {
+      if (!traj || traj.length === 0) return null;
+      if (phase <= 0) {
+        return { ...traj[0], tangentX: 1, tangentY: 0 };
+      }
+      if (phase >= 1) {
+        const end = traj[traj.length - 1];
+        const prev = traj[Math.max(0, traj.length - 2)];
+        return { ...end, tangentX: end.x - prev.x, tangentY: end.y - prev.y };
+      }
+
+      let i = 1;
+      while (i < traj.length && traj[i].tNorm < phase) i++;
+      const p1 = traj[Math.min(i, traj.length - 1)];
+      const p0 = traj[Math.max(0, i - 1)];
+      const span = Math.max(1e-6, p1.tNorm - p0.tNorm);
+      const w = clamp((phase - p0.tNorm) / span, 0, 1);
+      return {
+        x: p0.x + (p1.x - p0.x) * w,
+        y: p0.y + (p1.y - p0.y) * w,
+        r: p0.r + (p1.r - p0.r) * w,
+        a: p0.a + (p1.a - p0.a) * w,
+        tNorm: phase,
+        tangentX: p1.x - p0.x,
+        tangentY: p1.y - p0.y,
+      };
+    }
+
+    // ------------------------------------------------------------------
+    // Canvas utilities
+    // ------------------------------------------------------------------
+    function resizeCanvas2D(canvas, ctx) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(1, Math.round(rect.width * dpr));
+      const h = Math.max(1, Math.round(rect.height * dpr));
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { width: rect.width, height: rect.height };
+    }
+
+    function encounterDisplayScale(b) {
+      // The Section A canvas shows physical miss distance trends across a 10^5 range
+      // in b. A mild power-law compression keeps the whole slider range visible while
+      // still making smaller/larger impact parameters move closer to / farther from the ion.
+      return clamp(Math.pow(b / B_DISPLAY_REF, B_DISPLAY_EXP), 0.34, 4.6);
+    }
+
+    function drawArrow(ctx, x0, y0, x1, y1, color, widthPx, alpha) {
+      ctx.save();
+      ctx.globalAlpha = alpha ?? 1;
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = widthPx;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
+      const angle = Math.atan2(y1 - y0, x1 - x0);
+      const head = Math.max(7, widthPx * 3);
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x1 - head * Math.cos(angle - 0.34), y1 - head * Math.sin(angle - 0.34));
+      ctx.lineTo(x1 - head * Math.cos(angle + 0.34), y1 - head * Math.sin(angle + 0.34));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawDipoleEmissionPattern(ctx, x, y, axisX, axisY, strength) {
+      const norm = Math.hypot(axisX, axisY);
+      if (norm < 1e-6 || strength <= 0) return;
+
+      const ax = axisX / norm;
+      const ay = axisY / norm;
+      const perpX = -ay;
+      const perpY = ax;
+      const baseAngle = Math.atan2(perpY, perpX);
+      const lobeLength = 14 + 28 * strength;
+      const lobeWidth = 4 + 10 * strength;
+      const spread = 0.72;
+      const rayCount = 9;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.shadowColor = 'rgba(211,59,111,0.16)';
+      ctx.shadowBlur = 8 + 10 * strength;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      for (const sign of [1, -1]) {
+        ctx.save();
+        ctx.rotate(baseAngle + (sign < 0 ? Math.PI : 0));
+
+        ctx.fillStyle = `rgba(211,59,111,${0.11 + 0.20 * strength})`;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(lobeLength * 0.32, lobeWidth * 1.45, lobeLength, 0);
+        ctx.quadraticCurveTo(lobeLength * 0.32, -lobeWidth * 1.45, 0, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        for (let i = 0; i < rayCount; i++) {
+          const u = rayCount === 1 ? 0 : -1 + 2 * i / (rayCount - 1);
+          const offset = u * spread;
+          const weight = Math.pow(Math.cos(0.5 * Math.PI * u), 2);
+          const inner = 2 + 2.5 * strength;
+          const outer = lobeLength * (0.78 + 0.22 * weight);
+
+          ctx.strokeStyle = `rgba(255,241,245,${0.06 + 0.12 * strength * weight})`;
+          ctx.lineWidth = (0.7 + 1.8 * strength) * (0.45 + 0.55 * weight);
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(offset) * inner, Math.sin(offset) * inner);
+          ctx.lineTo(Math.cos(offset) * outer, Math.sin(offset) * outer);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    function fmtSci(value, digits = 2) {
+      if (!Number.isFinite(value) || value === 0) return value === 0 ? '0' : '—';
+      const exp = Math.floor(Math.log10(Math.abs(value)));
+      const mant = value / Math.pow(10, exp);
+      if (exp >= -2 && exp <= 3) return value.toPrecision(digits + 1);
+      return `${mant.toFixed(digits)}·10${sup(exp)}`;
+    }
+    function sup(n) {
+      const map = {'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+      return String(n).split('').map((c) => map[c] || c).join('');
+    }
+
+    // ------------------------------------------------------------------
+    // Animation tick for the moving electron dot — throttled to ~30 FPS
+    // (drawCollisionScene repaints the full canvas) and paused when the
+    // tab is hidden.
+    // ------------------------------------------------------------------
+    let animFrame = 0;
+    let lastTime = performance.now();
+    let lastDrawT = 0;
+    let tickRafId = 0;
+    const TICK_FRAME_MS = 1000 / 30;
+    function tick(now) {
+      tickRafId = 0;
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+      animPhase = (animPhase + dt / 6) % 1;   // 6-second loop
+      if (now - lastDrawT >= TICK_FRAME_MS) {
+        drawCollisionScene();
+        lastDrawT = now;
+      }
+      tickRafId = requestAnimationFrame(tick);
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { if (tickRafId) cancelAnimationFrame(tickRafId); tickRafId = 0; }
+      else if (!tickRafId && !pauseCollisionAnim) {
+        lastTime = performance.now();
+        tickRafId = requestAnimationFrame(tick);
+      }
+    });
+    let animPhase = clamp(parseFloat(pageParams.get('phase') ?? '0.18'), 0, 1);
+
+    // ------------------------------------------------------------------
+    // Collision scene
+    // ------------------------------------------------------------------
+    let currentTrajectory = null;
+    let currentKin = null;
+    function rebuildTrajectory() {
+      currentKin = derivedKinematics();
+      currentTrajectory = computeTrajectory(currentKin.alpha);
+    }
+
+    function drawCollisionScene() {
+      if (!currentTrajectory) rebuildTrajectory();
+      const { width, height } = resizeCanvas2D(collisionCanvas, collisionCtx);
+      const ctx = collisionCtx;
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = '#f9fbfe';
+      ctx.fillRect(0, 0, width, height);
+
+      const viewHalf = 4.5;
+      const margin = 20;
+      const size = Math.min(width, height) - 2 * margin;
+      const cx = width / 2;
+      const cy = height / 2;
+      const scale = size / (2 * viewHalf);
+      const displayScale = encounterDisplayScale(currentKin.b);
+      const toPx = (x, y) => ({ px: cx + x * displayScale * scale, py: cy - y * displayScale * scale });
+
+      // Faint grid at unit radii
+      ctx.save();
+      ctx.strokeStyle = 'rgba(90,110,131,0.12)';
+      ctx.lineWidth = 1;
+      for (let r = 1; r <= 4; r++) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r * scale, 0, 2 * Math.PI);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Cross-section annulus at r = b, drawn with a compressed physical scale so
+      // the impact-parameter distance itself changes on screen as b changes.
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, 1.04 * displayScale * scale, 0, 2 * Math.PI);
+      ctx.arc(cx, cy, 0.96 * displayScale * scale, 0, 2 * Math.PI, true);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(226,154,21,0.18)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(226,154,21,0.55)';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.arc(cx, cy, displayScale * scale, 0, 2 * Math.PI);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = COLORS.amber;
+      ctx.font = `600 11px ${mathFont}`;
+      ctx.textAlign = 'left';
+      ctx.fillText('2π b db', cx + 1.05 * displayScale * scale + 4, cy - 0.10 * displayScale * scale);
+      ctx.restore();
+
+      // Dashed asymptotes
+      ctx.save();
+      ctx.strokeStyle = 'rgba(28,78,160,0.45)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      const incoming0 = toPx(-viewHalf, 1);
+      const incoming1 = toPx(viewHalf, 1);
+      ctx.moveTo(incoming0.px, incoming0.py);
+      ctx.lineTo(incoming1.px, incoming1.py);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+
+      // Trajectory line + nonrelativistic dipole-emission cue
+      const traj = currentTrajectory;
+      let maxA = 0;
+      for (const p of traj) if (p.a > maxA) maxA = p.a;
+
+      ctx.save();
+      ctx.strokeStyle = COLORS.electron;
+      ctx.lineWidth = 2.2;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      for (let i = 0; i < traj.length; i++) {
+        const p = traj[i];
+        const pt = toPx(p.x, p.y);
+        const px = pt.px;
+        const py = pt.py;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // Animated moving electron dot
+      const visLimit = viewHalf / displayScale + 0.55;
+      let visFirst = -1;
+      let visLast = -1;
+      for (let i = 0; i < traj.length; i++) {
+        const pt = traj[i];
+        if (Math.abs(pt.x) <= visLimit && Math.abs(pt.y) <= visLimit) {
+          if (visFirst < 0) visFirst = i;
+          visLast = i;
+        }
+      }
+      const visStartT = visFirst >= 0 ? traj[visFirst].tNorm : 0;
+      const visEndT = visLast >= 0 ? traj[visLast].tNorm : 1;
+      const phaseT = visStartT + animPhase * Math.max(1e-5, visEndT - visStartT);
+      const p = sampleTrajectoryAtPhase(traj, phaseT) || traj[0];
+      const dot = toPx(p.x, p.y);
+      const bendStrength = clamp(1 - (p.r - 0.85) / 2.25, 0, 1);
+      if (bendStrength > 0.05) {
+        drawDipoleEmissionPattern(ctx, dot.px, dot.py, cx - dot.px, cy - dot.py, bendStrength);
+      }
+      ctx.fillStyle = COLORS.electron;
+      ctx.beginPath();
+      ctx.arc(dot.px, dot.py, 5, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Ion at origin
+      const ionRadius = state.Z >= 10 ? 13 : 11.5;
+      ctx.fillStyle = COLORS.ion;
+      ctx.beginPath();
+      ctx.arc(cx, cy, ionRadius, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `700 ${state.Z >= 10 ? 8.8 : 9.8}px ${uiFont}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`Z=${state.Z}`, cx, cy);
+
+      // Deflection angle arc + label at outgoing side
+      const theta = currentKin.theta;
+      if (theta > 0.02) {
+        ctx.save();
+        ctx.strokeStyle = COLORS.indigo;
+        ctx.lineWidth = 1.6;
+        const arcCx = cx + 2.08 * scale;
+        const arcCy = incoming1.py;
+        const arcR = 0.72 * scale;
+        const thetaDraw = Math.min(theta, Math.PI - 0.04);
+        ctx.beginPath();
+        ctx.arc(arcCx, arcCy, arcR, 0, thetaDraw, false);
+        ctx.stroke();
+        ctx.fillStyle = COLORS.indigo;
+        ctx.font = `700 11px ${mathFont}`;
+        ctx.textAlign = 'left';
+        const labelAngle = Math.min(thetaDraw * 0.55, Math.PI * 0.82);
+        ctx.fillText(`θ = ${(theta * 180 / Math.PI).toFixed(1)}°`,
+          arcCx + (arcR + 14) * Math.cos(labelAngle),
+          arcCy + (arcR + 10) * Math.sin(labelAngle));
+        ctx.restore();
+      }
+
+      // Velocity arrow at incoming asymptote
+      drawArrow(ctx, cx - 3.5 * scale, cy - displayScale * scale, cx - 2.6 * scale, cy - displayScale * scale,
+                COLORS.electron, 2.2, 0.9);
+      ctx.fillStyle = COLORS.electron;
+      ctx.font = `600 12px ${mathFont}`;
+      ctx.textAlign = 'left';
+      ctx.fillText('v', cx - 2.5 * scale + 4, cy - displayScale * scale - 4);
+
+      // b-label
+      ctx.save();
+      ctx.strokeStyle = 'rgba(28,78,160,0.55)';
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      const bGuideX = cx + Math.min(0.45 * displayScale, 0.9) * scale;
+      ctx.moveTo(bGuideX, cy);
+      ctx.lineTo(bGuideX, cy - displayScale * scale);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = COLORS.electron;
+      ctx.font = `italic 700 12px ${mathFont}`;
+      ctx.fillText('b', bGuideX + 5, cy - 0.52 * displayScale * scale);
+      ctx.restore();
+
+      // Title bar text
+      ctx.fillStyle = COLORS.muted;
+      ctx.font = `11px ${uiFont}`;
+      ctx.textAlign = 'left';
+      ctx.fillText(`view: compressed miss distance      b = ${fmtSci(currentKin.b, 2)} cm`, 10, 14);
+    }
+
+    // ------------------------------------------------------------------
+    // Single-collision spectrum (log-log dW/dω vs ω)
+    // ------------------------------------------------------------------
+    function drawSingleSpectrum() {
+      const { width, height } = resizeCanvas2D(singleSpecCanvas, singleSpecCtx);
+      const ctx = singleSpecCtx;
+      const margin = { top: 18, right: 16, bottom: 46, left: 62 };
+      const plotW = width - margin.left - margin.right;
+      const plotH = height - margin.top - margin.bottom;
+
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = '#f9fbfe';
+      ctx.fillRect(0, 0, width, height);
+
+      const { v, b, omegaMax } = currentKin;
+
+      // Frequency axis: ω in log10(rad/s). Center around ω_max.
+      const logOmegaCenter = Math.log10(omegaMax);
+      const logOmegaMin = logOmegaCenter - 4.5;
+      const logOmegaMax = logOmegaCenter + 2.5;
+
+      // Build curves: current, b/2 (stronger, higher cutoff), 2b (weaker, lower cutoff)
+      const curves = [
+        { b: b * 0.5, color: COLORS.ghost, width: 1.4, dash: [4, 3] },
+        { b: b,       color: COLORS.blue,  width: 2.6, dash: null   },
+        { b: b * 2,   color: COLORS.ghost, width: 1.4, dash: [2, 3] },
+      ];
+
+      const nPts = 160;
+      const samples = curves.map((cv) => {
+        const pts = [];
+        for (let i = 0; i < nPts; i++) {
+          const logw = logOmegaMin + (i / (nPts - 1)) * (logOmegaMax - logOmegaMin);
+          const w = Math.pow(10, logw);
+          const y = dWdOmega(w, cv.b, v, state.Z);
+          pts.push({ logw, logy: y > 0 ? Math.log10(y) : NaN, y });
+        }
+        return { pts, ...cv };
+      });
+
+      // y-axis: take min and max across current curve's interior region
+      const mid = samples[1].pts.filter((p) => p.logw >= logOmegaCenter - 3 && p.logw <= logOmegaCenter + 1);
+      let logYMax = -Infinity, logYMin = Infinity;
+      mid.forEach((p) => { if (Number.isFinite(p.logy)) { if (p.logy > logYMax) logYMax = p.logy; if (p.logy < logYMin) logYMin = p.logy; } });
+      if (!Number.isFinite(logYMax)) { logYMax = -20; logYMin = -30; }
+      logYMax += 1.0;
+      logYMin = logYMax - 7;
+
+      const xScale = (logw) => margin.left + (logw - logOmegaMin) / (logOmegaMax - logOmegaMin) * plotW;
+      const yScale = (logy) => margin.top + (1 - (logy - logYMin) / (logYMax - logYMin)) * plotH;
+
+      drawLogLogFrame(ctx, margin, plotW, plotH, logOmegaMin, logOmegaMax, logYMin, logYMax,
+        'log₁₀ ω  (rad s⁻¹)', 'log₁₀ dW/dω  (erg s rad⁻¹)');
+
+      // Cutoff vertical marker
+      ctx.save();
+      ctx.strokeStyle = COLORS.rose;
+      ctx.setLineDash([5, 4]);
+      ctx.lineWidth = 1.5;
+      const xCut = xScale(logOmegaCenter);
+      ctx.beginPath();
+      ctx.moveTo(xCut, margin.top);
+      ctx.lineTo(xCut, margin.top + plotH);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = COLORS.rose;
+      ctx.font = `700 11px ${mathFont}`;
+      ctx.textAlign = 'center';
+      ctx.fillText('ω ~ v/b', xCut, margin.top - 4);
+      ctx.restore();
+
+      // Draw the curves
+      samples.forEach(({ pts, color, width: lw, dash }) => {
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lw;
+        ctx.lineJoin = 'round';
+        if (dash) ctx.setLineDash(dash);
+        ctx.beginPath();
+        let started = false;
+        pts.forEach((p) => {
+          if (!Number.isFinite(p.logy)) return;
+          const px = xScale(p.logw);
+          const py = yScale(p.logy);
+          if (py < margin.top - 10 || py > margin.top + plotH + 10) { started = false; return; }
+          if (!started) { ctx.moveTo(px, py); started = true; }
+          else ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      // Labels for ghosts
+      ctx.fillStyle = COLORS.muted;
+      ctx.font = `10px ${mathFont}`;
+      ctx.textAlign = 'left';
+      ctx.fillText('b/2 (stronger)', margin.left + 4, margin.top + 12);
+      ctx.fillText('2b (weaker)',    margin.left + 4, margin.top + 26);
+    }
+
+    // ------------------------------------------------------------------
+    // Dulk-style brightness-temperature plot
+    // ------------------------------------------------------------------
+    function drawDistribution() {
+      const { width, height } = resizeCanvas2D(distCanvas, distCtx);
+      const ctx = distCtx;
+      const margin = { top: 18, right: 16, bottom: 46, left: 62 };
+      const plotW = width - margin.left - margin.right;
+      const plotH = height - margin.top - margin.bottom;
+
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = '#f9fbfe';
+      ctx.fillRect(0, 0, width, height);
+
+      const T = Math.pow(10, state.logTe);
+      const EM = Math.pow(10, state.logEM);
+      const nuRef = Math.pow(10, state.logNuRef);
+      const Z = state.Z;
+      const nuTau = findTauTurnoverHz(T, Z, EM);
+
+      const logNuLo = 7;
+      const logNuHi = 18;
+      const N = 180;
+      const pts = [];
+      let logYMin = Infinity;
+      let logYMax = -Infinity;
+      for (let i = 0; i <= N; i++) {
+        const logNu = logNuLo + (i / N) * (logNuHi - logNuLo);
+        const nu = Math.pow(10, logNu);
+        const Tb = radioBrightnessTemperature(nu, T, Z, EM);
+        const logTb = Math.log10(Math.max(Tb, 1e-12));
+        pts.push({ logNu, logTb });
+        if (logTb < logYMin) logYMin = logTb;
+        if (logTb > logYMax) logYMax = logTb;
+      }
+
+      logYMax = Math.ceil(logYMax * 2) / 2 + 0.2;
+      logYMin = Math.floor((logYMin - 0.4) * 2) / 2;
+
+      const xScale = (logNu) => margin.left + (logNu - logNuLo) / (logNuHi - logNuLo) * plotW;
+      const yScale = (logTb) => margin.top + (1 - (logTb - logYMin) / (logYMax - logYMin)) * plotH;
+
+      drawLogLogFrame(ctx, margin, plotW, plotH, logNuLo, logNuHi, logYMin, logYMax,
+        'log₁₀ ν (Hz)', 'log₁₀ T_b  (K)');
+
+      const xTau = xScale(Math.log10(nuTau));
+      ctx.fillStyle = 'rgba(47,125,225,0.05)';
+      ctx.fillRect(margin.left, margin.top, Math.max(0, xTau - margin.left), plotH);
+      ctx.fillStyle = 'rgba(211,59,111,0.04)';
+      ctx.fillRect(xTau, margin.top, Math.max(0, margin.left + plotW - xTau), plotH);
+
+      ctx.save();
+      ctx.strokeStyle = COLORS.rose;
+      ctx.setLineDash([5, 4]);
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(xTau, margin.top);
+      ctx.lineTo(xTau, margin.top + plotH);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = COLORS.rose;
+      ctx.font = `700 11px ${mathFont}`;
+      ctx.textAlign = 'center';
+      ctx.fillText('τν ≈ 1', xTau, margin.top - 4);
+      ctx.restore();
+
+      ctx.save();
+      ctx.strokeStyle = COLORS.blue;
+      ctx.lineWidth = 2.6;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      pts.forEach((p, i) => {
+        const px = xScale(p.logNu);
+        const py = yScale(p.logTb);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      });
+      ctx.stroke();
+      ctx.restore();
+
+      const logNuRef = Math.log10(nuRef);
+      const xRef = xScale(logNuRef);
+      const TbRef = radioBrightnessTemperature(nuRef, T, Z, EM);
+      ctx.save();
+      ctx.strokeStyle = COLORS.indigo;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(xRef, margin.top);
+      ctx.lineTo(xRef, margin.top + plotH);
+      ctx.stroke();
+      ctx.fillStyle = COLORS.indigo;
+      ctx.beginPath();
+      ctx.arc(xRef, yScale(Math.log10(Math.max(TbRef, 1e-12))), 4.5, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.fillStyle = COLORS.muted;
+      ctx.font = `10px ${mathFont}`;
+      ctx.textAlign = 'left';
+      ctx.fillText('thick: T_b ≈ T_e', margin.left + 6, margin.top + 14);
+      ctx.textAlign = 'right';
+      ctx.fillText('thin: T_b falls with τν', margin.left + plotW - 6, margin.top + 14);
+    }
+
+    // ------------------------------------------------------------------
+    // Dulk-style flux plot (log-log S_ν vs ν)
+    // ------------------------------------------------------------------
+    function drawThermalSpectrum() {
+      const { width, height } = resizeCanvas2D(thermSpecCanvas, thermSpecCtx);
+      const ctx = thermSpecCtx;
+      const margin = { top: 18, right: 16, bottom: 46, left: 72 };
+      const plotW = width - margin.left - margin.right;
+      const plotH = height - margin.top - margin.bottom;
+
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = '#f9fbfe';
+      ctx.fillRect(0, 0, width, height);
+
+      const T = Math.pow(10, state.logTe);
+      const EM = Math.pow(10, state.logEM);
+      const nuRef = Math.pow(10, state.logNuRef);
+      const Z = state.Z;
+      const nuTau = findTauTurnoverHz(T, Z, EM);
+
+      const logNuLo = 7;
+      const logNuHi = 18;
+      const N = 180;
+      const pts = [];
+      let logYMin = Infinity;
+      let logYMax = -Infinity;
+      for (let i = 0; i <= N; i++) {
+        const logNu = logNuLo + (i / N) * (logNuHi - logNuLo);
+        const nu = Math.pow(10, logNu);
+        const s = radioFluxProxy(nu, T, Z, EM);
+        const logS = Math.log10(Math.max(s, 1e-40));
+        pts.push({ logNu, logS });
+        if (logS < logYMin) logYMin = logS;
+        if (logS > logYMax) logYMax = logS;
+      }
+      logYMax = Math.ceil((logYMax + 0.2) * 2) / 2;
+      logYMin = Math.floor((logYMin - 0.4) * 2) / 2;
+
+      const xScale = (logNu) => margin.left + (logNu - logNuLo) / (logNuHi - logNuLo) * plotW;
+      const yScale = (logS)  => margin.top + (1 - (logS - logYMin) / (logYMax - logYMin)) * plotH;
+
+      drawLogLogFrame(ctx, margin, plotW, plotH, logNuLo, logNuHi, logYMin, logYMax,
+        'log₁₀ ν (Hz)', 'log₁₀ S_ν  (arb.)');
+
+      const xTau = xScale(Math.log10(nuTau));
+      ctx.fillStyle = 'rgba(47,125,225,0.05)';
+      ctx.fillRect(margin.left, margin.top, Math.max(0, xTau - margin.left), plotH);
+      ctx.fillStyle = 'rgba(211,59,111,0.04)';
+      ctx.fillRect(xTau, margin.top, Math.max(0, margin.left + plotW - xTau), plotH);
+
+      ctx.save();
+      ctx.strokeStyle = COLORS.rose;
+      ctx.setLineDash([5, 4]);
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(xTau, margin.top);
+      ctx.lineTo(xTau, margin.top + plotH);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = COLORS.rose;
+      ctx.font = `700 11px ${mathFont}`;
+      ctx.textAlign = 'center';
+      ctx.fillText('τν ≈ 1', xTau, margin.top - 4);
+      ctx.restore();
+
+      ctx.save();
+      ctx.strokeStyle = COLORS.blue;
+      ctx.lineWidth = 2.6;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      pts.forEach((p, i) => {
+        const px = xScale(p.logNu);
+        const py = yScale(p.logS);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      });
+      ctx.stroke();
+      ctx.restore();
+
+      const logNuRef = Math.log10(nuRef);
+      const xRef = xScale(logNuRef);
+      const sRef = radioFluxProxy(nuRef, T, Z, EM);
+      ctx.save();
+      ctx.strokeStyle = COLORS.indigo;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(xRef, margin.top);
+      ctx.lineTo(xRef, margin.top + plotH);
+      ctx.stroke();
+      ctx.fillStyle = COLORS.indigo;
+      ctx.beginPath();
+      ctx.arc(xRef, yScale(Math.log10(Math.max(sRef, 1e-40))), 4.5, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.fillStyle = COLORS.muted;
+      ctx.font = `10px ${mathFont}`;
+      ctx.textAlign = 'left';
+      ctx.fillText('thick: Sν ∝ ν²', margin.left + 6, margin.top + 14);
+      ctx.textAlign = 'right';
+      ctx.fillText('thin: Sν nearly flat', margin.left + plotW - 6, margin.top + 14);
+    }
+
+    // ------------------------------------------------------------------
+    // Shared log-log frame with axes
+    // ------------------------------------------------------------------
+    function drawLogLogFrame(ctx, margin, plotW, plotH, xMin, xMax, yMin, yMax, xLabel, yLabel) {
+      ctx.save();
+      ctx.strokeStyle = COLORS.axis;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(margin.left, margin.top, plotW, plotH);
+
+      ctx.fillStyle = COLORS.muted;
+      ctx.font = `11px ${uiFont}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const xSpan = xMax - xMin;
+      const xStep = xSpan > 8 ? 2 : 1;
+      for (let t = Math.ceil(xMin); t <= Math.floor(xMax); t += xStep) {
+        const px = margin.left + (t - xMin) / xSpan * plotW;
+        ctx.strokeStyle = COLORS.grid;
+        ctx.beginPath();
+        ctx.moveTo(px, margin.top);
+        ctx.lineTo(px, margin.top + plotH);
+        ctx.stroke();
+        ctx.fillStyle = COLORS.muted;
+        ctx.fillText(`${t}`, px, margin.top + plotH + 4);
+      }
+
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      const ySpan = yMax - yMin;
+      const yStep = ySpan > 8 ? 2 : 1;
+      for (let t = Math.ceil(yMin); t <= Math.floor(yMax); t += yStep) {
+        const py = margin.top + (1 - (t - yMin) / ySpan) * plotH;
+        ctx.strokeStyle = COLORS.grid;
+        ctx.beginPath();
+        ctx.moveTo(margin.left, py);
+        ctx.lineTo(margin.left + plotW, py);
+        ctx.stroke();
+        ctx.fillStyle = COLORS.muted;
+        ctx.fillText(`${t}`, margin.left - 6, py);
+      }
+
+      ctx.fillStyle = COLORS.text;
+      ctx.font = `700 11px ${mathFont}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(xLabel, margin.left + plotW / 2, margin.top + plotH + 30);
+      ctx.save();
+      ctx.translate(14, margin.top + plotH / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText(yLabel, 0, 0);
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    // ------------------------------------------------------------------
+    // Readouts
+    // ------------------------------------------------------------------
+    function updateReadouts() {
+      const { v, b, theta, omegaMax, deltaW } = currentKin;
+      const beta = v / C_LIGHT;
+      document.getElementById('readV').textContent     = `${fmtSci(v, 2)} cm s⁻¹`;
+      document.getElementById('readVText').textContent = `β = ${beta.toFixed(3)}`;
+      document.getElementById('readTheta').textContent = `${(theta * 180 / Math.PI).toFixed(1)}°`;
+      document.getElementById('readOmegaMax').textContent = `${fmtSci(omegaMax, 2)} rad s⁻¹`;
+      const nuMax = omegaMax / (2 * Math.PI);
+      document.getElementById('readOmegaMaxText').textContent = `τ_enc ~ b/v, so ν_max ~ ${fmtSci(nuMax, 2)} Hz`;
+      document.getElementById('readDeltaW').textContent = `${fmtSci(deltaW, 2)} erg`;
+
+      const T = Math.pow(10, state.logTe);
+      const nuRef = Math.pow(10, state.logNuRef);
+      const EM = Math.pow(10, state.logEM);
+      const tauRef = radioTau(nuRef, T, state.Z, EM);
+      const tbRef = radioBrightnessTemperature(nuRef, T, state.Z, EM);
+      const sRef = radioFluxProxy(nuRef, T, state.Z, EM);
+      const nuTurn = findTauTurnoverHz(T, state.Z, EM);
+      let regime = 'transition';
+      if (tauRef > 3) regime = 'optically thick';
+      else if (tauRef < 0.3) regime = 'optically thin';
+      document.getElementById('readVth').textContent = tauRef >= 100 ? '>100' : tauRef.toFixed(tauRef >= 10 ? 1 : 2);
+      document.getElementById('readVthText').textContent = `${regime} at ν_ref`;
+      document.getElementById('readTurnover').textContent = `${fmtSci(nuTurn, 2)} Hz`;
+      document.getElementById('readEps').textContent = `${fmtSci(tbRef, 2)} K`;
+      document.getElementById('readGff').textContent = fmtSci(sRef, 2);
+    }
+
+    // ------------------------------------------------------------------
+    // Render pipeline
+    // ------------------------------------------------------------------
+    function render() {
+      rebuildTrajectory();
+      updateReadouts();
+      drawCollisionScene();
+      drawSingleSpectrum();
+      drawDistribution();
+      drawThermalSpectrum();
+    }
+
+    window.addEventListener('resize', () => { render(); });
+
+    // Initial setup
+    syncControls();
+    syncZPresets();
+    render();
+    if (!pauseCollisionAnim) {
+      tickRafId = requestAnimationFrame((t) => { lastTime = t; tick(t); });
+    }
+  </script>
+  <div id="site-footer-root"></div>
+</body>
+</html>

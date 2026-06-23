@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EOVSA Corner-Turn Visualization</title>
+    <meta name="description" content="Show how EOVSA data are rearranged through the corner-turn processing step." />
+  <meta name="author" content="Sijie Yu" />
+  <meta name="application-name" content="Phys 681 Solar Physics and Instruments Teaching Visualizations" />
+<title>EOVSA Corner-Turn Visualization</title>
   <style>
     :root {
       --bg: #f5f1e8;
@@ -291,8 +294,12 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="_site-shared.css" />
+  <script defer src="_site-manifest.js"></script>
+  <script defer src="_site-nav.js"></script>
 </head>
 <body>
+  <div id="site-nav-root"></div>
   <main>
     <section class="intro">
       <h1>EOVSA Corner Turn</h1>
@@ -1563,5 +1570,6 @@
     updateRouteDots(0.55);
     requestAnimationFrame(tick);
   </script>
+  <div id="site-footer-root"></div>
 </body>
 </html>

@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polarization Ellipse Interactive</title>
+      <meta name="description" content="Relate electric-field components, phase difference, and polarization ellipse geometry." />
+  <meta name="author" content="Sijie Yu" />
+  <meta name="application-name" content="Phys 681 Solar Physics and Instruments Teaching Visualizations" />
+<title>Polarization Ellipse Interactive</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -28,8 +31,12 @@
             gap: 20px;
             padding: 12px;
             box-sizing: border-box;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             overflow: auto;
+        }
+        #site-footer-root {
+            flex: 0 0 100%;
+            min-width: 0;
         }
         .canvas-container {
             background-color: #2a2a2a;
@@ -303,8 +310,12 @@
             }
         }
     </style>
+  <link rel="stylesheet" href="_site-shared.css" />
+  <script defer src="_site-manifest.js"></script>
+  <script defer src="_site-nav.js"></script>
 </head>
 <body>
+  <div id="site-nav-root"></div>
 
     <div class="sphere-container" id="panel-sphere">
         <h3 class="sphere-title">Poincar&eacute; Sphere</h3>
@@ -1241,5 +1252,6 @@
         // Start animation loop
         requestAnimationFrame(animate);
     </script>
+  <div id="site-footer-root"></div>
 </body>
 </html>
