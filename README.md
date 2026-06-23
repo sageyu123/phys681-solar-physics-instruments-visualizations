@@ -37,9 +37,12 @@ Supplemental pages are publishable supporting materials and should pass the mini
 navigation, metadata, visible labels/units, desktop rendering, no console errors, and a visible
 regime or assumptions statement where relevant.
 
-## Local Preview
+## Local Use
 
-From this directory:
+After downloading and unzipping the archive, open `index.html` in a browser. No local server is
+required for normal use.
+
+If a browser or institutional security setting blocks local files, serve the directory with:
 
 ```sh
 python3 -m http.server 8765
