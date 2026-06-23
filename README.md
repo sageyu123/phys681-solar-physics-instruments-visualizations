@@ -11,6 +11,10 @@ propagation, interferometry, and instrumentation.
 - `html/module-interferometry-instrumentation.html` lists interferometry and instrumentation materials.
 - Collection DOI: `10.5281/zenodo.20820901`
 
+## Citation
+
+Yu, S. (2026, June 23). *NJIT PHYS 681 Spring 2026: Solar Physics and Instruments Teaching Visualizations*. Zenodo. https://doi.org/10.5281/zenodo.20820995
+
 ## Corrections
 
 These materials may contain errors. If you spot a mistake or have a suggested improvement,
