@@ -18,12 +18,19 @@ node_modules/
 # Local assistant/tool state.
 .claude/
 .claude/settings.local.json
+CLAUDE.md
 
 # Generated release artifacts. Recreate with:
 # python3 tools/release/build_dist.py
 dist/
 zenodo-package/
 figures/qa-screenshots/
+tools/
+RELEASE.md
+ZENODO_DEPOSIT.md
+_convert_fasr_ecef_to_enu.py
+generate-uv-synthesis.py
+beam-pattern-feed-illumination-description.md
 
 # Local planning, proposal, and backup artifacts excluded from the DOI package.
 _plan*.md

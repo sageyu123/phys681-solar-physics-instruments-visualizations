@@ -60,7 +60,3 @@ From this `visualizations/` directory:
 ```sh
 quarto render emission-mechanism-explorer-narratives.qmd --to html
 ```
-
-## Release Checklist
-
-See `RELEASE.md`.
