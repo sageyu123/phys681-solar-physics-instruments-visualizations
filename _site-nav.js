@@ -5,6 +5,16 @@
     return decodeURIComponent((path || "").split("/").pop() || "index.html");
   }
 
+  function rootPrefix() {
+    const parts = decodeURIComponent(window.location.pathname || "").split("/");
+    return parts.length >= 2 && parts[parts.length - 2] === "html" ? "../" : "";
+  }
+
+  function siteHref(href) {
+    if (!href || /^(https?:|mailto:|#)/.test(href)) return href;
+    return `${rootPrefix()}${href}`;
+  }
+
   function moduleById(manifest, id) {
     return (manifest.modules || []).find((module) => module.id === id) || null;
   }
@@ -33,7 +43,7 @@
 
   function makeLink(href, label) {
     const link = document.createElement("a");
-    link.href = href;
+    link.href = siteHref(href);
     link.textContent = label;
     return link;
   }
@@ -48,7 +58,7 @@
   }
 
   function pageByFilename(manifest, filename) {
-    return publishablePages(manifest).find((page) => page.filename === filename) || null;
+    return publishablePages(manifest).find((page) => page.filename === filename || page.filename.endsWith(`/${filename}`)) || null;
   }
 
   function pageSearchText(manifest, page) {
@@ -74,7 +84,7 @@
     preview.className = "phys681-card-preview";
     if (page.screenshot) {
       const image = document.createElement("img");
-      image.src = page.screenshot;
+      image.src = siteHref(page.screenshot);
       image.alt = "";
       preview.append(image);
     } else {
@@ -176,8 +186,8 @@
       links.className = "phys681-site-links";
       links.append(
         makeLink("index.html", "Home"),
-        makeLink("module-emission-propagation.html", "Emission"),
-        makeLink("module-interferometry-instrumentation.html", "Interferometry")
+        makeLink("html/module-emission-propagation.html", "Emission"),
+        makeLink("html/module-interferometry-instrumentation.html", "Interferometry")
       );
       if (page && page.narrative_anchor) {
         links.append(makeLink(page.narrative_anchor, "Narrative"));

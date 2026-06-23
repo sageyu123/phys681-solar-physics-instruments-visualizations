@@ -7,8 +7,8 @@ propagation, interferometry, and instrumentation.
 
 - Live site: <https://sageyu123.github.io/phys681-solar-physics-instruments-visualizations/>
 - `index.html` opens the teaching-site landing page.
-- `module-emission-propagation.html` lists emission, transfer, propagation, and coherent-radiation materials.
-- `module-interferometry-instrumentation.html` lists interferometry and instrumentation materials.
+- `html/module-emission-propagation.html` lists emission, transfer, propagation, and coherent-radiation materials.
+- `html/module-interferometry-instrumentation.html` lists interferometry and instrumentation materials.
 - Collection DOI: `10.5281/zenodo.20820901`
 
 ## Corrections
